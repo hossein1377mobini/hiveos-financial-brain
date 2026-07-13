@@ -1,0 +1,67 @@
+# Hello Flow - A simple multi-agent workflow
+
+name: "Hello Multi-Agent World"
+description: "Greeting agents demonstrate basic flow coordination"
+version: "0.1.0"
+
+# Trigger: manual start
+trigger:
+  type: "manual"
+
+# Agent team
+agents:
+  # First agent - Greets users and extracts information
+  - id: "hello_greeter"
+    name: "Hello Greeter"
+    skills:
+      - "text-generation"
+    knowledge:
+      - "greeting_rules.txt"
+    output: "greeting_output.txt"
+    deliver:
+      format: "text"
+
+  # Second agent - Personalizes the greeting
+  - id: "hello_personalizer"
+    name: "Hello Personalizer"
+    skills:
+      - "text-generation"
+    knowledge:
+      - "personalization_rules.txt"
+    depends_on:
+      - "hello_greeter"
+    input_from:
+      agent: "hello_greeter"
+      files: ["greeting_output.txt"]
+    output: "personalized_greeting.txt"
+
+  # Third agent - Final delivery and formatting
+  - id: "hello_deliverer"
+    name: "Hello Deliverer"
+    skills:
+      - "text-formatting"
+    knowledge:
+      - "delivery_templates.txt"
+    depends_on:
+      - "hello_personalizer"
+    input_from:
+      agent: "hello_personalizer"
+      files: ["personalized_greeting.txt"]
+    output: "final_greeting.json"
+    action:
+      format_to_json: true
+      add_timestamp: true
+
+# Shared memory for coordination
+memory:
+  share_context: true
+  consolidate: "flow_execution"
+  trace: true
+  greeting_history: true
+
+# Delivery specification
+deliver:
+  to: "telegram:#general"
+  format: "json"
+  include_agents: true
+  include_trace: true
