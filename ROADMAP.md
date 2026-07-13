@@ -30,14 +30,14 @@ Live product roadmap. Updated after every session.
 | State persistence | ✅ Done | Flow state saved between steps |
 | Error handling | ✅ Done | Agent failure → retry / reassign / cascade skip, flow-level status tracking |
 
-## Phase 2: Integration (Current 🔄)
+## Phase 2: Integration ✅
 
 - [x] CLI tooling for packaging & running flows
 - [x] Hermes skill for HiveOS
 - [x] **Flow Engine → Hermes subagent** — real subprocess spawning
 - [x] **State persistence** — resume support, state CLI
 - [x] **Error handling** — retry, cascade skip, status tracking
-- [ ] **Knowledge sync between Mothership and satellites**
+- [x] **Knowledge sync between Mothership and satellites**
 
 ## Phase 3: Packaging ✅
 
@@ -47,13 +47,14 @@ Live product roadmap. Updated after every session.
 - [x] **Package registry** — Central hub to discover/share packages
 - [x] **Remote Registry Client** — HTTP client for remote registries
 
-## Phase 4: Mothership
+## Phase 4: Mothership ✅
 
-- [ ] **Agent Registry** — Node registration, capability declaration
-- [ ] **Knowledge sync** — Mothership pushes skills to satellites
-- [ ] **Task routing** — Route tasks by capability + load
-- [ ] **Communication Bus** — Cross-node agent messaging
-- [ ] **Resilience** — Node failure → task reassignment
+- [x] **Agent Registry** — Node registration, capability declaration, heartbeat monitoring
+- [x] **Task routing** — 5 strategies: BEST_FIT, LEAST_LOADED, ROUND_ROBIN, CAPABILITY_FIRST, AFFINITY
+- [x] **Communication Bus** — Pub/sub, request/response, in-memory + file-based backends
+- [x] **Resilience** — Health checker, failure detection, circuit breaker, task reassignment
+- [x] **Mothership Server** — FastAPI HTTP REST API for satellite communication
+- [x] **Mothership CLI** — `hive mothership` with agent/route/bus/health/server subcommands
 
 ## Phase 5: Enterprise
 

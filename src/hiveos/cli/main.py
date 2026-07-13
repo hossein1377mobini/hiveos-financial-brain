@@ -17,6 +17,8 @@ from ..registry import PackageRegistry, RegistryEntry, RemoteRegistryClient
 from ..utils.knowledge import KnowledgeManager
 from ..utils.config import ConfigManager
 from ..sync import NodeRegistry, SyncService, SYNC_DIR
+from ..mothership.communication_bus import MessageType, MessagePriority
+from ..mothership.task_router import RouteStrategy
 
 console = Console()
 
@@ -695,6 +697,533 @@ def mothership_info():
         width=60,
     )
     console.print(panel)
+
+
+# ── Enhanced Mothership Commands (Phase 4) ─────────────────────────────
+
+# Import new components lazily to avoid circular imports
+def _get_agent_registry():
+    from ..mothership.agent_registry import AgentRegistry, CapabilityDeclaration
+    return AgentRegistry()
+
+def _get_task_router():
+    from ..mothership.task_router import TaskRouter, RouteStrategy
+    registry = _get_agent_registry()
+    return TaskRouter(registry=registry, default_strategy=RouteStrategy.BEST_FIT)
+
+def _get_comm_bus():
+    from ..mothership.communication_bus import CommunicationBus, InMemoryBusBackend
+    return CommunicationBus(backend=InMemoryBusBackend())
+
+def _get_resilience():
+    from ..mothership.resilience import ResilienceEngine
+    registry = _get_agent_registry()
+    router = _get_task_router()
+    bus = _get_comm_bus()
+    return ResilienceEngine(registry=registry, task_router=router, comm_bus=bus)
+
+def _get_server():
+    from ..mothership.server import MothershipServer
+    from ..sync import NodeRegistry as LegacyNodeRegistry
+    registry = _get_agent_registry()
+    router = _get_task_router()
+    bus = _get_comm_bus()
+    resilience = _get_resilience()
+    return MothershipServer(
+        registry=registry,
+        task_router=router,
+        bus=bus,
+        resilience=resilience,
+        health_checker=resilience.health_checker,
+        node_registry=LegacyNodeRegistry(),
+    )
+
+
+@mothership.group()
+def agent():
+    """Manage enhanced agent nodes with capabilities."""
+    pass
+
+
+@agent.command(name="register")
+@click.argument("name")
+@click.argument("url")
+@click.option("--api-key", help="API key for agent authentication")
+@click.option("--description", help="Agent description")
+@click.option("--capability", "capabilities", multiple=True, help="Capability (can repeat: name:version:desc)")
+@click.option("--max-concurrent", default=5, help="Max concurrent tasks")
+def agent_register(name, url, api_key, description, capabilities, max_concurrent):
+    """Register an agent node with structured capabilities."""
+    from ..mothership.agent_registry import CapabilityDeclaration
+    registry = _get_agent_registry()
+    caps = {}
+    for c in capabilities:
+        parts = c.split(":")
+        cap_name = parts[0]
+        version = parts[1] if len(parts) > 1 else "1.0.0"
+        desc = parts[2] if len(parts) > 2 else ""
+        caps[cap_name] = CapabilityDeclaration(name=cap_name, version=version, description=desc)
+
+    registry.register(
+        name=name,
+        url=url,
+        api_key=api_key or "",
+        description=description or "",
+        capabilities=caps,
+        max_concurrent=max_concurrent,
+    )
+
+
+@agent.command(name="list")
+@click.option("--status", help="Filter by status (online, offline, degraded, unknown)")
+@click.option("--capability", help="Filter by capability name")
+def agent_list(status, capability):
+    """List all registered agents."""
+    registry = _get_agent_registry()
+    agents = registry.list()
+
+    if status:
+        agents = [a for a in agents if a.status == status]
+    if capability:
+        agents = [a for a in agents if capability in a.capabilities]
+
+    if not agents:
+        console.print("[yellow]No agents found.[/yellow]")
+        return
+
+    from rich.table import Table
+    table = Table(title="🤖 Registered Agents")
+    table.add_column("Name", style="cyan")
+    table.add_column("URL", style="white")
+    table.add_column("Status", style="green")
+    table.add_column("Capabilities", style="yellow")
+    table.add_column("Load", style="white")
+    table.add_column("Tasks", style="dim")
+
+    for a in agents:
+        status_style = {"online": "green", "degraded": "yellow", "offline": "red", "unknown": "dim"}
+        s = f"[{status_style.get(a.status, 'dim')}]{a.status}[/]"
+        caps = ", ".join(a.capabilities.keys()) if a.capabilities else "—"
+        if len(caps) > 30:
+            caps = caps[:30] + "..."
+        table.add_row(
+            a.name,
+            a.url,
+            s,
+            caps,
+            f"{a.current_load}/{a.max_concurrent}",
+            f"✓{a.total_tasks_completed} ✗{a.total_errors}",
+        )
+
+    console.print(table)
+
+
+@agent.command(name="info")
+@click.argument("name")
+def agent_info(name):
+    """Show detailed info about an agent."""
+    registry = _get_agent_registry()
+    agent = registry.get(name)
+    if not agent:
+        console.print(f"[red]❌ Agent '{name}' not found[/red]")
+        return
+
+    from rich.panel import Panel
+    caps_str = ""
+    if agent.capabilities:
+        for cap_name, cap in agent.capabilities.items():
+            caps_str += f"  • {cap_name} (v{cap.version}): {cap.description or '—'}\n"
+    else:
+        caps_str = "  —"
+
+    panel = Panel(
+        f"[bold cyan]🤖 Agent: {agent.name}[/bold cyan]\n\n"
+        f"  [bold]URL:[/bold]              {agent.url}\n"
+        f"  [bold]Status:[/bold]           {agent.status}\n"
+        f"  [bold]Description:[/bold]      {agent.description or '—'}\n"
+        f"  [bold]Max Concurrent:[/bold]   {agent.max_concurrent}\n"
+        f"  [bold]Current Load:[/bold]     {agent.current_load}\n"
+        f"  [bold]Load Factor:[/bold]      {agent.current_load / max(1, agent.max_concurrent) * 100:.0f}%\n"
+        f"  [bold]Tasks Completed:[/bold]  {agent.total_tasks_completed}\n"
+        f"  [bold]Errors:[/bold]           {agent.total_errors}\n"
+        f"  [bold]Reliability:[/bold]       {agent.total_tasks_completed / max(1, agent.total_tasks_completed + agent.total_errors) * 100:.1f}%\n"
+        f"  [bold]Last Heartbeat:[/bold]   {agent.last_heartbeat or '—'}\n"
+        f"  [bold]Registered:[/bold]        {agent.registered_at}\n\n"
+        f"  [bold]Capabilities:[/bold]\n{caps_str}",
+        width=70,
+    )
+    console.print(panel)
+
+
+@agent.command(name="remove")
+@click.argument("name")
+def agent_remove(name):
+    """Remove an agent from the registry."""
+    registry = _get_agent_registry()
+    registry.unregister(name)
+
+
+@agent.command(name="capabilities")
+def agent_capabilities():
+    """List all capability types and how many agents provide each."""
+    registry = _get_agent_registry()
+    caps = registry.list_capabilities()
+
+    if not caps:
+        console.print("[yellow]No capabilities registered.[/yellow]")
+        return
+
+    from rich.table import Table
+    table = Table(title="📋 Capability Inventory")
+    table.add_column("Capability", style="cyan")
+    table.add_column("Providers", style="green")
+    table.add_column("Online", style="white")
+
+    for cap, count in sorted(caps.items(), key=lambda x: -x[1]):
+        online = sum(1 for a in registry.find_available(cap))
+        table.add_row(cap, str(count), str(online))
+
+    console.print(table)
+
+
+@agent.command(name="heartbeat")
+@click.argument("name")
+@click.option("--load", type=int, help="Current load")
+def agent_heartbeat(name, load):
+    """Record a heartbeat from an agent (for testing)."""
+    registry = _get_agent_registry()
+    success = registry.record_heartbeat(name, load=load)
+    if success:
+        console.print(f"[green]✅ Heartbeat recorded for '{name}'[/green]")
+    else:
+        console.print(f"[red]❌ Agent '{name}' not found[/red]")
+
+
+# ── Task Router Commands ────────────────────────────────────────────────
+
+@mothership.group()
+def route():
+    """Task routing commands."""
+    pass
+
+
+@route.command(name="assign")
+@click.argument("agent_id")
+@click.argument("capability")
+@click.option("--metadata", help="JSON metadata")
+@click.option("--preferred", help="Comma-separated preferred nodes")
+@click.option("--excluded", help="Comma-separated excluded nodes")
+@click.option("--strategy", type=click.Choice([s.value for s in RouteStrategy]), help="Routing strategy")
+def route_assign(agent_id, capability, metadata, preferred, excluded, strategy):
+    """Route a task to the best available node."""
+    router = _get_task_router()
+    from ..mothership.task_router import RouteStrategy as RTS
+    strat = RTS(strategy) if strategy else None
+    pref = [n.strip() for n in preferred.split(",")] if preferred else None
+    excl = [n.strip() for n in excluded.split(",")] if excluded else None
+    meta = json.loads(metadata) if metadata else {}
+
+    assignment = router.route(
+        agent_id=agent_id,
+        required_capability=capability,
+        metadata=meta,
+        preferred_nodes=pref,
+        excluded_nodes=excl,
+        strategy=strat,
+    )
+
+    if assignment:
+        console.print(f"[green]✅ Routed to '{assignment.node_name}' ({assignment.node_url})[/green]")
+        console.print(f"   Task ID: {assignment.task_id}")
+        console.print(f"   Strategy: {assignment.strategy.value}")
+    else:
+        console.print(f"[red]❌ No available node for capability '{capability}'[/red]")
+
+
+@route.command(name="reroute")
+@click.argument("task_id")
+@click.option("--reason", default="manual", help="Reroute reason")
+def route_reroute(task_id, reason):
+    """Re-route a failed task."""
+    router = _get_task_router()
+    assignment = router.reroute(task_id, reason=reason)
+    if assignment:
+        console.print(f"[green]✅ Re-routed to '{assignment.node_name}'[/green]")
+    else:
+        console.print("[red]❌ Could not reroute[/red]")
+
+
+@route.command(name="metrics")
+def route_metrics():
+    """Show routing metrics."""
+    router = _get_task_router()
+    router.display_metrics()
+
+
+@route.command(name="rules")
+@click.option("--add", nargs=3, metavar="CAPABILITY STRATEGY MAX_LOAD", help="Add rule: capability strategy max_load")
+@click.option("--remove", help="Remove rule by capability")
+def route_rules(add, remove):
+    """Manage routing rules."""
+    router = _get_task_router()
+    from ..mothership.task_router import RoutingRule, RouteStrategy as RTS
+
+    if add:
+        cap, strat, max_load = add
+        rule = RoutingRule(
+            capability=cap,
+            strategy=RTS(strat),
+            max_load_factor=float(max_load),
+        )
+        router.add_rule(rule)
+        console.print(f"[green]✅ Added rule for '{cap}'[/green]")
+
+    if remove:
+        if router.remove_rule(remove):
+            console.print(f"[green]🗑️ Removed rule for '{remove}'[/green]")
+        else:
+            console.print(f"[red]❌ No rule found for '{remove}'[/red]")
+
+
+# ── Communication Bus Commands ────────────────────────────────────────
+
+@mothership.group()
+def bus():
+    """Communication bus commands."""
+    pass
+
+
+@bus.command(name="publish")
+@click.argument("msg_type", type=click.Choice([t.value for t in MessageType]))
+@click.argument("payload", required=False)
+@click.option("--recipient", help="Target node (default: broadcast)")
+@click.option("--priority", type=click.Choice([p.name for p in MessagePriority]), default="NORMAL")
+def bus_publish(msg_type, payload, recipient, priority):
+    """Publish a message to the bus."""
+    bus = _get_comm_bus()
+    from ..mothership.communication_bus import MessageType, MessagePriority
+    msg = MessageType(msg_type)
+    pri = MessagePriority[priority]
+    data = json.loads(payload) if payload else {}
+
+    message = bus.publish(msg_type=msg, payload=data, recipient=recipient, priority=pri)
+    console.print(f"[green]📤 Published {msg_type} (id: {message.message_id})[/green]")
+
+
+@bus.command(name="subscribe")
+@click.argument("msg_types", nargs=-1)
+@click.option("--count", default=5, help="Number of messages to wait for")
+def bus_subscribe(msg_types, count):
+    """Subscribe to message types and print received messages."""
+    bus = _get_comm_bus()
+    from ..mothership.communication_bus import MessageType
+    types = [MessageType(t) for t in msg_types] if msg_types else list(MessageType)
+
+    received = []
+    def callback(msg):
+        received.append(msg)
+        console.print(f"[cyan]📨 {msg.type.value} from {msg.sender}: {msg.payload}[/cyan]")
+
+    sub_id = bus.subscribe(types, callback)
+    console.print(f"[dim]Subscribed (id: {sub_id}). Waiting for {count} messages...[/dim]")
+
+    # Wait for messages
+    import time
+    start = time.time()
+    while len(received) < count and time.time() - start < 30:
+        time.sleep(0.5)
+
+    bus.unsubscribe(sub_id)
+    console.print(f"[dim]Received {len(received)} messages.[/dim]")
+
+
+@bus.command(name="stats")
+def bus_stats():
+    """Show bus statistics."""
+    # Placeholder - would need to track in bus
+    console.print("[dim]Bus stats not yet implemented[/dim]")
+
+
+# ── Resilience Commands ────────────────────────────────────────────────
+
+@mothership.group()
+def health():
+    """Health and resilience commands."""
+    pass
+
+
+@health.command(name="check")
+@click.argument("node", required=False)
+def health_check(node):
+    """Run health check on a node or all nodes."""
+    resilience = _get_resilience()
+    if node:
+        result = resilience.health_checker.check_node(node)
+        status_style = {"healthy": "green", "degraded": "yellow", "unhealthy": "red", "unknown": "dim"}
+        s = f"[{status_style.get(result.status.value, 'dim')}]{result.status.value}[/]"
+        console.print(f"Health check for {node}: {s}")
+        console.print(f"  Latency: {result.latency_ms:.1f}ms")
+        if result.errors:
+            console.print(f"  Errors: {', '.join(result.errors)}")
+        console.print(f"  Details: {result.details}")
+    else:
+        results = resilience.health_checker.check_all()
+        from rich.table import Table
+        table = Table(title="🏥 Health Check Results")
+        table.add_column("Node", style="cyan")
+        table.add_column("Status", style="green")
+        table.add_column("Latency (ms)", style="white")
+        table.add_column("Errors", style="red")
+        for name, result in results.items():
+            status_style = {"healthy": "green", "degraded": "yellow", "unhealthy": "red", "unknown": "dim"}
+            s = f"[{status_style.get(result.status.value, 'dim')}]{result.status.value}[/]"
+            err_str = ", ".join(result.errors) if result.errors else "—"
+            table.add_row(name, s, f"{result.latency_ms:.1f}", err_str)
+        console.print(table)
+
+
+@health.command(name="monitor")
+@click.option("--interval", default=30, help="Check interval (seconds)")
+def health_monitor(interval):
+    """Start continuous health monitoring."""
+    resilience = _get_resilience()
+    resilience.start()
+    console.print(f"[green]🏥 Health monitoring started (interval: {interval}s)[/green]")
+    console.print("[dim]Press Ctrl+C to stop[/dim]")
+    try:
+        import time
+        while True:
+            time.sleep(interval)
+            resilience.display_status()
+    except KeyboardInterrupt:
+        resilience.stop()
+        console.print("[dim]Health monitoring stopped[/dim]")
+
+
+@health.command(name="status")
+def health_status():
+    """Show overall resilience status."""
+    resilience = _get_resilience()
+    resilience.display_status()
+
+
+@health.command(name="failures")
+@click.option("--resolved", is_flag=True, help="Show resolved failures too")
+def health_failures(resolved):
+    """List detected failures."""
+    resilience = _get_resilience()
+    failures = resilience.failure_detector.get_failures(unresolved_only=not resolved)
+
+    if not failures:
+        console.print("[green]No failures detected.[/green]")
+        return
+
+    from rich.table import Table
+    table = Table(title="🚨 Detected Failures")
+    table.add_column("Node", style="cyan")
+    table.add_column("Type", style="red")
+    table.add_column("Severity", style="white")
+    table.add_column("Description", style="white")
+    table.add_column("Time", style="dim")
+    table.add_column("Resolved", style="green")
+
+    for f in failures:
+        table.add_row(
+            f.node_name,
+            f.failure_type.value,
+            f.severity,
+            f.description,
+            f.timestamp[:19],
+            "✅" if f.resolved else "❌",
+        )
+    console.print(table)
+
+
+@health.command(name="circuits")
+def health_circuits():
+    """Show circuit breaker states."""
+    resilience = _get_resilience()
+    status = resilience.get_status()
+
+    from rich.table import Table
+    table = Table(title="🔌 Circuit Breakers")
+    table.add_column("Node", style="cyan")
+    table.add_column("State", style="white")
+
+    for node, state in status["circuit_breakers"].items():
+        style = {"closed": "green", "half_open": "yellow", "open": "red"}.get(state, "white")
+        table.add_row(node, f"[{style}]{state}[/]")
+    console.print(table)
+
+
+@health.command(name="reassignments")
+def health_reassignments():
+    """Show reassignment statistics."""
+    resilience = _get_resilience()
+    stats = resilience.reassignment_engine.get_reassignment_stats()
+
+    console.print(f"[bold]🔄 Total Reassignments:[/bold] {stats['total_reassignments']}")
+    console.print(f"[bold]Active Reassigned Tasks:[/bold] {stats['active_reassigned']}")
+
+    if stats["by_node"]:
+        from rich.table import Table
+        table = Table(title="Reassignments by Node")
+        table.add_column("Node", style="cyan")
+        table.add_column("Count", style="white")
+        for node, count in stats["by_node"].items():
+            table.add_row(node, str(count))
+        console.print(table)
+
+
+# ── Server Commands ────────────────────────────────────────────────────
+
+@mothership.group()
+def server():
+    """Mothership HTTP server commands."""
+    pass
+
+
+@server.command(name="start")
+@click.option("--host", default="0.0.0.0", help="Bind host")
+@click.option("--port", default=8080, help="Bind port")
+@click.option("--foreground", is_flag=True, help="Run in foreground")
+def server_start(host, port, foreground):
+    """Start the Mothership HTTP server."""
+    server = _get_server()
+    server.host = host
+    server.port = port
+    server.start(background=not foreground)
+    if not foreground:
+        console.print("[dim]Server running in background. Use 'hive mothership server stop' to stop.[/dim]")
+
+
+@server.command(name="stop")
+def server_stop():
+    """Stop the Mothership HTTP server."""
+    # Note: This would need a way to get the running server instance
+    # For now, just a placeholder
+    console.print("[yellow]Server stop not yet implemented (run in foreground with Ctrl+C)[/yellow]")
+
+
+@server.command(name="status")
+def server_status():
+    """Show server status."""
+    server = _get_server()
+    status = {
+        "uptime": server._uptime(),
+        "agents": server.registry.count(),
+        "tasks_assigned": server.metrics.get("tasks_assigned", 0),
+        "tasks_completed": server.metrics.get("tasks_completed", 0),
+        "tasks_failed": server.metrics.get("tasks_failed", 0),
+        "bus_messages": server.metrics.get("bus_messages", 0),
+    }
+    from rich.table import Table
+    table = Table(title="🌍 Mothership Server Status")
+    table.add_column("Metric", style="cyan")
+    table.add_column("Value", style="white")
+    for k, v in status.items():
+        table.add_row(k, str(v))
+    console.print(table)
 
 
 def main():

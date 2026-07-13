@@ -5,9 +5,9 @@
 
 ---
 
-## 📌 Current Phase: Phase 3 — Package Registry (Complete ✅)
+## 📌 Current Phase: Phase 4 — Mothership (Complete ✅)
 
-Phase 0 (Foundation) ✅ | Phase 1 (Playground) ✅ | Phase 2 (Integration) ✅ | Phase 3 (Packaging) ✅ | **Phase 4 (Mothership) 🔜**
+Phase 0 (Foundation) ✅ | Phase 1 (Playground) ✅ | Phase 2 (Integration) ✅ | Phase 3 (Packaging) ✅ | **Phase 4 (Mothership) ✅**
 
 ---
 
@@ -24,7 +24,19 @@ File: `src/hiveos/mothership/`
 
 ## 📋 Session History
 
-### v0.4.0 (2026-07-13) — Phase 3: Package Registry ✅
+### v0.4.0 (2026-07-14) — Phase 4: Mothership ✅
+
+| Component | File | Description |
+|-----------|------|-------------|
+| Agent Registry | `src/hiveos/mothership/agent_registry.py` | Node registration, capability declaration, heartbeat monitoring, health checks |
+| Task Router | `src/hiveos/mothership/task_router.py` | 5 routing strategies: BEST_FIT, LEAST_LOADED, ROUND_ROBIN, CAPABILITY_FIRST, AFFINITY |
+| Communication Bus | `src/hiveos/mothership/communication_bus.py` | Pub/sub, request/response, 2 backends (InMemory + File-based) |
+| Resilience Engine | `src/hiveos/mothership/resilience.py` | Health checker, failure detector, circuit breaker, task reassignment |
+| Mothership Server | `src/hiveos/mothership/server.py` | FastAPI HTTP REST API for satellite communication |
+| Mothership CLI | `src/hiveos/cli/main.py` | `hive mothership agent/route/bus/health/server` subcommands |
+| Mothership tests | `tests/test_agent_registry.py`, `test_task_router.py`, `test_comm_bus.py`, `test_resilience.py` | 76 new tests |
+
+### v0.3.0 (2026-07-13) — Phase 3: Package Registry ✅
 
 | Component | File | Description |
 |-----------|------|-------------|
@@ -34,7 +46,7 @@ File: `src/hiveos/mothership/`
 | `hive package publish` | `src/hiveos/cli/main.py` | Build + publish in one command |
 | Registry tests | `tests/test_registry.py` | 20 tests for registry, builder, installer, E2E |
 
-### v0.3.0 (2026-07-13) — Phase 2: Integration ✅
+### v0.2.0 (2026-07-13) — Phase 2: Integration ✅
 
 | Component | File | Description |
 |-----------|------|-------------|
@@ -43,12 +55,13 @@ File: `src/hiveos/mothership/`
 | Mothership CLI | `src/hiveos/cli/main.py` | `hive mothership node/sync/info/preview` |
 | Sync tests | `tests/test_sync.py` | 12 unit tests for NodeRegistry |
 
-### Test results: 48/48 ✅
+### Test results: 124/124 ✅
 ```
-hive flow validate prototype/      → 2 valid flows
-hive package publish . --name hiveos-core → published
-hive registry list/search/info/verify → all working
-python -m pytest tests/ -v         → 48 passed in 8.6s
+python -m pytest tests/ -v         → 124 passed in 9.3s
+hive mothership agent list/info    → all working
+hive mothership health status      → working
+hive flow validate prototype/      → valid flows
+hive registry list/search/info     → all working
 ```
 
 ---
@@ -69,7 +82,12 @@ hive
  ├── flow run/validate/list/state/clear-state
  ├── package build/install/list/publish
  ├── registry list/search/info/remove/verify
- ├── mothership node/sync/preview/info
+ ├── mothership
+ │    ├── agent register/list/info/remove/capabilities/heartbeat
+ │    ├── route assign/reroute/metrics/rules
+ │    ├── bus publish/subscribe/stats
+ │    ├── health check/monitor/status/failures/circuits/reassignments
+ │    └── server start/stop/status
  └── util init/info
 ```
 
@@ -89,11 +107,13 @@ hive
 - [x] `hive registry` CLI — list, search, info, remove, verify
 - [x] Remote Registry Client — HTTP client for remote registries
 
-### Phase 4: Mothership 🔜 (Next)
-- [ ] Agent Registry — node registration, capability declaration
-- [ ] Task routing — route by capability + load
-- [ ] Communication Bus — cross-node agent messaging
-- [ ] Resilience — node failure → task reassignment
+### Phase 4: Mothership ✅
+- [x] Agent Registry — node registration, capability declaration, heartbeat monitoring
+- [x] Task routing — 5 strategies: best-fit, least-loaded, round-robin, capability-first, affinity
+- [x] Communication Bus — pub/sub messaging, request/response, two backends
+- [x] Resilience — health checker, failure detection, circuit breaker, task reassignment
+- [x] Mothership Server — FastAPI HTTP REST API for satellite nodes
+- [x] Mothership CLI — `hive mothership` with 5 subcommand groups
 
 ### Phase 5: Enterprise
 - [ ] RBAC, Audit trail, Dashboard, Multi-tenant, Pricing
@@ -111,6 +131,9 @@ uv pip install .                           # after code changes
 .venv/Scripts/hive registry list
 .venv/Scripts/hive registry search <query>
 .venv/Scripts/hive registry verify
+.venv/Scripts/hive mothership agent list
+.venv/Scripts/hive mothership health status
+.venv/Scripts/hive mothership server status
 python -m pytest tests/ -v                 # run tests
 git add -A && git commit -m "feat: ..." && git push origin master
 ```
