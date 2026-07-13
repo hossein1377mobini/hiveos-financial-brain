@@ -13,30 +13,15 @@ Phase 0 (Foundation) ✅ | Phase 1 (Playground) ✅ | Phase 2 (Integration) 🔄
 
 ## 🎯 Immediate Next Task
 
-**Connect Flow Engine → Hermes `delegate_task`**
+**P2: State persistence** — flow state saved between agent steps (JSON file)
 
-File: `src/hiveos/engine.py` → method `_execute_agent()`
+File: `src/hiveos/engine.py`
 
-Currently uses a placeholder that prints "Agent completed" without actually running anything.
-Replace it with a real `delegate_task` call that spawns a Hermes subagent with:
-- The agent's `skills` loaded
-- The agent's `knowledge` injected as context
-- `input_from` data (from previous agents in the flow) passed as context
-- Result captured as the agent's `output`
-
-### Implementation approach:
-```python
-# In _execute_agent():
-result = delegate_task(
-    goal=f"Execute as agent '{agent.name}' with skills: {', '.join(agent.skills)}",
-    context=f"""You are part of the HiveOS flow '{flow.name}'.
-Previous agent output: {previous_output if agent.depends_on else 'none'}
-Your task: Apply your skills ({', '.join(agent.skills)}) to process the input.
-""",
-    # Note: skills parameter is not supported by delegate_task directly
-    # The agent's capabilities come from the context description
-)
-```
+Currently flow state lives only in memory during execution. Add JSON-based
+state persistence so:
+- Each agent step writes its result to `.hiveos/flows/<flow_name>/state.json`
+- Failed agents can be retried by reading their last state
+- Flow state survives process restarts
 
 ---
 
@@ -46,27 +31,26 @@ Your task: Apply your skills ({', '.join(agent.skills)}) to process the input.
 | Component | File | Description |
 |-----------|------|-------------|
 | DSL Parser | `src/hiveos/dsl.py` | Flow, Agent, Trigger dataclasses + FlowDSL.load_flow() |
-| Flow Engine | `src/hiveos/engine.py` | Topological sort, sequential agent execution, delivery |
+| Flow Engine | `src/hiveos/engine.py` | Topological sort, sequential agent execution via Hermes `chat -q` subprocess, delivery |
 | CLI | `src/hiveos/cli/main.py` | 8 commands: `flow run/validate/list`, `package build/install/list`, `util init/info` |
 | Package Manager | `src/hiveos/package/__init__.py` | tar.gz builder + installer + manifest |
 | Validator | `src/hiveos/utils/validator.py` | Full YAML schema validation |
 | Config | `src/hiveos/utils/config.py` | ~/.hiveos/config.yaml |
 | Knowledge | `src/hiveos/utils/knowledge.py` | KB scanner for docs/ |
 | Hermes Skill | `hiveos-skill.md` | Installable skill for Hermes |
-| Hello-flow | `prototype/hello-flow/hello.yml` | 3-agent flow demo |
+| Hello-flow | `prototype/hello-flow/hello.yml` | 3-agent flow demo (tested: 3 Hermes subagents spawned) |
 | Package spec | `pyproject.toml` | Installable via `uv pip install .` |
 
 ### Latest commit
 ```
-ae690aa docs: update roadmap - Phase 1 complete, Phase 2 current, add detail notes
-6d28220 feat(core): HiveOS v0.1.0 - Flow Engine, CLI, Package Manager, DSL + first prototype flow
+0ebcd87 feat(core): connect Flow Engine to Hermes subagent via chat -q
 ```
 GitHub: `origin` → https://github.com/hossein1377mobini/hiveos-financial-brain.git
 
 ### Test results
 - `hive util info` ✅
 - `hive flow validate prototype/` ✅ (1 file valid)
-- `hive flow run prototype/hello-flow/hello.yml` ✅ (3 agents executed in dependency order)
+- `hive flow run prototype/hello-flow/hello.yml` ✅ (3 Hermes subagents spawned in sequence: Greeter→Personalizer→Deliverer, 173s total)
 - `hive flow list` ✅
 - Package build tested ✅ (CLI works)
 
@@ -104,10 +88,10 @@ hive
 ## 🎯 Full Task Backlog (for next sessions)
 
 ### Phase 2: Integration 🔄 (PRIORITY)
-- [ ] **P1: Connect delegate_task** — replace placeholder in `_execute_agent()` with real Hermes `delegate_task`
-- [ ] **State persistence** — flow state saved between agent steps (JSON/Redis)
-- [ ] **Error handling** — agent failure → retry / reassign
-- [ ] **Knowledge sync** — mothership pushes skills to satellites
+- [x] **P1: Connect Hermes subagent** — replaced placeholder in `_execute_agent()` with real `hermes chat -q` subprocess spawning
+- [ ] **P2: State persistence** — flow state saved between agent steps (JSON/Redis)
+- [ ] **P3: Error handling** — agent failure → retry / reassign
+- [ ] **P4: Knowledge sync** — mothership pushes skills to satellites
 
 ### Phase 3: Packaging (future)
 - [ ] Package registry — central hub for sharing packages
