@@ -39,12 +39,13 @@ Live product roadmap. Updated after every session.
 - [x] **Error handling** — retry, cascade skip, status tracking
 - [ ] **Knowledge sync between Mothership and satellites**
 
-## Phase 3: Packaging
+## Phase 3: Packaging ✅
 
-- [ ] **Package spec finalized** — Tar.gz format for agent ecosystems
-- [ ] `hive package export` — Export flows + skills + knowledge
-- [ ] `hive package install` — Import on another Hermes node
-- [ ] **Package registry** — Central hub to discover/share packages
+- [x] **Package spec finalized** — Tar.gz format for agent ecosystems
+- [x] `hive package publish` — Publish to local registry
+- [x] `hive registry` — List, search, info, remove, verify commands
+- [x] **Package registry** — Central hub to discover/share packages
+- [x] **Remote Registry Client** — HTTP client for remote registries
 
 ## Phase 4: Mothership
 

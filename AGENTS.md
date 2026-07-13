@@ -5,21 +5,41 @@
 
 ---
 
-## 📌 Current Phase: Phase 2 — Integration (Active)
+## 📌 Current Phase: Phase 3 — Package Registry (Active)
 
-Phase 0 (Foundation) ✅ | Phase 1 (Playground) ✅ | Phase 2 (Integration) 🔄
+Phase 0 (Foundation) ✅ | Phase 1 (Playground) ✅ | Phase 2 (Integration) ✅ | Phase 3 (Package Registry) 🔄
 
 ---
 
-## 🎯 Immediate Next Task
+## 🎯 Current: Phase 3 — Package Registry (Active 🔄)
 
-**Phase 3: Packaging** — Package registry, `hive package publish`, central hub for sharing packages
+Phase 0 (Foundation) ✅ | Phase 1 (Playground) ✅ | Phase 2 (Integration) ✅ | Phase 3 (Package Registry) 🔄
 
-File: `src/hiveos/package/__init__.py` + new `src/hiveos/registry/`
+---
 
-- Package registry service to publish/discover packages
-- `hive package publish` command to push to registry
-- Central hub for sharing agent ecosystems across teams
+### ✅ Completed this session (2026-07-13 v0.4.0)
+
+| Component | File | Description |
+|-----------|------|-------------|
+| Package Registry | `src/hiveos/registry/registry.py` | YAML-based local catalog: publish, search, list, get latest version, remove, install counter |
+| Remote Registry Client | `src/hiveos/registry/remote.py` | HTTP client for remote registries: push/pull/search packages |
+| `hive registry` CLI | `src/hiveos/cli/main.py` | `hive registry list/search/info/remove/verify` commands |
+| `hive package publish` | `src/hiveos/cli/main.py` | Build + publish to local registry in one command |
+| Registry tests | `tests/test_registry.py` | 17 tests covering RegistryEntry, PackageRegistry, PackageBuilder, PackageInstaller, and E2E workflow |
+
+### CLI Commands Added
+
+```
+hive registry list [--tag]          — List published packages
+hive registry search <query>        — Search by name/desc/tag/author
+hive registry info <name> [version] — Show package details
+hive registry remove <name>         — Remove from registry
+hive registry verify                — Check registry integrity
+hive package publish <dir>          — Build + publish to registry
+```
+
+### Test results: 48/48 ✅
+- All 31 existing tests + 17 new registry tests pass
 
 ---
 
@@ -79,9 +99,11 @@ hive
 - [x] **P3: Error handling** — retry, cascade skip, status tracking
 - [ ] **P4: Knowledge sync** — mothership pushes skills to satellites
 
-### Phase 3: Packaging (future)
-- [ ] Package registry — central hub for sharing packages
-- [ ] `hive package publish` command
+### Phase 3: Packaging (Completed ✅)
+- [x] Package registry — central hub for sharing packages
+- [x] `hive package publish` command
+- [x] `hive registry` CLI (list/search/info/remove/verify)
+- [x] Remote registry client (push/pull/search)
 
 ### Phase 4: Mothership (future)
 - [ ] Agent Registry — node registration, capability declaration

@@ -12,7 +12,8 @@ from rich import print as rprint
 from ..engine import FlowEngine
 from ..dsl import Flow, Agent, Trigger, TriggerType
 from ..utils.validator import FlowValidator
-from ..package import PackageBuilder, PackageInstaller, create_manifest_yaml
+from ..package import PackageBuilder, PackageInstaller, create_manifest_yaml, Manifest
+from ..registry import PackageRegistry, RegistryEntry, RemoteRegistryClient
 from ..utils.knowledge import KnowledgeManager
 from ..utils.config import ConfigManager
 from ..sync import NodeRegistry, SyncService, SYNC_DIR
@@ -294,6 +295,9 @@ def install(package_file):
     installer = PackageInstaller()
     manifest = installer.install(Path(package_file))
     console.print(f"[green]✅ Package '{manifest.name}' v{manifest.version} installed![/green]")
+    # Sync install count with registry
+    reg = PackageRegistry()
+    reg.increment_install(manifest.name, manifest.version)
 
 
 @package.command("list")
@@ -315,6 +319,143 @@ def list_packages():
         table.add_row(pkg.name, pkg.version, pkg.description)
     
     console.print(table)
+
+
+@package.command()
+@click.argument('source-dir', type=click.Path(exists=True))
+@click.option('--name', prompt=True, help='Package name')
+@click.option('--version', default='0.1.0', help='Package version')
+@click.option('--author', prompt=True, help='Package author')
+@click.option('--description', prompt=True, help='Package description')
+@click.option('--tags', help='Comma-separated tags')
+@click.option('--force', is_flag=True, help='Overwrite existing registry entry')
+def publish(source_dir, name, version, author, description, tags, force):
+    """Publish a package directory to the local registry."""
+    source_path = Path(source_dir).resolve()
+    tag_list = [t.strip() for t in tags.split(",")] if tags else []
+
+    # Build the tar.gz package first
+    builder = PackageBuilder(source_path)
+    output = source_path.parent / f"{name}-{version}.tar.gz"
+    builder.build(output)
+
+    # Read flows from the source
+    flow_dir = source_path / "flows"
+    flows = sorted(f.name for f in flow_dir.glob("*.yml")) if flow_dir.exists() else []
+
+    # Publish to registry
+    entry = RegistryEntry(
+        name=name,
+        version=version,
+        description=description,
+        author=author,
+        tags=tag_list,
+        flows=flows,
+        source_url=str(output.resolve()),
+    )
+    reg = PackageRegistry()
+    success = reg.publish(entry, overwrite=force)
+    if success:
+        console.print()
+        console.print(Panel(
+            f"[bold green]📦 {name} v{version}[/bold green]\n\n"
+            f"  Author:     {author}\n"
+            f"  Tags:       {', '.join(tag_list) or '—'}\n"
+            f"  Package:    {output}\n"
+            f"  Registry:   ~/.hiveos/registry/catalog.yaml\n\n"
+            f"  Install:    [cyan]hive package install {output}[/cyan]\n"
+            f"  Discover:   [cyan]hive registry search {name}[/cyan]",
+            width=60,
+        ))
+
+
+@hive.group()
+def registry():
+    """📦 Package registry — discover, search, manage packages."""
+    pass
+
+
+@registry.command("list")
+@click.option('--tag', help='Filter by tag')
+def registry_list(tag):
+    """List published packages in the registry."""
+    reg = PackageRegistry()
+    entries = reg.list_packages(tag=tag)
+    reg.display_table(entries, title="📦 Published Packages")
+
+
+@registry.command()
+@click.argument('query')
+def search(query):
+    """Search published packages by name, description, tag, or author."""
+    reg = PackageRegistry()
+    results = reg.search(query)
+    if results:
+        reg.display_table(results, title=f"🔍 Search: '{query}'")
+    else:
+        console.print(f"[yellow]No packages found for '{query}'[/yellow]")
+
+
+@registry.command()
+@click.argument('name')
+@click.argument('version', required=False)
+def info(name, version):
+    """Show detailed info about a published package."""
+    reg = PackageRegistry()
+    entry = reg.get(name, version)
+    if entry is None:
+        console.print(f"[red]❌ Package '{name}' not found in registry[/red]")
+        return
+
+    console.print(Panel(
+        f"[bold cyan]📦 {entry.name} v{entry.version}[/bold cyan]\n\n"
+        f"  [bold]Description:[/bold]  {entry.description}\n"
+        f"  [bold]Author:[/bold]       {entry.author}\n"
+        f"  [bold]Tags:[/bold]         {', '.join(entry.tags) or '—'}\n"
+        f"  [bold]Flows:[/bold]        {', '.join(entry.flows) or '—'}\n"
+        f"  [bold]Dependencies:[/bold] {', '.join(entry.dependencies) or '—'}\n"
+        f"  [bold]Published:[/bold]    {entry.published_at}\n"
+        f"  [bold]Updated:[/bold]      {entry.updated_at}\n"
+        f"  [bold]Installs:[/bold]     {entry.install_count}\n"
+        f"  [bold]Source:[/bold]       {entry.source_url or '—'}\n"
+        f"  [bold]Requires:[/bold]     HiveOS {entry.requires_hiveos_version}",
+        width=64,
+    ))
+
+
+@registry.command()
+@click.argument('name')
+@click.option('--version', help='Remove a specific version only')
+def remove(name, version):
+    """Remove a package (or version) from the registry."""
+    reg = PackageRegistry()
+    reg.remove(name, version)
+
+
+@registry.command()
+def verify():
+    """Verify registry integrity — check for missing/corrupt entries."""
+    reg = PackageRegistry()
+    entries = reg.list_packages()
+    errors = 0
+
+    for entry in entries:
+        # Check source file exists
+        if entry.source_url:
+            src = Path(entry.source_url)
+            if not src.exists():
+                console.print(f"[yellow]⚠️  {entry.name} v{entry.version}: source file missing: {src}[/yellow]")
+                errors += 1
+
+        # Check required fields
+        if not entry.name or not entry.version:
+            console.print(f"[red]❌ Corrupt entry: name='{entry.name}' version='{entry.version}'[/red]")
+            errors += 1
+
+    if errors == 0:
+        console.print(f"[green]✅ Registry verified — {len(entries)} package(s) OK[/green]")
+    else:
+        console.print(f"[yellow]⚠️  {errors} issue(s) found in registry[/yellow]")
 
 
 @hive.group()
