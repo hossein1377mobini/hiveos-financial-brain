@@ -182,136 +182,196 @@ class FlowEngine:
         return executed
 
     def _execute_agent(self, agent: Agent, flow: Flow) -> Dict[str, Any]:
-        """Execute a single agent by spawning a Hermes subagent.
+        """Execute a single agent by spawning a Hermes subagent with retry logic.
 
         Uses `hermes chat -q` as a subprocess to run the agent with its
         configured skills and knowledge. Captures output for the next
-        agent in the flow.
+        agent in the flow. Handles failures and retries per agent.retry count.
         """
         console.print(f"   🔧 [bold]Agent:[/bold] {agent.name} (ID: {agent.id})")
         console.print(f"      Skills: {', '.join(agent.skills)}")
         if agent.depends_on:
             console.print(f"      Depends on: {', '.join(agent.depends_on)}")
 
-        # --- Build context from previous agents ---
-        previous_output = None
-        if agent.depends_on:
-            flow_name = flow.name
-            predecessors = {}
-            for dep_id in agent.depends_on:
-                dep_result = self.flow_state.get(flow_name, {}).get("agents", {}).get(dep_id)
-                if dep_result:
-                    predecessors[dep_id] = dep_result.get("result", {})
-            if predecessors:
-                previous_output = json.dumps(predecessors, ensure_ascii=False, indent=2)
+        # Determine retry settings
+        max_retries = agent.retry or 0
 
-        # --- Load knowledge documents ---
-        knowledge_text = ""
-        km = KnowledgeManager(self.knowledge_dir)
-        for doc_path in agent.knowledge:
-            doc_content = km.get_document(doc_path)
-            if doc_content:
-                knowledge_text += f"\n=== {doc_path} ===\n{doc_content}\n"
+        last_result = None
+        for attempt in range(max_retries + 1):
+            # --- Build context from previous agents (always from latest persisted state) ---
+            previous_output = None
+            if agent.depends_on:
+                flow_name = flow.name
+                predecessors = {}
+                for dep_id in agent.depends_on:
+                    dep_result = self.flow_state.get(flow_name, {}).get("agents", {}).get(dep_id)
+                    if dep_result:
+                        predecessors[dep_id] = dep_result.get("result", {})
+                if predecessors:
+                    previous_output = json.dumps(predecessors, ensure_ascii=False, indent=2)
 
-        # --- Build the prompt for the Hermes subagent ---
-        prompt_parts = [
-            f"You are agent '{agent.name}' in the HiveOS flow '{flow.name}'.",
-            f"Your configured skills are: {', '.join(agent.skills)}.",
-            f"Apply these skills to accomplish your task.",
-        ]
-        if knowledge_text:
-            prompt_parts.append(f"\n--- Knowledge base ---\n{knowledge_text}\n---")
-        if previous_output:
-            prompt_parts.append(f"\n--- Input from previous agents ---\n{previous_output}\n---")
-        if agent.action:
-            prompt_parts.append(f"\n--- Action constraints ---\n{json.dumps(agent.action, ensure_ascii=False, indent=2)}\n---")
-        if agent.input_from:
-            prompt_parts.append(f"\n--- Input configuration ---\n{json.dumps(agent.input_from, ensure_ascii=False, indent=2)}\n---")
+            # --- Load knowledge documents ---
+            knowledge_text = ""
+            km = KnowledgeManager(self.knowledge_dir)
+            for doc_path in agent.knowledge:
+                doc_content = km.get_document(doc_path)
+                if doc_content:
+                    knowledge_text += f"\n=== {doc_path} ===\n{doc_content}\n"
 
-        prompt_parts.append("\nComplete your task and report the result concisely.")
-        prompt = "\n".join(prompt_parts)
+            # --- Build the prompt for the Hermes subagent ---
+            prompt_parts = [
+                f"You are agent '{agent.name}' in the HiveOS flow '{flow.name}'.",
+                f"Your configured skills are: {', '.join(agent.skills)}.",
+                f"Apply these skills to accomplish your task.",
+            ]
+            if knowledge_text:
+                prompt_parts.append(f"\n--- Knowledge base ---\n{knowledge_text}\n---")
+            if previous_output:
+                prompt_parts.append(f"\n--- Input from previous agents ---\n{previous_output}\n---")
+            if agent.action:
+                prompt_parts.append(f"\n--- Action constraints ---\n{json.dumps(agent.action, ensure_ascii=False, indent=2)}\n---")
+            if agent.input_from:
+                prompt_parts.append(f"\n--- Input configuration ---\n{json.dumps(agent.input_from, ensure_ascii=False, indent=2)}\n---")
 
-        console.print(f"      [dim]🚀 Spawning Hermes subagent...[/dim]")
-        try:
-            start = time.time()
-            cmd_list = [self._hermes_path, "chat", "-q", prompt, "-Q", "-v"]
-            result = subprocess.run(
-                cmd_list,
-                capture_output=True,
-                text=True,
-                timeout=agent.timeout or 120,
-            )
-            elapsed = time.time() - start
+            prompt_parts.append("\nComplete your task and report the result concisely.")
+            prompt = "\n".join(prompt_parts)
 
-            stdout = result.stdout.strip()
-            stderr = result.stderr.strip()
+            console.print(f"      [dim]🚀 Spawning Hermes subagent (attempt {attempt + 1}/{max_retries + 1})...[/dim]")
+            try:
+                start = time.time()
+                cmd_list = [self._hermes_path, "chat", "-q", prompt, "-Q", "-v"]
+                result = subprocess.run(
+                    cmd_list,
+                    capture_output=True,
+                    text=True,
+                    timeout=agent.timeout or 120,
+                )
+                elapsed = time.time() - start
 
-            # Parse the session_id from output if present
-            session_id = None
-            clean_output = stdout
-            for line in stdout.splitlines():
-                if line.startswith("session_id:"):
-                    session_id = line.split(":", 1)[1].strip()
-                    clean_output = "\n".join(
-                        l for l in stdout.splitlines()
-                        if not l.startswith("session_id:")
-                    ).strip()
+                stdout = result.stdout.strip()
+                stderr = result.stderr.strip()
 
-            status = "completed" if result.returncode == 0 else "failed"
-            agent_result = {
+                # Parse the session_id from output if present
+                session_id = None
+                clean_output = stdout
+                for line in stdout.splitlines():
+                    if line.startswith("session_id:"):
+                        session_id = line.split(":", 1)[1].strip()
+                        clean_output = "\n".join(
+                            l for l in stdout.splitlines()
+                            if not l.startswith("session_id:")
+                        ).strip()
+
+                # Determine status
+                if result.returncode == 0:
+                    status = "completed"
+                elif attempt < max_retries:
+                    status = "retrying"
+                    console.print(f"      [yellow]⚠️  Attempt {attempt + 1} failed, retrying...[/yellow]")
+                    time.sleep(2)  # Brief delay before retry
+                    continue
+                else:
+                    status = "failed"
+
+                agent_result = {
+                    "agent_id": agent.id,
+                    "name": agent.name,
+                    "status": status,
+                    "n_retries": attempt,
+                    "max_retries": max_retries,
+                    "output_file": agent.output,
+                    "timestamp": time.time(),
+                    "elapsed_seconds": round(elapsed, 2),
+                    "result": clean_output or stderr,
+                    "session_id": session_id,
+                    "returncode": result.returncode,
+                }
+
+                if status == "completed":
+                    console.print(f"   [green]✅ {agent.name} completed (attempt {attempt + 1}) ({elapsed:.1f}s)[/green]")
+                    return agent_result
+                else:
+                    # Final failure
+                    console.print(f"   [red]❌ {agent.name} failed after {attempt + 1} attempts ({elapsed:.1f}s)[/red]")
+                    if stderr:
+                        console.print(f"      [red]   STDERR: {stderr[:300]}[/]")
+                    # Record the failed attempt (will be stored below)
+
+            except subprocess.TimeoutExpired:
+                if attempt < max_retries:
+                    console.print(f"      [yellow]⏰ {agent.name} timed out, retrying...[/yellow]")
+                    time.sleep(2)
+                    continue
+                else:
+                    console.print(f"   [red]⏰ {agent.name} timed out after {attempt + 1} attempts[/red]")
+                    status = "timeout"
+                    # Create the final failed result
+                    agent_result = {
+                        "agent_id": agent.id,
+                        "name": agent.name,
+                        "status": status,
+                        "n_retries": attempt,
+                        "max_retries": max_retries,
+                        "output_file": agent.output,
+                        "timestamp": time.time(),
+                        "result": f"Agent timed out after {attempt + 1} attempts",
+                        "returncode": -1,
+                    }
+                    return agent_result
+
+            except FileNotFoundError:
+                console.print(f"   [red]❌ Hermes CLI not found at '{self._hermes_path}'[/red]")
+                console.print(f"   [yellow]   Falling back to placeholder mode with retry...[/yellow]")
+                # For CLI not found, we'd likely fail immediately, but let's treat this as a final failure after one attempt
+                agent_result = {
+                    "agent_id": agent.id,
+                    "name": agent.name,
+                    "status": "failed",
+                    "n_retries": attempt,
+                    "max_retries": max_retries,
+                    "output_file": agent.output,
+                    "timestamp": time.time(),
+                    "result": f"✅ Agent '{agent.name}' completed (placeholder - Hermes CLI not available)",
+                }
+                return agent_result
+
+            except Exception as e:
+                if attempt < max_retries:
+                    console.print(f"      [yellow]❌ {agent.name} error: {e}, retrying...[/yellow]")
+                    time.sleep(2)
+                    continue
+                else:
+                    console.print(f"   [red]❌ {agent.name} error: {e}[/red]")
+                    agent_result = {
+                        "agent_id": agent.id,
+                        "name": agent.name,
+                        "status": "error",
+                        "n_retries": attempt,
+                        "max_retries": max_retries,
+                        "output_file": agent.output,
+                        "timestamp": time.time(),
+                        "result": f"Error: {e}",
+                        "returncode": -1,
+                    }
+                    return agent_result
+
+            # If we reach here, it means we need to retry
+            last_result = agent_result
+
+        # If all retries exhausted, return the last result (should be the final failure)
+        if last_result is None:
+            last_result = {
                 "agent_id": agent.id,
                 "name": agent.name,
-                "status": status,
+                "status": "failed",
+                "n_retries": max_retries,
+                "max_retries": max_retries,
                 "output_file": agent.output,
                 "timestamp": time.time(),
-                "elapsed_seconds": round(elapsed, 2),
-                "result": clean_output or stderr,
-                "session_id": session_id,
-                "returncode": result.returncode,
-            }
-
-            if status == "completed":
-                console.print(f"   [green]✅ {agent.name} completed ({elapsed:.1f}s)[/green]")
-            else:
-                console.print(f"   [red]❌ {agent.name} failed ({elapsed:.1f}s)[/red]")
-                if stderr:
-                    console.print(f"   [red]   STDERR: {stderr[:300]}[/red]")
-
-            return agent_result
-
-        except subprocess.TimeoutExpired:
-            console.print(f"   [red]⏰ {agent.name} timed out after {agent.timeout or 120}s[/red]")
-            return {
-                "agent_id": agent.id,
-                "name": agent.name,
-                "status": "timeout",
-                "output_file": agent.output,
-                "timestamp": time.time(),
-                "result": f"Agent timed out after {agent.timeout or 120}s",
+                "result": "Agent failed after exhausting all retries",
                 "returncode": -1,
             }
-        except FileNotFoundError:
-            console.print(f"   [red]❌ Hermes CLI not found at '{self._hermes_path}'[/red]")
-            console.print(f"   [yellow]   Falling back to placeholder mode.[/yellow]")
-            return {
-                "agent_id": agent.id,
-                "name": agent.name,
-                "status": "completed",
-                "output_file": agent.output,
-                "timestamp": time.time(),
-                "result": f"✅ Agent '{agent.name}' completed (placeholder - Hermes CLI not available)",
-            }
-        except Exception as e:
-            console.print(f"   [red]❌ {agent.name} error: {e}[/red]")
-            return {
-                "agent_id": agent.id,
-                "name": agent.name,
-                "status": "error",
-                "output_file": agent.output,
-                "timestamp": time.time(),
-                "result": f"Error: {e}",
-                "returncode": -1,
-            }
+        return last_result
 
     def _deliver_flow(self, flow: Flow) -> Dict[str, Any]:
         """Deliver flow output to the configured destination."""
