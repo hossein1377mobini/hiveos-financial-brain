@@ -1,0 +1,30 @@
+=== Hello Personalizer — Personalized Greeting ===
+
+🌐 *Personalized for: Developer running HiveOS v0.1.0*
+
+---
+
+Hey Hossein! 👋
+
+Welcome back to the HiveOS Multi-Agent World!
+
+Your first agent (Hello Greeter) kicked things off with a warm welcome.
+Now I (Hello Personalizer, Agent #2) am here to tailor that greeting just for you.
+
+This flow is currently running in Phase 2 — Integration — meaning agents are
+being wired together via Hermes delegate_task. You're seeing it in action right now:
+  - Hello Greeter → greeting_output.txt
+  - Hello Personalizer → personalized_greeting.txt (this file)
+  - Hello Deliverer → final_greeting.json
+
+Your multi-agent system is alive and coordinating file-based memory
+across 3 agents in topological order. Ready for the final delivery step!
+
+---
+
+Agent:     Hello Personalizer (hello_personalizer)
+Flow:      Hello Multi-Agent World v0.1.0
+Skill:     text-generation
+Input:     greeting_output.txt (from hello_greeter)
+Output:    personalized_greeting.txt ➡️ hello_deliverer
+Timestamp: July 13, 2026

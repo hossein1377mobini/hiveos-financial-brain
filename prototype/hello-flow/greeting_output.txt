@@ -1,0 +1,12 @@
+=== Hello Greeter — Output ===
+
+Hello there! Welcome to the HiveOS Multi-Agent World!
+
+This is a greeting from Agent #1 (Hello Greeter), powered by text-generation skills.
+The time is now — let's see what this flow can do together.
+
+Key info for downstream agents:
+- Sender: Hello Greeter (hello_greeter)
+- Flow: Hello Multi-Agent World v0.1.0
+- Tone: Warm, welcoming, and excited about multi-agent collaboration
+- Next step: Personalize this greeting for a specific audience or context
