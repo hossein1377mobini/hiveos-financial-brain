@@ -13,15 +13,14 @@ Phase 0 (Foundation) ✅ | Phase 1 (Playground) ✅ | Phase 2 (Integration) 🔄
 
 ## 🎯 Immediate Next Task
 
-**P2: State persistence** — flow state saved between agent steps (JSON file)
+**P3: Error handling** — agent failure → retry / reassign
 
 File: `src/hiveos/engine.py`
 
-Currently flow state lives only in memory during execution. Add JSON-based
-state persistence so:
-- Each agent step writes its result to `.hiveos/flows/<flow_name>/state.json`
-- Failed agents can be retried by reading their last state
-- Flow state survives process restarts
+Currently agents fail silently with non-zero returncode. Add:
+- Configurable retry count (already in Agent DSL: `retry` field)
+- `n_retries` counter in agent result
+- On final failure, skip agent or reassign to next available agent
 
 ---
 
@@ -31,8 +30,9 @@ state persistence so:
 | Component | File | Description |
 |-----------|------|-------------|
 | DSL Parser | `src/hiveos/dsl.py` | Flow, Agent, Trigger dataclasses + FlowDSL.load_flow() |
-| Flow Engine | `src/hiveos/engine.py` | Topological sort, sequential agent execution via Hermes `chat -q` subprocess, delivery |
-| CLI | `src/hiveos/cli/main.py` | 8 commands: `flow run/validate/list`, `package build/install/list`, `util init/info` |
+| Flow Engine | `src/hiveos/engine.py` | Topological sort, sequential agent execution via Hermes `chat -q` subprocess, delivery, **state persistence** |
+| State Persistence | `src/hiveos/engine.py` | `_save_state()` / `_load_state()` / `clear_state()` — JSON at `~/.hiveos/flows/<flow_name>/state.json`, auto-save after each agent, `--resume` flag |
+| CLI | `src/hiveos/cli/main.py` | 11 commands: `flow run/validate/list/state/clear-state`, `package build/install/list`, `util init/info` |
 | Package Manager | `src/hiveos/package/__init__.py` | tar.gz builder + installer + manifest |
 | Validator | `src/hiveos/utils/validator.py` | Full YAML schema validation |
 | Config | `src/hiveos/utils/config.py` | ~/.hiveos/config.yaml |
@@ -73,14 +73,17 @@ User → Flow DSL YAML → Flow Engine (topological sort)
 ### CLI Structure
 ```
 hive
- ├── flow run <file>        — Validate + execute a flow
- ├── flow validate <dir>    — Bulk validate all YAML flows
- ├── flow list              — List available flows
- ├── package build <dir>    — Build tar.gz package
- ├── package install <file> — Install a package
- ├── package list           — List installed packages
- ├── util init              — Scaffold new HiveOS project
- └── util info              — Show environment
+ ├── flow run <file>            — Validate + execute a flow
+ ├── flow run <file> --resume   — Resume from last saved state
+ ├── flow validate <dir>        — Bulk validate all YAML flows
+ ├── flow list                  — List available flows
+ ├── flow state [file]          — Show persisted state for a flow (or list all)
+ ├── flow clear-state <file>    — Delete persisted state for a flow
+ ├── package build <dir>        — Build tar.gz package
+ ├── package install <file>     — Install a package
+ ├── package list               — List installed packages
+ ├── util init                  — Scaffold new HiveOS project
+ └── util info                  — Show environment
 ```
 
 ---
@@ -89,7 +92,7 @@ hive
 
 ### Phase 2: Integration 🔄 (PRIORITY)
 - [x] **P1: Connect Hermes subagent** — replaced placeholder in `_execute_agent()` with real `hermes chat -q` subprocess spawning
-- [ ] **P2: State persistence** — flow state saved between agent steps (JSON/Redis)
+- [x] **P2: State persistence** — flow state saved between agent steps in `~/.hiveos/flows/<flow_name>/state.json`, auto-persist after each agent, `--resume` flag, `flow state`, `flow clear-state`
 - [ ] **P3: Error handling** — agent failure → retry / reassign
 - [ ] **P4: Knowledge sync** — mothership pushes skills to satellites
 

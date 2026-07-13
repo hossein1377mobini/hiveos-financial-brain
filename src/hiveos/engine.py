@@ -18,13 +18,55 @@ from .utils.knowledge import KnowledgeManager
 console = Console()
 
 
+def _sanitize_name(name: str) -> str:
+    """Convert a flow name to a safe directory name."""
+    import re
+    safe = re.sub(r'[^a-zA-Z0-9_\-\.]', '_', name)
+    return safe.strip('_') or 'unnamed'
+
+
 class FlowEngine:
     """Engine that executes flows according to their DSL."""
 
-    def __init__(self, knowledge_dir: Optional[Path] = None):
+    def __init__(self, knowledge_dir: Optional[Path] = None, state_root: Optional[Path] = None):
         self.knowledge_dir = knowledge_dir or Path("docs")
+        self.state_root = state_root or Path.home() / ".hiveos" / "flows"
+        self.state_root.mkdir(parents=True, exist_ok=True)
         self.flow_state: Dict[str, Dict] = {}
         self._hermes_path = self._find_hermes()
+
+    def _get_state_dir(self, flow_name: str) -> Path:
+        """Return the directory where flow state is persisted."""
+        return self.state_root / _sanitize_name(flow_name)
+
+    def _state_file(self, flow_name: str) -> Path:
+        """Return the JSON state file path for a flow."""
+        return self._get_state_dir(flow_name) / "state.json"
+
+    def _save_state(self, flow_name: str):
+        """Persist current flow_state to JSON file."""
+        state_dir = self._get_state_dir(flow_name)
+        state_dir.mkdir(parents=True, exist_ok=True)
+        state = self.flow_state.get(flow_name)
+        if state is None:
+            return
+        self._state_file(flow_name).write_text(
+            json.dumps(state, ensure_ascii=False, indent=2, default=str),
+            encoding="utf-8",
+        )
+
+    def _load_state(self, flow_name: str) -> Optional[Dict[str, Any]]:
+        """Load persisted flow state from JSON file (if exists)."""
+        sfile = self._state_file(flow_name)
+        if sfile.exists():
+            return json.loads(sfile.read_text(encoding="utf-8"))
+        return None
+
+    def clear_state(self, flow_name: str):
+        """Delete persisted state for a flow (e.g. after a successful completed run)."""
+        sfile = self._state_file(flow_name)
+        if sfile.exists():
+            sfile.unlink()
 
     @staticmethod
     def _find_hermes() -> str:
@@ -48,19 +90,39 @@ class FlowEngine:
         """Load a flow from a YAML file using FlowDSL."""
         return FlowDSL.load_flow(flow_path)
 
-    def execute_flow(self, flow: Flow) -> Dict[str, Any]:
-        """Execute an entire flow from a Flow object."""
+    def execute_flow(self, flow: Flow, resume: bool = False) -> Dict[str, Any]:
+        """Execute an entire flow from a Flow object.
+
+        Args:
+            flow: The Flow to execute.
+            resume: If True, try to load persisted state and skip already-completed agents.
+        """
         console.print(f"🐝 [bold cyan]Executing flow:[/bold cyan] {flow.name}")
         if flow.description:
             console.print(f"   📋 {flow.description}")
 
         flow_name = flow.name
-        self.flow_state[flow_name] = {
-            "status": "running",
-            "start_time": time.time(),
-            "agents": {},
-            "output": None,
-        }
+
+        # --- Resume or fresh start ---
+        if resume:
+            persisted = self._load_state(flow_name)
+            if persisted and persisted.get("status") in ("running", "completed"):
+                self.flow_state[flow_name] = persisted
+                console.print(f"   [yellow]📂 Resuming from saved state[/yellow]")
+                if persisted.get("status") == "completed":
+                    console.print(f"   [green]✅ Flow already completed. Use --resume to re-run.[/green]")
+                    return persisted
+            else:
+                console.print(f"   [yellow]No saved state found, starting fresh.[/yellow]")
+
+        if flow_name not in self.flow_state:
+            self.flow_state[flow_name] = {
+                "status": "running",
+                "start_time": time.time(),
+                "agents": {},
+                "output": None,
+            }
+            self._save_state(flow_name)
 
         with Progress(
             SpinnerColumn(),
@@ -75,13 +137,22 @@ class FlowEngine:
 
             # Execute agents sequentially (parallel support planned)
             for agent in execution_order:
+                # Skip already-completed agents in resume mode
+                existing = self.flow_state[flow_name]["agents"].get(agent.id, {})
+                if resume and existing.get("status") == "completed":
+                    console.print(f"   [dim]⏩ Skipping {agent.name} (already completed)[/dim]")
+                    continue
+
                 agent_result = self._execute_agent(agent, flow)
                 self.flow_state[flow_name]["agents"][agent.id] = agent_result
+                # Persist state after every agent step
+                self._save_state(flow_name)
 
             # Deliver final output
             self.flow_state[flow_name]["output"] = self._deliver_flow(flow)
             self.flow_state[flow_name]["end_time"] = time.time()
             self.flow_state[flow_name]["status"] = "completed"
+            self._save_state(flow_name)
 
         return self.flow_state[flow_name]
 

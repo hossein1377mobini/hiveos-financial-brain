@@ -2,6 +2,7 @@
 CLI main entry point.
 """
 
+import json
 import click
 from pathlib import Path
 from rich.console import Console
@@ -62,33 +63,37 @@ def flow():
 @click.argument('flow-file', type=click.Path(exists=True))
 @click.option('--validate', is_flag=True, help='Only validate, do not run')
 @click.option('--verbose', '-v', is_flag=True, help='Verbose output')
-def run(flow_file, validate, verbose):
+@click.option('--resume', is_flag=True, help='Resume from last saved state')
+def run(flow_file, validate, verbose, resume):
     """Run a flow from a DSL YAML file."""
     rprint("[bold cyan]🐝 HiveOS Flow Engine[/bold cyan]")
-    
+
     file_path = Path(flow_file).resolve()
-    
+
     # Validate first
     validator = _get_validator()
     errors = validator.validate_file(file_path)
-    
+
     if errors:
         console.print("[red]❌ Flow validation failed:[/red]")
         for err in errors:
             console.print(f"  • {err}")
         raise SystemExit(1)
-    
+
     console.print(f"[green]✅ Flow file is valid:[/green] {file_path}")
-    
+
     if validate:
         return
-    
+
+    if resume:
+        console.print("[yellow]📂 Resume mode enabled — will skip completed agents.[/yellow]")
+
     # Load and run
     engine = _get_engine(None)
-    
+
     try:
         flow = engine.load_flow(file_path)
-        result = engine.execute_flow(flow)
+        result = engine.execute_flow(flow, resume=resume)
     except Exception as e:
         console.print(f"[red]❌ Flow execution failed: {e}[/red]")
         raise SystemExit(1)
@@ -151,6 +156,72 @@ def list():
                 table.add_row(f.stem, str(f.relative_to(Path.cwd())), "?")
     
     console.print(table)
+
+
+@flow.command()
+@click.argument('flow-file', type=click.Path(exists=True), required=False)
+def state(flow_file):
+    """Show persisted state for a flow (or list all)."""
+    engine = _get_engine(None)
+
+    if flow_file:
+        file_path = Path(flow_file).resolve()
+        flow = engine.load_flow(file_path)
+        persisted = engine._load_state(flow.name)
+        if persisted is None:
+            console.print(f"[yellow]No saved state for '{flow.name}'[/yellow]")
+            return
+        console.print(f"[bold cyan]📊 State for flow:[/bold cyan] {flow.name}")
+        console.print(f"   Status: [{'green' if persisted['status'] == 'completed' else 'yellow'}]{persisted['status']}[/]")
+        console.print(f"   Started: {persisted.get('start_time', '?')}")
+        if persisted.get('end_time'):
+            console.print(f"   Ended: {persisted['end_time']}")
+        agent_count = len(persisted.get('agents', {}))
+        completed_agents = sum(1 for a in persisted['agents'].values() if a.get('status') == 'completed')
+        console.print(f"   Agents: {completed_agents}/{agent_count} completed")
+        # Show raw JSON path
+        sfile = engine._state_file(flow.name)
+        console.print(f"   File: {sfile}")
+    else:
+        # List all state directories
+        state_root = engine.state_root
+        if not state_root.exists():
+            console.print("[yellow]No state directories found.[/yellow]")
+            return
+        from rich.table import Table
+        table = Table(title="Persisted Flow States")
+        table.add_column("Flow Name", style="cyan")
+        table.add_column("Status", style="green")
+        table.add_column("Agents", style="white")
+        table.add_column("State File", style="dim")
+        for d in sorted(state_root.iterdir()):
+            if d.is_dir():
+                sfile = d / "state.json"
+                if sfile.exists():
+                    try:
+                        data = json.loads(sfile.read_text(encoding="utf-8"))
+                        agent_count = len(data.get("agents", {}))
+                        completed = sum(1 for a in data["agents"].values() if a.get("status") == "completed")
+                        table.add_row(
+                            d.name,
+                            f"[{'green' if data['status'] == 'completed' else 'yellow'}]{data['status']}[/]",
+                            f"{completed}/{agent_count}",
+                            str(sfile),
+                        )
+                    except:
+                        table.add_row(d.name, "[red]corrupt[/red]", "?", str(sfile))
+        console.print(table)
+
+
+@flow.command()
+@click.argument('flow-file', type=click.Path(exists=True))
+def clear_state(flow_file):
+    """Delete persisted state for a flow."""
+    file_path = Path(flow_file).resolve()
+    engine = _get_engine(None)
+    flow = engine.load_flow(file_path)
+    engine.clear_state(flow.name)
+    console.print(f"[green]✅ State cleared for '{flow.name}'[/green]")
 
 
 @hive.group()
