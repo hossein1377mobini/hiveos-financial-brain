@@ -136,6 +136,7 @@ class FlowEngine:
             execution_order = self._determine_execution_order(flow.agents)
 
             # Execute agents sequentially (parallel support planned)
+            failed_agents_list = []
             for agent in execution_order:
                 # Skip already-completed agents in resume mode
                 existing = self.flow_state[flow_name]["agents"].get(agent.id, {})
@@ -143,15 +144,76 @@ class FlowEngine:
                     console.print(f"   [dim]⏩ Skipping {agent.name} (already completed)[/dim]")
                     continue
 
+                # Check if any dependency has failed → skip downstream
+                failed_dep = self._has_failed_dependencies(agent, flow_name)
+                if failed_dep:
+                    console.print(f"   [yellow]⏩ Skipping '{agent.name}' — dependency '{failed_dep}' failed[/yellow]")
+                    self.flow_state[flow_name]["agents"][agent.id] = {
+                        "agent_id": agent.id,
+                        "name": agent.name,
+                        "status": "skipped",
+                        "reason": f"Dependency '{failed_dep}' failed",
+                        "timestamp": time.time(),
+                        "result": None,
+                    }
+                    self._save_state(flow_name)
+                    continue
+
                 agent_result = self._execute_agent(agent, flow)
                 self.flow_state[flow_name]["agents"][agent.id] = agent_result
                 # Persist state after every agent step
                 self._save_state(flow_name)
 
+                # Track failures for flow-level status
+                if agent_result.get("status") in ("failed", "error", "timeout"):
+                    failed_agents_list.append(agent.id)
+                    # Automatically skip downstream agents
+                    downstream = self._get_downstream_agent_ids(agent.id, flow.agents)
+                    for ds_id in downstream:
+                        ds_agent = next((a for a in flow.agents if a.id == ds_id), None)
+                        ds_name = ds_agent.name if ds_agent else ds_id
+                        if self.flow_state[flow_name]["agents"].get(ds_id, {}).get("status") in ("completed", "running"):
+                            continue  # already executed — can't skip retroactively
+                        console.print(f"   [yellow]⏩ Skipping downstream '{ds_name}' — dependency '{agent.id}' failed[/yellow]")
+                        self.flow_state[flow_name]["agents"][ds_id] = {
+                            "agent_id": ds_id,
+                            "name": ds_name,
+                            "status": "skipped",
+                            "reason": f"Upstream '{agent.id}' failed",
+                            "timestamp": time.time(),
+                            "result": None,
+                        }
+
             # Deliver final output
             self.flow_state[flow_name]["output"] = self._deliver_flow(flow)
             self.flow_state[flow_name]["end_time"] = time.time()
-            self.flow_state[flow_name]["status"] = "completed"
+
+            # Determine flow-level status
+            all_completed = all(
+                s.get("status") == "completed"
+                for s in self.flow_state[flow_name]["agents"].values()
+            )
+            has_skipped = any(
+                s.get("status") == "skipped"
+                for s in self.flow_state[flow_name]["agents"].values()
+            )
+            has_failures = any(
+                s.get("status") in ("failed", "error", "timeout")
+                for s in self.flow_state[flow_name]["agents"].values()
+            )
+
+            if all_completed:
+                self.flow_state[flow_name]["status"] = "completed"
+                console.print(f"\n   [green]✅ Flow '{flow.name}' completed successfully[/green]")
+            elif has_failures:
+                self.flow_state[flow_name]["status"] = "completed_with_errors"
+                console.print(f"\n   [yellow]⚠️  Flow '{flow.name}' completed with errors[/yellow]")
+                console.print(f"      Failed: {len(failed_agents_list)}, Skipped: {sum(1 for s in self.flow_state[flow_name]['agents'].values() if s.get('status') == 'skipped')}")
+            elif has_skipped:
+                self.flow_state[flow_name]["status"] = "completed_with_skipped"
+                console.print(f"\n   [yellow]⚠️  Flow '{flow.name}' completed with skipped agents[/yellow]")
+
+            self.flow_state[flow_name]["failed_agents"] = failed_agents_list
             self._save_state(flow_name)
 
         return self.flow_state[flow_name]
@@ -180,6 +242,29 @@ class FlowEngine:
                 remaining.remove(agent)
 
         return executed
+
+    def _has_failed_dependencies(self, agent: Agent, flow_name: str) -> Optional[str]:
+        """Check if any dependency of this agent has failed.
+
+        Returns the agent_id of the first failed dependency, or None if all good.
+        """
+        if not agent.depends_on:
+            return None
+        agents_state = self.flow_state.get(flow_name, {}).get("agents", {})
+        for dep_id in agent.depends_on:
+            dep_result = agents_state.get(dep_id, {})
+            if dep_result.get("status") in ("failed", "error", "timeout"):
+                return dep_id
+        return None
+
+    def _get_downstream_agent_ids(self, agent_id: str, agents: List[Agent]) -> List[str]:
+        """Collect all agent IDs that (transitively) depend on the given agent."""
+        downstream = set()
+        dependents = [a.id for a in agents if agent_id in (a.depends_on or [])]
+        for dep_id in dependents:
+            downstream.add(dep_id)
+            downstream.update(self._get_downstream_agent_ids(dep_id, agents))
+        return list(downstream)
 
     def _execute_agent(self, agent: Agent, flow: Flow) -> Dict[str, Any]:
         """Execute a single agent by spawning a Hermes subagent with retry logic.

@@ -172,13 +172,34 @@ def state(flow_file):
             console.print(f"[yellow]No saved state for '{flow.name}'[/yellow]")
             return
         console.print(f"[bold cyan]📊 State for flow:[/bold cyan] {flow.name}")
-        console.print(f"   Status: [{'green' if persisted['status'] == 'completed' else 'yellow'}]{persisted['status']}[/]")
+        status_colors = {
+            "completed": "green",
+            "completed_with_errors": "yellow",
+            "completed_with_skipped": "yellow",
+            "running": "cyan",
+            "failed": "red",
+        }
+        status_color = status_colors.get(persisted["status"], "yellow")
+        console.print(f"   Status: [{status_color}]{persisted['status']}[/]")
         console.print(f"   Started: {persisted.get('start_time', '?')}")
         if persisted.get('end_time'):
             console.print(f"   Ended: {persisted['end_time']}")
         agent_count = len(persisted.get('agents', {}))
-        completed_agents = sum(1 for a in persisted['agents'].values() if a.get('status') == 'completed')
-        console.print(f"   Agents: {completed_agents}/{agent_count} completed")
+        status_counts = {}
+        for a in persisted['agents'].values():
+            s = a.get('status', 'unknown')
+            status_counts[s] = status_counts.get(s, 0) + 1
+        completed_agents = status_counts.get('completed', 0)
+        parts = [f"{completed_agents}/{agent_count} completed"]
+        if 'skipped' in status_counts:
+            parts.append(f"{status_counts['skipped']} ⏩ skipped")
+        if 'failed' in status_counts:
+            parts.append(f"{status_counts['failed']} ❌ failed")
+        if 'error' in status_counts:
+            parts.append(f"{status_counts['error']} ⚠️ error")
+        if 'timeout' in status_counts:
+            parts.append(f"{status_counts['timeout']} ⏰ timeout")
+        console.print(f"   Agents: {', '.join(parts)}")
         # Show raw JSON path
         sfile = engine._state_file(flow.name)
         console.print(f"   File: {sfile}")
@@ -202,10 +223,17 @@ def state(flow_file):
                         data = json.loads(sfile.read_text(encoding="utf-8"))
                         agent_count = len(data.get("agents", {}))
                         completed = sum(1 for a in data["agents"].values() if a.get("status") == "completed")
+                        skipped = sum(1 for a in data["agents"].values() if a.get("status") == "skipped")
+                        failed = sum(1 for a in data["agents"].values() if a.get("status") in ("failed", "error", "timeout"))
+                        status_parts = [f"{completed}/{agent_count}"]
+                        if failed:
+                            status_parts.append(f"{failed}❌")
+                        if skipped:
+                            status_parts.append(f"{skipped}⏩")
                         table.add_row(
                             d.name,
                             f"[{'green' if data['status'] == 'completed' else 'yellow'}]{data['status']}[/]",
-                            f"{completed}/{agent_count}",
+                            " ".join(status_parts),
                             str(sfile),
                         )
                     except:

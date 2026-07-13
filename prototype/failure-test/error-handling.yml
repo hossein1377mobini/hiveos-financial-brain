@@ -1,0 +1,64 @@
+# Error Test Flow — Tests P3 error handling, retry, and cascade skip
+#
+# Agent 1 (intentional-failer): timeouts quickly → fails
+# Agent 2 (downstream-1): depends on 1 → should be skipped
+# Agent 3 (independent): no dependencies → should still execute
+# Agent 4 (downstream-3): depends on 3 → should execute normally
+
+name: "Error Handling Test"
+description: "Tests agent failure → retry → cascading skip to downstream agents"
+version: "0.1.0"
+
+trigger:
+  type: "manual"
+
+agents:
+  # Agent 1 — Fails by short timeout (Hermes needs ~5s to boot, 2s will timeout)
+  - id: "intentional_failer"
+    name: "Intentional Failer"
+    skills:
+      - "text-generation"
+    timeout: 2  # Very short — will timeout before Hermes finishes
+    retry: 1    # Will retry once, then fail
+    output: "failer_output.txt"
+
+  # Agent 2 — Should be skipped because agent 1 (its dependency) failed
+  - id: "downstream_1"
+    name: "Downstream Agent 1"
+    skills:
+      - "text-generation"
+    depends_on:
+      - "intentional_failer"
+    input_from:
+      agent: "intentional_failer"
+      files: ["failer_output.txt"]
+    output: "downstream_1_output.txt"
+
+  # Agent 3 — Independent agent, should run normally
+  - id: "independent_agent"
+    name: "Independent Agent"
+    skills:
+      - "text-generation"
+    output: "independent_output.txt"
+
+  # Agent 4 — Depends on agent 3, should run when agent 3 succeeds
+  - id: "downstream_3"
+    name: "Downstream Agent 3"
+    skills:
+      - "text-generation"
+    depends_on:
+      - "independent_agent"
+    input_from:
+      agent: "independent_agent"
+      files: ["independent_output.txt"]
+    output: "downstream_3_output.txt"
+
+memory:
+  share_context: false
+  trace: true
+
+deliver:
+  to: "origin"
+  format: "markdown"
+  include_agents: true
+  include_trace: true

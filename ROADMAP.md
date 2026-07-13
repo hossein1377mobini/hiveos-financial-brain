@@ -27,16 +27,17 @@ Live product roadmap. Updated after every session.
 | Flow DSL v0.1 | ✅ Done | YAML schema for agent team definitions |
 | Flow Engine | ✅ Done | Hermes-based executor via delegate_task chain |
 | Playground demo | ✅ Done | 3-agent flow (greeter → personalizer → deliverer) |
-| State persistence | 🚧 Pending | Flow state saved between steps |
-| Error handling | 🚧 Pending | Agent failure → retry / reassign |
+| State persistence | ✅ Done | Flow state saved between steps |
+| Error handling | ✅ Done | Agent failure → retry / reassign / cascade skip, flow-level status tracking |
 
 ## Phase 2: Integration (Current 🔄)
 
 - [x] CLI tooling for packaging & running flows
 - [x] Hermes skill for HiveOS
-- [ ] **Connect Flow Engine to Hermes delegate_task** — replace placeholder with real subagent spawning
+- [x] **Flow Engine → Hermes subagent** — real subprocess spawning
+- [x] **State persistence** — resume support, state CLI
+- [x] **Error handling** — retry, cascade skip, status tracking
 - [ ] **Knowledge sync between Mothership and satellites**
-- [ ] **Multi-node execution** — satellite registration and task routing
 
 ## Phase 3: Packaging
 

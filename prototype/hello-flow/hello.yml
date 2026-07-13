@@ -1,8 +1,9 @@
 # Hello Flow - A simple multi-agent workflow
+# Test: P3 error handling with retry configs
 
 name: "Hello Multi-Agent World"
-description: "Greeting agents demonstrate basic flow coordination"
-version: "0.1.0"
+description: "Greeting agents demonstrate basic flow coordination with retry support"
+version: "0.2.0"
 
 # Trigger: manual start
 trigger:
@@ -18,6 +19,7 @@ agents:
     knowledge:
       - "greeting_rules.txt"
     output: "greeting_output.txt"
+    retry: 1  # Allow 1 retry on failure
     deliver:
       format: "text"
 
@@ -61,7 +63,7 @@ memory:
 
 # Delivery specification
 deliver:
-  to: "telegram:#general"
+  to: "origin"
   format: "json"
   include_agents: true
   include_trace: true

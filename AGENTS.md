@@ -13,50 +13,32 @@ Phase 0 (Foundation) ✅ | Phase 1 (Playground) ✅ | Phase 2 (Integration) 🔄
 
 ## 🎯 Immediate Next Task
 
-**P3: Error handling** — agent failure → retry / reassign
+**P4: Knowledge sync** — mothership pushes skills to satellites
 
-File: `src/hiveos/engine.py`
+File: `src/hiveos/engine.py` + need a new sync module
 
-Currently agents fail silently with non-zero returncode. Add:
-- Configurable retry count (already in Agent DSL: `retry` field)
-- `n_retries` counter in agent result
-- On final failure, skip agent or reassign to next available agent
+Build a mechanism for a "Mothership" Hermes instance to push skill updates and
+knowledge docs to registered satellite nodes.
 
 ---
 
 ## 📋 Full State at Last Session (2026-07-13)
 
-### What was built (v0.1.0)
+### What was built (v0.2.0)
+
+Added in this session:
 | Component | File | Description |
 |-----------|------|-------------|
-| DSL Parser | `src/hiveos/dsl.py` | Flow, Agent, Trigger dataclasses + FlowDSL.load_flow() |
-| Flow Engine | `src/hiveos/engine.py` | Topological sort, sequential agent execution via Hermes `chat -q` subprocess, delivery, **state persistence** |
-| State Persistence | `src/hiveos/engine.py` | `_save_state()` / `_load_state()` / `clear_state()` — JSON at `~/.hiveos/flows/<flow_name>/state.json`, auto-save after each agent, `--resume` flag |
-| CLI | `src/hiveos/cli/main.py` | 11 commands: `flow run/validate/list/state/clear-state`, `package build/install/list`, `util init/info` |
-| Package Manager | `src/hiveos/package/__init__.py` | tar.gz builder + installer + manifest |
-| Validator | `src/hiveos/utils/validator.py` | Full YAML schema validation |
-| Config | `src/hiveos/utils/config.py` | ~/.hiveos/config.yaml |
-| Knowledge | `src/hiveos/utils/knowledge.py` | KB scanner for docs/ |
-| Hermes Skill | `hiveos-skill.md` | Installable skill for Hermes |
-| Hello-flow | `prototype/hello-flow/hello.yml` | 3-agent flow demo (tested: 3 Hermes subagents spawned) |
-| Package spec | `pyproject.toml` | Installable via `uv pip install .` |
+| Error handling + cascade skip | `src/hiveos/engine.py` | `_has_failed_dependencies()`, `_get_downstream_agent_ids()`, flow-level status tracking (`completed`, `completed_with_errors`, `completed_with_skipped`), auto-skip downstream agents on failure |
+| Retry logic finalized | `src/hiveos/engine.py` | Configurable per-agent retry count, timeout cascade, max retry exhaustion |
+| Failure test flow | `prototype/failure-test/error-handling.yml` | 4-agent flow: 1 failer (timeout), 1 skipped downstream, 1 independent, 1 downstream of independent |
+| Test suite | `tests/test_engine.py` | 19 unit tests covering: failed deps detection, downstream ID resolution, retry-then-succeed, retry exhausted, timeout cascade, mixed failure+independent, state persistence, clear_state |
 
-### Latest commit
-```
-0ebcd87 feat(core): connect Flow Engine to Hermes subagent via chat -q
-```
-GitHub: `origin` → https://github.com/hossein1377mobini/hiveos-financial-brain.git
+### Test results (19/19 ✅)
+- `hive flow validate prototype/` ✅ (2 valid flows)
+- `python -m pytest tests/test_engine.py -v` ✅ 19 passed in 9s
 
-### Test results
-- `hive util info` ✅
-- `hive flow validate prototype/` ✅ (1 file valid)
-- `hive flow run prototype/hello-flow/hello.yml` ✅ (3 Hermes subagents spawned in sequence: Greeter→Personalizer→Deliverer, 173s total)
-- `hive flow list` ✅
-- Package build tested ✅ (CLI works)
-
-### Workspace
-- `.venv/` — venv with uv (Python 3.11.7)
-- `~/.hiveos/config.yaml` — auto-generated with defaults
+### Full file map
 
 ---
 
@@ -65,9 +47,9 @@ GitHub: `origin` → https://github.com/hossein1377mobini/hiveos-financial-brain
 ```
 User → Flow DSL YAML → Flow Engine (topological sort)
                          ├── Agent 1 (skills: A, B) ──┐
-                         ├── Agent 2 (depends: 1) ───┤→ Hermes delegate_task
+                         ├── Agent 2 (depends: 1) ───┤→ Hermes subagent (chat -q)
                          ├── Agent 3 (depends: 1) ───┘
-                         └── Agent 4 (depends: 2, 3) → Final output → Telegram/Discord/etc
+                         └── Agent 4 (depends: 2, 3) → Final output → deliver
 ```
 
 ### CLI Structure
@@ -88,12 +70,12 @@ hive
 
 ---
 
-## 🎯 Full Task Backlog (for next sessions)
+## 🎯 Full Task Backlog
 
 ### Phase 2: Integration 🔄 (PRIORITY)
-- [x] **P1: Connect Hermes subagent** — replaced placeholder in `_execute_agent()` with real `hermes chat -q` subprocess spawning
-- [x] **P2: State persistence** — flow state saved between agent steps in `~/.hiveos/flows/<flow_name>/state.json`, auto-persist after each agent, `--resume` flag, `flow state`, `flow clear-state`
-- [ ] **P3: Error handling** — agent failure → retry / reassign
+- [x] **P1: Connect Hermes subagent**
+- [x] **P2: State persistence**
+- [x] **P3: Error handling** — retry, cascade skip, status tracking
 - [ ] **P4: Knowledge sync** — mothership pushes skills to satellites
 
 ### Phase 3: Packaging (future)
@@ -103,7 +85,7 @@ hive
 ### Phase 4: Mothership (future)
 - [ ] Agent Registry — node registration, capability declaration
 - [ ] Task routing — route by capability + load
-- [ ] Communication Bus — cross-node messaging (NATS/Redis)
+- [ ] Communication Bus — cross-node messaging
 - [ ] Resilience — node failure → task reassignment
 
 ### Phase 5: Enterprise (future)
@@ -116,7 +98,7 @@ hive
 ```bash
 # Activate
 cd "C:\Users\Hossein Mobini\Desktop\hive-os"
-.venv/Scripts/activate
+source .venv/Scripts/activate
 
 # Reinstall after code changes
 uv pip install .
@@ -124,8 +106,11 @@ uv pip install .
 # Run a flow
 .venv/Scripts/hive flow run prototype/hello-flow/hello.yml
 
-# Validate
+# Validate all flows
 .venv/Scripts/hive flow validate prototype/
+
+# Run tests
+python -m pytest tests/ -v
 
 # Push changes
 git add -A && git commit -m "feat: message" && git push origin master
@@ -142,8 +127,9 @@ git add -A && git commit -m "feat: message" && git push origin master
 | Flow DSL Spec | `docs/02-Architecture/02-flow-dsl.md` |
 | ADR: File-Based Memory | `docs/02-Architecture/ADR/001-use-file-based-memory.md` |
 | Accounting MAS Report | `docs/06-Technical/HiveOS-Accounting-Multi-Agent-Architecture-Report.md` |
-| Accounting KB (Persian) | `docs/06-Research/accounting/01-اصول-حسابداری/001-mabani-accounting.md` |
+| Accounting KB (Persian) | `docs/06-Research/accounting/` |
 | Roadmap | `ROADMAP.md` |
 | Manifesto | `MANIFEST.md` |
 | Hermes Skill | `hiveos-skill.md` |
 | Meeting Log | `docs/04-Meetings/` |
+| Prototype flows | `prototype/hello-flow/hello.yml`, `prototype/failure-test/error-handling.yml` |
