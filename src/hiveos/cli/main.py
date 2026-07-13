@@ -15,6 +15,7 @@ from ..utils.validator import FlowValidator
 from ..package import PackageBuilder, PackageInstaller, create_manifest_yaml
 from ..utils.knowledge import KnowledgeManager
 from ..utils.config import ConfigManager
+from ..sync import NodeRegistry, SyncService, SYNC_DIR
 
 console = Console()
 
@@ -130,8 +131,8 @@ def validate(directory):
                      f"{'[red]' + str(total_errors) + ' errors[/red]' if total_errors else '[green]all valid[/green]'}")
 
 
-@flow.command()
-def list():
+@flow.command("list")
+def list_flows():
     """List available flows."""
     # TODO: scan configured flow directories
     table = Table(title="Available Flows")
@@ -295,8 +296,8 @@ def install(package_file):
     console.print(f"[green]✅ Package '{manifest.name}' v{manifest.version} installed![/green]")
 
 
-@package.command()
-def list():
+@package.command("list")
+def list_packages():
     """List installed packages."""
     installer = PackageInstaller()
     packages = installer.list_packages()
@@ -389,6 +390,170 @@ def info():
     
     console.print(info_table)
     console.print()
+
+
+# ── Mothership Commands ──────────────────────────────────────────────
+
+@hive.group()
+def mothership():
+    """🌍 Mothership orchestration — satellites, sync, registry."""
+    pass
+
+
+@mothership.group()
+def node():
+    """Manage satellite nodes."""
+    pass
+
+
+@node.command(name="register")
+@click.argument("name")
+@click.argument("url")
+@click.option("--api-key", help="API key for satellite authentication")
+@click.option("--description", help="Node description")
+@click.option("--capabilities", help="Comma-separated capabilities")
+def node_register(name, url, api_key, description, capabilities):
+    """Register a satellite node with the Mothership."""
+    registry = NodeRegistry()
+    cap_list = [c.strip() for c in capabilities.split(",")] if capabilities else None
+    registry.register(
+        name=name,
+        url=url,
+        api_key=api_key or "",
+        description=description or "",
+        capabilities=cap_list,
+    )
+
+
+@node.command(name="list")
+def node_list():
+    """List all registered satellite nodes."""
+    registry = NodeRegistry()
+    nodes = registry.list()
+
+    if not nodes:
+        console.print("[yellow]No satellites registered.[/yellow]")
+        console.print("  Register one: [cyan]hive mothership node register <name> <url>[/cyan]")
+        return
+
+    table = Table(title="🌍 Registered Satellites")
+    table.add_column("Name", style="cyan")
+    table.add_column("URL", style="white")
+    table.add_column("Status", style="green")
+    table.add_column("Last Seen", style="dim")
+    table.add_column("Capabilities", style="yellow")
+
+    for n in nodes:
+        status_style = {"online": "green", "offline": "red", "unknown": "yellow"}
+        s = f"[{status_style.get(n.status, 'yellow')}]{n.status}[/]"
+        last_seen = n.last_seen[:19] if n.last_seen else "—"
+        caps = ", ".join(n.capabilities[:3]) if n.capabilities else "—"
+        if len(n.capabilities) > 3:
+            caps += "..."
+        table.add_row(n.name, n.url, s, last_seen, caps)
+
+    console.print(table)
+
+
+@node.command(name="remove")
+@click.argument("name")
+def node_remove(name):
+    """Remove a registered satellite node."""
+    registry = NodeRegistry()
+    registry.remove(name)
+
+
+@mothership.command()
+@click.option("--nodes", help="Comma-separated node names (default: all)")
+@click.option("--no-skills", is_flag=True, help="Exclude skills from sync")
+@click.option("--no-knowledge", is_flag=True, help="Exclude knowledge docs from sync")
+@click.option("--no-flows", is_flag=True, help="Exclude flows from sync")
+@click.option("--dry-run", is_flag=True, help="Show what would be synced without sending")
+def sync(nodes, no_skills, no_knowledge, no_flows, dry_run):
+    """Sync skills, knowledge, and flows to satellite nodes."""
+    config = _load_config()
+    knowledge_dir = Path(config.get("knowledge_dir", "docs"))
+    if not knowledge_dir.is_absolute():
+        knowledge_dir = Path.cwd() / knowledge_dir
+
+    registry = NodeRegistry()
+    service = SyncService(
+        registry=registry,
+        knowledge_dir=knowledge_dir,
+        flow_dir=Path.cwd() / "prototype",
+    )
+
+    node_names = [n.strip() for n in nodes.split(",")] if nodes else None
+
+    if dry_run:
+        console.print("[yellow]🏁 Dry-run mode[/yellow]")
+        preview = service.preview(
+            include_skills=not no_skills,
+            include_knowledge=not no_knowledge,
+            include_flows=not no_flows,
+        )
+        for category, items in preview.items():
+            console.print(f"  [bold]{category}:[/bold] {len(items)} file(s)")
+            for item in items:
+                console.print(f"    • {item}")
+
+    service.push_to_all(
+        node_names=node_names,
+        include_skills=not no_skills,
+        include_knowledge=not no_knowledge,
+        include_flows=not no_flows,
+        dry_run=dry_run,
+    )
+
+
+@mothership.command()
+def preview():
+    """Preview what would be synced to satellites."""
+    config = _load_config()
+    knowledge_dir = Path(config.get("knowledge_dir", "docs"))
+    if not knowledge_dir.is_absolute():
+        knowledge_dir = Path.cwd() / knowledge_dir
+
+    service = SyncService(
+        registry=NodeRegistry(),
+        knowledge_dir=knowledge_dir,
+        flow_dir=Path.cwd() / "prototype",
+    )
+    preview_data = service.preview()
+
+    console.print("[bold cyan]📋 Sync Preview[/bold cyan]")
+    for category, items in preview_data.items():
+        console.print(f"\n[bold]{category.upper()}[/bold] ({len(items)})")
+        for item in items:
+            console.print(f"  • {item}")
+
+    if not any(preview_data.values()):
+        console.print("[yellow]Nothing to sync.[/yellow]")
+
+
+@mothership.command(name="info")
+def mothership_info():
+    """Show Mothership status summary."""
+    registry = NodeRegistry()
+    service = SyncService(
+        registry=registry,
+        knowledge_dir=Path.cwd() / "docs",
+        flow_dir=Path.cwd() / "prototype",
+    )
+    status = service.status()
+
+    config = _load_config()
+
+    panel = Panel(
+        f"[bold cyan]🌍 Mothership Status[/bold cyan]\n\n"
+        f"  [bold]Satellites:[/bold]     {status['nodes']} registered ({status['online_nodes']} online)\n"
+        f"  [bold]Skills:[/bold]         {status['skills']} available\n"
+        f"  [bold]Knowledge Docs:[/bold] {status['knowledge_docs']} available\n"
+        f"  [bold]Flows:[/bold]          {status['flows']} available\n"
+        f"  [bold]Sync Packages:[/bold]  {len(list(SYNC_DIR.glob('*.tar.gz')))} cached",
+        width=60,
+    )
+    console.print(panel)
 
 
 def main():

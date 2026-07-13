@@ -13,30 +13,31 @@ Phase 0 (Foundation) ✅ | Phase 1 (Playground) ✅ | Phase 2 (Integration) 🔄
 
 ## 🎯 Immediate Next Task
 
-**P4: Knowledge sync** — mothership pushes skills to satellites
+**Phase 3: Packaging** — Package registry, `hive package publish`, central hub for sharing packages
 
-File: `src/hiveos/engine.py` + need a new sync module
+File: `src/hiveos/package/__init__.py` + new `src/hiveos/registry/`
 
-Build a mechanism for a "Mothership" Hermes instance to push skill updates and
-knowledge docs to registered satellite nodes.
+- Package registry service to publish/discover packages
+- `hive package publish` command to push to registry
+- Central hub for sharing agent ecosystems across teams
 
 ---
 
 ## 📋 Full State at Last Session (2026-07-13)
 
-### What was built (v0.2.0)
+### What was built (v0.3.0)
 
 Added in this session:
 | Component | File | Description |
 |-----------|------|-------------|
-| Error handling + cascade skip | `src/hiveos/engine.py` | `_has_failed_dependencies()`, `_get_downstream_agent_ids()`, flow-level status tracking (`completed`, `completed_with_errors`, `completed_with_skipped`), auto-skip downstream agents on failure |
-| Retry logic finalized | `src/hiveos/engine.py` | Configurable per-agent retry count, timeout cascade, max retry exhaustion |
-| Failure test flow | `prototype/failure-test/error-handling.yml` | 4-agent flow: 1 failer (timeout), 1 skipped downstream, 1 independent, 1 downstream of independent |
-| Test suite | `tests/test_engine.py` | 19 unit tests covering: failed deps detection, downstream ID resolution, retry-then-succeed, retry exhausted, timeout cascade, mixed failure+independent, state persistence, clear_state |
+| Node Registry | `src/hiveos/sync/node_registry.py` | YAML-based satellite node registration, heartbeat, CRUD |
+| Sync Service | `src/hiveos/sync/sync_service.py` | Builds tar.gz sync packages (skills+knowledge+flows), HTTP push to satellites, dry-run preview |
+| Mothership CLI | `src/hiveos/cli/main.py` | `hive mothership node register/list/remove`, `hive mothership sync` (`--dry-run`), `hive mothership info`, `hive mothership preview` |
+| Sync tests | `tests/test_sync.py` | 12 unit tests for NodeRegistry CRUD and persistence |
 
-### Test results (19/19 ✅)
+### Test results (31/31 ✅)
 - `hive flow validate prototype/` ✅ (2 valid flows)
-- `python -m pytest tests/test_engine.py -v` ✅ 19 passed in 9s
+- `python -m pytest tests/ -v` ✅ 31 passed in 8s
 
 ### Full file map
 
