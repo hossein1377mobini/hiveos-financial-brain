@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>HiveOS Dashboard</title>
+<style>
+  :root {
+    --bg-primary: #0f1117;
+    --bg-secondary: #1a1d28;
+    --bg-card: #222639;
+    --bg-hover: #2a2e42;
+    --border: #2e3348;
+    --text-primary: #e8eaf0;
+    --text-secondary: #8b90a5;
+    --text-muted: #5c6178;
+    --accent: #f5a623;
+    --accent-dim: #c4881c;
+    --green: #34d399;
+    --green-dim: #1a7a4a;
+    --red: #f87171;
+    --red-dim: #7f1d1d;
+    --yellow: #fbbf24;
+    --yellow-dim: #7c5c00;
+    --blue: #60a5fa;
+    --blue-dim: #1e3a5f;
+    --purple: #a78bfa;
+    --font: 'Segoe UI','SF Pro Display',-apple-system,sans-serif;
+    --font-mono: 'JetBrains Mono','Cascadia Code','Fira Code',monospace;
+    --radius: 8px;
+    --radius-sm: 4px;
+    --shadow: 0 2px 8px rgba(0,0,0,.3);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: var(--font);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    display: flex;
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 220px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .sidebar-header {
+    padding: 20px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-header h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sidebar-header h1 span { color: var(--text-primary); }
+  .sidebar-header .version {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+  .sidebar-nav {
+    flex: 1;
+    padding: 8px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all .15s;
+    margin-bottom: 2px;
+    font-size: 13px;
+  }
+  .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .nav-item.active { background: rgba(245,166,35,.12); color: var(--accent); font-weight: 600; }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+  /* ── Main ── */
+  .main {
+    flex: 1;
+    padding: 24px 28px;
+    overflow-y: auto;
+    max-height: 100vh;
+  }
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  .page-header h2 { font-size: 22px; font-weight: 700; }
+  .last-updated { font-size: 12px; color: var(--text-muted); }
+
+  /* ── Cards ── */
+  .grid { display: grid; gap: 16px; }
+  .grid-2 { grid-template-columns: repeat(2,1fr); }
+  .grid-3 { grid-template-columns: repeat(3,1fr); }
+  .grid-4 { grid-template-columns: repeat(4,1fr); }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+  }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .card-header h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  .card-value {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .card-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .card .icon-lg { font-size: 28px; }
+
+  /* ── Status Badges ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .badge-green { background: rgba(52,211,153,.15); color: var(--green); }
+  .badge-green .badge-dot { background: var(--green); }
+  .badge-yellow { background: rgba(251,191,36,.15); color: var(--yellow); }
+  .badge-yellow .badge-dot { background: var(--yellow); }
+  .badge-red { background: rgba(248,113,113,.15); color: var(--red); }
+  .badge-red .badge-dot { background: var(--red); }
+  .badge-blue { background: rgba(96,165,250,.15); color: var(--blue); }
+  .badge-blue .badge-dot { background: var(--blue); }
+  .badge-gray { background: rgba(139,144,165,.15); color: var(--text-secondary); }
+  .badge-gray .badge-dot { background: var(--text-muted); }
+  .badge-accent { background: rgba(245,166,35,.15); color: var(--accent); }
+  .badge-accent .badge-dot { background: var(--accent); }
+
+  /* ── Tables ── */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    text-align: left;
+    padding: 10px 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(46,51,72,.5);
+  }
+  tr:hover td { background: var(--bg-hover); }
+
+  /* ── Sections ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── Progress / Bar ── */
+  .bar-container { height: 6px; background: var(--bg-hover); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width .3s; }
+  .bar-green .bar-fill { background: var(--green); }
+  .bar-yellow .bar-fill { background: var(--yellow); }
+  .bar-red .bar-fill { background: var(--red); }
+
+  /* ── Responsive ── */
+  @media(max-width:960px){
+    .sidebar { display: none; }
+    .main { padding: 16px; }
+    .grid-4 { grid-template-columns: repeat(2,1fr); }
+    .grid-3 { grid-template-columns: repeat(2,1fr); }
+  }
+  @media(max-width:600px){
+    .grid-2,.grid-3,.grid-4 { grid-template-columns: 1fr; }
+  }
+
+  /* ── Metric rows ── */
+  .metric-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; }
+  .metric-row .label { color: var(--text-secondary); }
+  .metric-row .value { font-weight: 600; }
+  .mt-2 { margin-top: 12px; }
+  .mb-2 { margin-bottom: 12px; }
+  .gap-2 { gap: 8px; }
+  .flex { display: flex; }
+  .flex-wrap { flex-wrap: wrap; }
+  .items-center { align-items: center; }
+  .text-muted { color: var(--text-muted); }
+  .text-accent { color: var(--accent); }
+  .text-green { color: var(--green); }
+  .text-red { color: var(--red); }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+  }
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+
+<!-- ─── Sidebar ─── -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1>🐝 <span>HiveOS</span></h1>
+    <div class="version">v0.5.0 · Enterprise</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-item active" data-page="overview"><span class="nav-icon">📊</span> Overview</div>
+    <div class="nav-item" data-page="agents"><span class="nav-icon">🤖</span> Agents</div>
+    <div class="nav-item" data-page="tasks"><span class="nav-icon">📋</span> Tasks</div>
+    <div class="nav-item" data-page="health"><span class="nav-icon">💚</span> Health</div>
+    <div class="nav-item" data-page="bus"><span class="nav-icon">📨</span> Bus</div>
+    <div class="nav-item" data-page="audit"><span class="nav-icon">📜</span> Audit</div>
+    <div class="nav-item" data-page="rbac"><span class="nav-icon">🔐</span> RBAC</div>
+    <div class="nav-item" data-page="domains"><span class="nav-icon">🧩</span> Domains</div>
+  </nav>
+</aside>
+
+<!-- ─── Main Content ─── -->
+<main class="main">
+
+  <!-- OVERVIEW -->
+  <section class="page active" id="page-overview">
+    <div class="page-header">
+      <h2>📊 Overview</h2>
+      <div class="last-updated" id="overview-time">Loading…</div>
+    </div>
+    <div class="grid grid-4" id="overview-cards"></div>
+    <div class="grid grid-2 mt-2">
+      <div class="card"><div class="card-header"><h3>📜 Recent Audit</h3></div><div id="audit-mini" class="empty-state"><div class="icon">📭</div><div>No recent entries</div></div></div>
+      <div class="card"><div class="card-header"><h3>⚠️ Recent Failures</h3></div><div id="failures-mini" class="empty-state"><div class="icon">✅</div><div>No failures</div></div></div>
+    </div>
+  </section>
+
+  <!-- AGENTS -->
+  <section class="page" id="page-agents">
+    <div class="page-header">
+      <h2>🤖 Agents</h2>
+      <div class="last-update" id="agents-count"></div>
+    </div>
+    <div class="card"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Status</th><th>Load</th><th>Capabilities</th><th>Tasks</th><th>Errors</th><th>Uptime</th></tr></thead><tbody id="agents-body"></tbody></table></div></div>
+  </section>
+
+  <!-- TASKS -->
+  <section class="page" id="page-tasks">
+    <div class="page-header">
+      <h2>📋 Tasks</h2>
+    </div>
+    <div class="grid grid-4 mb-2" id="tasks-stats"></div>
+    <div class="card"><div class="table-wrap"><table><thead><tr><th>ID</th><th>Agent</th><th>Node</th><th>Status</th><th>Created</th><th>Result</th></tr></thead><tbody id="tasks-body"></tbody></table></div></div>
+  </section>
+
+  <!-- HEALTH -->
+  <section class="page" id="page-health">
+    <div class="page-header">
+      <h2>💚 System Health</h2>
+    </div>
+    <div class="grid grid-4 mb-2" id="health-stats"></div>
+    <div class="card mt-2"><div class="card-header"><h3>Node Health</h3></div><div class="table-wrap"><table><thead><tr><th>Node</th><th>Status</th><th>Failures</th><th>Successes</th><th>Last Change</th></tr></thead><tbody id="health-body"></tbody></table></div></div>
+  </section>
+
+  <!-- BUS -->
+  <section class="page" id="page-bus">
+    <div class="page-header">
+      <h2>📨 Communication Bus</h2>
+    </div>
+    <div class="grid grid-2 mb-2" id="bus-stats"></div>
+    <div class="card mt-2"><div class="card-header"><h3>Recent Messages</h3></div><div class="table-wrap"><table><thead><tr><th>ID</th><th>Type</th><th>Sender</th><th>Target</th><th>Time</th></tr></thead><tbody id="bus-body"></tbody></table></div></div>
+  </section>
+
+  <!-- AUDIT -->
+  <section class="page" id="page-audit">
+    <div class="page-header">
+      <h2>📜 Audit Trail</h2>
+    </div>
+    <div class="card"><div class="table-wrap"><table><thead><tr><th>ID</th><th>Action</th><th>Resource</th><th>Result</th><th>User</th><th>Detail</th><th>Time</th></tr></thead><tbody id="audit-body"></tbody></table></div></div>
+  </section>
+
+  <!-- RBAC -->
+  <section class="page" id="page-rbac">
+    <div class="page-header">
+      <h2>🔐 RBAC</h2>
+    </div>
+    <div class="grid grid-2">
+      <div class="card"><div class="card-header"><h3>👥 Users</h3></div><div class="table-wrap"><table><thead><tr><th>Username</th><th>Role</th><th>Enabled</th></tr></thead><tbody id="rbac-users-body"></tbody></table></div></div>
+      <div class="card"><div class="card-header"><h3>🛡️ Roles</h3></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>Permissions</th></tr></thead><tbody id="rbac-roles-body"></tbody></table></div></div>
+    </div>
+  </section>
+
+  <!-- DOMAINS -->
+  <section class="page" id="page-domains">
+    <div class="page-header">
+      <h2>🧩 Domain Plugins</h2>
+    </div>
+    <div class="card"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Version</th><th>Agents</th><th>Flows</th></tr></thead><tbody id="domains-body"></tbody></table></div></div>
+  </section>
+
+</main>
+
+<script>
+// ─── Navigation ───
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    item.classList.add('active');
+    document.getElementById('page-' + item.dataset.page).classList.add('active');
+  });
+});
+
+// ─── State ───
+const BASE = window.location.origin;
+
+function statusBadge(status) {
+  const s = (status || '').toLowerCase();
+  if (s === 'online' || s === 'healthy' || s === 'completed') return '<span class="badge badge-green"><span class="badge-dot"></span>'+status+'</span>';
+  if (s === 'degraded' || s === 'pending' || s === 'busy') return '<span class="badge badge-yellow"><span class="badge-dot"></span>'+status+'</span>';
+  if (s === 'offline' || s === 'unhealthy' || s === 'failed') return '<span class="badge badge-red"><span class="badge-dot"></span>'+status+'</span>';
+  if (s === 'running' || s === 'in_progress') return '<span class="badge badge-blue"><span class="badge-dot"></span>'+status+'</span>';
+  return '<span class="badge badge-gray">'+status+'</span>';
+}
+
+function loadBar(pct, cls='bar-green') {
+  const c = pct > 80 ? 'bar-red' : pct > 50 ? 'bar-yellow' : cls;
+  return '<div class="bar-container '+c+'"><div class="bar-fill" style="width:'+Math.min(pct,100)+'%"></div></div>';
+}
+
+// ─── Fetch helpers ───
+async function api(url) {
+  try {
+    const r = await fetch(url);
+    return await r.json();
+  } catch(e) {
+    return {error: e.message};
+  }
+}
+
+// ─── Overview ───
+async function loadOverview() {
+  const data = await api(BASE+'/api/overview');
+  if (data.error) return;
+  document.getElementById('overview-time').textContent = 'Updated: '+new Date().toLocaleTimeString();
+
+  const cards = [
+    {icon:'🤖', label:'Agents Total', value:data.agents?.total||0, sub:'🟢 '+ (data.agents?.online||0) +' online · 🔴 '+ (data.agents?.offline||0) +' offline'},
+    {icon:'📋', label:'Tasks', value:data.tasks?.total||0, sub:'✅ '+ (data.tasks?.completed||0) +' done · ⏳ '+ (data.tasks?.running||0) +' running'},
+    {icon:'💚', label:'Health', value:data.health?.healthy||0, sub:'⚠️ '+ (data.health?.degraded||0) +' degraded · ❌ '+ (data.health?.unhealthy||0) +' unhealthy'},
+    {icon:'📨', label:'Bus Messages', value:data.bus?.messages_total||0, sub:'👥 '+ (data.bus?.subscribers||0) +' subscribers'},
+  ];
+
+  document.getElementById('overview-cards').innerHTML = cards.map(c =>
+    '<div class="card"><div class="card-header"><h3>'+c.label+'</h3><span class="icon-lg">'+c.icon+'</span></div><div class="card-value">'+c.value+'</div><div class="card-label">'+c.sub+'</div></div>'
+  ).join('');
+
+  // Audit mini
+  const audit = await api(BASE+'/api/audit?limit=5');
+  if (audit.entries && audit.entries.length) {
+    document.getElementById('audit-mini').innerHTML = audit.entries.map(e =>
+      '<div class="metric-row"><span class="label">'+e.action+' '+e.resource+'</span><span class="value text-muted">'+ (e.timestamp||'').slice(11,19) +'</span></div>'
+    ).join('');
+  }
+
+  // Failures mini
+  const health = await api(BASE+'/api/health');
+  if (health.recent_failures && health.recent_failures.length) {
+    document.getElementById('failures-mini').innerHTML = health.recent_failures.slice(0,5).map(f =>
+      '<div class="metric-row"><span class="label text-red">⚠️ '+f.node+' · '+f.type+'</span><span class="value text-muted">'+ (f.timestamp||'').slice(11,19) +'</span></div>'
+    ).join('');
+  }
+}
+
+// ─── Agents ───
+async function loadAgents() {
+  const data = await api(BASE+'/api/agents');
+  if (!data.agents) return;
+  document.getElementById('agents-count').textContent = data.agents.length + ' agents';
+  document.getElementById('agents-body').innerHTML = data.agents.map(a => {
+    const loadPct = a.max_concurrent > 0 ? Math.round((a.load / a.max_concurrent) * 100) : 0;
+    return '<tr>' +
+      '<td><strong>'+a.name+'</strong></td>' +
+      '<td>'+statusBadge(a.status)+'</td>' +
+      '<td>'+loadPct+'%'+loadBar(loadPct)+'</td>' +
+      '<td>'+ (a.capabilities.length ? a.capabilities.slice(0,3).join(', ') + (a.capabilities.length > 3 ? ' (+'+(a.capabilities.length-3)+')' : '') : '—') +'</td>' +
+      '<td>'+a.tasks_completed+'</td>' +
+      '<td>'+a.errors+'</td>' +
+      '<td>'+(a.uptime > 86400 ? Math.round(a.uptime/86400)+'d' : a.uptime > 3600 ? Math.round(a.uptime/3600)+'h' : a.uptime > 60 ? Math.round(a.uptime/60)+'m' : a.uptime+'s')+'</td>' +
+    '</tr>';
+  }).join('');
+}
+
+// ─── Tasks ───
+async function loadTasks() {
+  const data = await api(BASE+'/api/tasks');
+  if (!data.tasks) return;
+  const stats = {total: data.tasks.length, pending:0, running:0, completed:0, failed:0};
+  data.tasks.forEach(t => {
+    const s = (t.status||'').toLowerCase();
+    if (s === 'pending' || s === 'queued') stats.pending++;
+    else if (s === 'running' || s === 'assigned' || s === 'in_progress') stats.running++;
+    else if (s === 'completed' || s === 'success') stats.completed++;
+    else if (s === 'failed' || s === 'error') stats.failed++;
+  });
+  document.getElementById('tasks-stats').innerHTML = [
+    {label:'Total', value:stats.total, cls:''},
+    {label:'Running', value:stats.running, cls:'text-blue'},
+    {label:'Completed', value:stats.completed, cls:'text-green'},
+    {label:'Failed', value:stats.failed, cls:'text-red'},
+  ].map(s => '<div class="card"><div class="card-value '+s.cls+'">'+s.value+'</div><div class="card-label">'+s.label+'</div></div>').join('');
+
+  document.getElementById('tasks-body').innerHTML = data.tasks.map(t =>
+    '<tr><td class="text-muted" style="font-family:var(--font-mono)">'+ (t.id||'').slice(0,12)+'…</td><td>'+t.agent+'</td><td>'+t.node+'</td><td>'+statusBadge(t.status)+'</td><td class="text-muted">'+ (t.created||'').slice(11,19) +'</td><td class="text-muted">'+ (t.result||'').slice(0,40) +'</td></tr>'
+  ).join('');
+}
+
+// ─── Health ───
+async function loadHealth() {
+  const data = await api(BASE+'/api/health');
+  const nodes = data.nodes || [];
+  const healthy = nodes.filter(n => (n.status||'').toLowerCase() === 'healthy').length;
+  const degraded = nodes.filter(n => (n.status||'').toLowerCase() === 'degraded').length;
+  const unhealthy = nodes.filter(n => (n.status||'').toLowerCase() === 'unhealthy').length;
+  document.getElementById('health-stats').innerHTML = [
+    {label:'Healthy', value:healthy, cls:'text-green'},
+    {label:'Degraded', value:degraded, cls:'text-yellow'},
+    {label:'Unhealthy', value:unhealthy, cls:'text-red'},
+    {label:'Total', value:nodes.length, cls:''},
+  ].map(s => '<div class="card"><div class="card-value '+s.cls+'">'+s.value+'</div><div class="card-label">'+s.label+'</div></div>').join('');
+
+  document.getElementById('health-body').innerHTML = nodes.map(n =>
+    '<tr><td><strong>'+n.node+'</strong></td><td>'+statusBadge(n.status)+'</td><td class="text-red">'+n.failures+'</td><td class="text-green">'+n.successes+'</td><td class="text-muted">'+ (n.last_change||'').slice(11,19) +'</td></tr>'
+  ).join('');
+}
+
+// ─── Bus ───
+async function loadBus() {
+  const data = await api(BASE+'/api/bus');
+  if (!data.stats) return;
+  document.getElementById('bus-stats').innerHTML = [
+    {label:'Total Messages', value:data.stats.total||0},
+    {label:'Subscribers', value:data.stats.subscribers||0},
+  ].map(s => '<div class="card"><div class="card-value">'+s.value+'</div><div class="card-label">'+s.label+'</div></div>').join('');
+
+  document.getElementById('bus-body').innerHTML = (data.messages||[]).map(m =>
+    '<tr><td class="text-muted" style="font-family:var(--font-mono)">'+ (m.id||'').slice(0,10)+'</td><td>'+statusBadge(m.type)+'</td><td>'+m.sender+'</td><td>'+m.target+'</td><td class="text-muted">'+ (m.timestamp||'').slice(11,19) +'</td></tr>'
+  ).join('');
+}
+
+// ─── Audit ───
+async function loadAudit() {
+  const data = await api(BASE+'/api/audit?limit=100');
+  if (!data.entries) return;
+  document.getElementById('audit-body').innerHTML = data.entries.map(e =>
+    '<tr><td class="text-muted" style="font-family:var(--font-mono)">'+ (e.id||'').slice(0,10)+'</td><td>'+statusBadge(e.action)+'</td><td>'+e.resource+'</td><td>'+statusBadge(e.result)+'</td><td>'+e.user+'</td><td class="text-muted">'+ (e.detail||'').slice(0,50) +'</td><td class="text-muted">'+ (e.timestamp||'').slice(11,19) +'</td></tr>'
+  ).join('');
+}
+
+// ─── RBAC ───
+async function loadRBAC() {
+  const data = await api(BASE+'/api/rbac');
+  if (!data.users) return;
+  document.getElementById('rbac-users-body').innerHTML = (data.users||[]).map(u =>
+    '<tr><td><strong>'+u.username+'</strong></td><td>'+statusBadge(u.role)+'</td><td>'+(u.enabled ? '<span class="badge badge-green">✓ Enabled</span>' : '<span class="badge badge-red">✗ Disabled</span>')+'</td></tr>'
+  ).join('') || '<tr><td colspan="3"><div class="empty-state">No users</div></td></tr>';
+  document.getElementById('rbac-roles-body').innerHTML = (data.roles||[]).map(r =>
+    '<tr><td><strong>'+r.name+'</strong></td><td class="text-muted">'+(r.permissions||[]).join(', ') || '—'+'</td></tr>'
+  ).join('') || '<tr><td colspan="2"><div class="empty-state">No roles</div></td></tr>';
+}
+
+// ─── Domains ───
+async function loadDomains() {
+  const data = await api(BASE+'/api/domains');
+  if (!data.domains) return;
+  document.getElementById('domains-body').innerHTML = (data.domains||[]).map(d =>
+    '<tr><td><strong>'+d.label+'</strong><br><span class="text-muted" style="font-size:11px">'+d.name+'</span></td><td>'+d.version+'</td><td>'+d.agents+'</td><td>'+d.flows+'</td></tr>'
+  ).join('') || '<tr><td colspan="4"><div class="empty-state">🧩 No domain plugins installed</div></td></tr>';
+}
+
+// ─── Poll ───
+function loadAll() {
+  loadOverview();
+  loadAgents();
+  loadTasks();
+  loadHealth();
+  loadBus();
+  loadAudit();
+  loadRBAC();
+  loadDomains();
+}
+
+loadAll();
+setInterval(loadAll, 5000); // auto-refresh every 5s
+</script>
+</body>
+</html>

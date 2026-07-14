@@ -1635,3 +1635,55 @@ def audit_rotate(keep_days):
     trail = _get_audit()
     removed = trail.rotate(keep_days=keep_days)
     console.print(f"[green]✅ Rotated {removed} old files (keeping {keep_days}d)[/green]")
+
+
+# ── Dashboard Commands ────────────────────────────────────────────────
+
+@hive.group()
+def dashboard():
+    """📊 Dashboard — Web UI for monitoring agents, flows, and nodes."""
+    pass
+
+
+@dashboard.command(name="start")
+@click.option("--host", default="127.0.0.1", help="Bind address")
+@click.option("--port", default=8080, help="Port number")
+@click.option("--data-dir", default=None, help="HiveOS data directory")
+def dashboard_start(host, port, data_dir):
+    """Start the dashboard web server."""
+    from ..dashboard import DashboardServer
+
+    data_path = Path(data_dir) if data_dir else None
+    server = DashboardServer(
+        host=host,
+        port=port,
+        data_dir=data_path,
+    )
+    result = server.start()
+    console.print(f"[green]✅ {result}[/green]")
+    console.print(f"[dim]   Open: http://{host}:{port}[/dim]")
+    console.print(f"[dim]   Stop: hive dashboard stop[/dim]")
+
+
+@dashboard.command(name="stop")
+def dashboard_stop():
+    """Stop the dashboard web server."""
+    from ..dashboard import DashboardServer
+
+    server = DashboardServer()
+    result = server.stop()
+    console.print(f"[yellow]{result}[/yellow]")
+
+
+@dashboard.command(name="status")
+def dashboard_status():
+    """Show dashboard server status."""
+    from ..dashboard import DashboardServer
+
+    server = DashboardServer()
+    status = server.status()
+    if status["running"]:
+        console.print(f"[green]✅ Dashboard is running[/green]")
+        console.print(f"   URL: {status['url']}")
+    else:
+        console.print("[yellow]⏸️  Dashboard is not running[/yellow]")

@@ -13,20 +13,11 @@ Phase 0 (Foundation) ✅ | Phase 1 (Playground) ✅ | Phase 2 (Integration) ✅ 
 
 ## 🎯 Current Work: Phase 5 — Enterprise
 
-File: `src/hiveos/rbac/`, `src/hiveos/audit/`
+File: `src/hiveos/rbac/`, `src/hiveos/audit/`, `src/hiveos/dashboard/`
 
 - 🔐 **RBAC** — Role-based access control (✅ Complete)
-  - 4 built-in roles: admin, operator, viewer, deployer
-  - Custom roles with arbitrary permissions
-  - User management with API key auth
-  - `hive rbac` CLI with user/role subcommands
-  - HTTP server auth middleware on all endpoints
 - 📜 **Audit Trail** — JSONL + gbrain PGLite (✅ Complete)
-  - JSONL daily files for fast append
-  - `hive audit list/search/stats/rotate` CLI
-  - `hive audit sync-gbrain` → push to gbrain PGLite for semantic search
-  - Server middleware logging on agent/task/config/auth operations
-- 📊 **Dashboard** — ⏳ Planned
+- 📊 **Dashboard** — Web UI for agents/flows/nodes monitoring (✅ Complete)
 - 🏢 **Multi-tenant** — ⏳ Planned
 - 💰 **Pricing model** — ⏳ Planned
 
@@ -207,10 +198,20 @@ git add -A && git commit -m "feat: ..." && git push origin master
 
 | File | Path |
 |------|------|
-| Product Vision | `docs/01-Vision/01-product-vision.md` |
-| High-Level Arch | `docs/02-Architecture/01-high-level-arch.md` |
-| Flow DSL Spec | `docs/02-Architecture/02-flow-dsl.md` |
-| ADR: File-Based Memory | `docs/02-Architecture/ADR/001-use-file-based-memory.md` |
-| Roadmap | `ROADMAP.md` |
-| Hermes Skill | `hiveos-skill.md` |
-| Prototype flows | `prototype/hello-flow/hello.yml`, `prototype/failure-test/error-handling.yml` |
+|| Product Vision | `docs/01-Vision/01-product-vision.md` |
+|| High-Level Arch | `docs/02-Architecture/01-high-level-arch.md` |
+|| Flow DSL Spec | `docs/02-Architecture/02-flow-dsl.md` |
+|| ADR: File-Based Memory | `docs/02-Architecture/ADR/001-use-file-based-memory.md` |
+|| Roadmap | `ROADMAP.md` |
+|| Hermes Skill | `hiveos-skill.md` |
+|| Prototype flows | `prototype/hello-flow/hello.yml`, `prototype/failure-test/error-handling.yml` |
+
+### v0.5.2 (2026-07-14) — Phase 5: Dashboard ✅
+
+| Component | File | Description |
+|-----------|------|-------------|
+| Dashboard Server | `src/hiveos/dashboard/server.py` | FastAPI-based REST API with 10 endpoints aggregating all subsystems |
+| Dashboard UI | `src/hiveos/dashboard/templates/index.html` | Dark SPA with 8 views: Overview, Agents, Tasks, Health, Bus, Audit, RBAC, Domains |
+| Dashboard CLI | `src/hiveos/cli/main.py` | `hive dashboard start/stop/status` commands |
+| Dashboard tests | `tests/test_dashboard.py` | 23 tests covering API endpoints, server lifecycle, mock integration |
+| Test results | 203/203 | `python -m pytest tests/ -v` → 203 passed in 11.7s |

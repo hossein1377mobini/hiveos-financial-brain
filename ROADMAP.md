@@ -60,7 +60,7 @@ Live product roadmap. Updated after every session.
 
 - [x] **RBAC** — Role-based access control (models, manager, server auth, CLI, 36 tests)
 - [x] **Audit Trail** — JSONL daily files + gbrain PGLite sync (CLI, server middleware, 20 tests)
-- [ ] **Dashboard** — Web UI to monitor agents, flows, and nodes
+- [x] **Dashboard** — Web UI to monitor agents, flows, and nodes
 - [ ] **Multi-tenant** — Isolated workspaces per team/org
 - [ ] **Pricing model** — License tiers
 
