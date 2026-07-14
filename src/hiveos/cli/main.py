@@ -1902,3 +1902,229 @@ def license_check(feature_name):
         tier_needed = mgr._tier_for_feature(feature)
         tier_label = tier_needed.value.upper() if tier_needed else "a higher"
         console.print(f"[yellow]⚠️  Feature '[bold]{feature_name}[/bold]' requires {tier_label} tier (current: {mgr.tier.value.upper()})[/yellow]")
+
+
+# ── Domain Commands ─────────────────────────────────────────────────
+
+@hive.group()
+def domain():
+    """🧩 Domain plugins — manage knowledge domains for agent teams."""
+    pass
+
+
+@domain.command("list")
+def domain_list():
+    """List all installed domain plugins."""
+    from ..domain.manager import DomainManager
+    mgr = DomainManager()
+
+    domains = mgr.list_domains()
+    if not domains:
+        console.print("[yellow]No domain plugins installed.[/yellow]")
+        console.print("  Install one: [cyan]hive domain install <path>[/cyan]")
+        return
+
+    table = Table(title="🧩 Installed Domain Plugins")
+    table.add_column("Name", style="cyan")
+    table.add_column("Version", style="green")
+    table.add_column("Label (EN)", style="white")
+    table.add_column("Agents", style="yellow")
+    table.add_column("Flows", style="blue")
+    table.add_column("Tags", style="dim")
+
+    for d in domains:
+        info = d.to_dict()
+        agent_str = f"{info['total_agents']} ({info['orchestrators']}O + {info['specialists']}S)"
+        tags_str = ", ".join(info['tags'][:3])
+        if len(info['tags']) > 3:
+            tags_str += "..."
+        table.add_row(
+            info['name'],
+            info['version'],
+            info['label_en'],
+            agent_str,
+            str(info['total_flows']),
+            tags_str,
+        )
+    console.print(table)
+
+
+@domain.command()
+@click.argument("name")
+def info(name):
+    """Show detailed information about a domain plugin."""
+    from ..domain.manager import DomainManager
+    mgr = DomainManager()
+
+    d = mgr.get_domain(name)
+    if d is None:
+        console.print(f"[red]❌ Domain '{name}' not found[/red]")
+        console.print("  Available: [cyan]hive domain list[/cyan]")
+        return
+
+    info_dict = d.to_dict()
+    node_count = d.knowledge_tree_node_count()
+
+    from rich.panel import Panel
+    lines = [
+        f"[bold cyan]🧩 {info_dict['label_en']}[/bold cyan] [dim]v{info_dict['version']}[/dim]",
+        "",
+    ]
+    if info_dict.get('label_fa'):
+        lines.append(f"  [bold]نام:[/bold] {info_dict['label_fa']}")
+    lines.append(f"  [bold]Name:[/bold] {info_dict['name']}")
+    lines.append(f"  [bold]Description:[/bold] {info_dict['description_en']}")
+    lines.append(f"  [bold]Orchestrator:[/bold] {info_dict.get('orchestrator_agent', '—')}")
+    lines.append(f"  [bold]Dependencies:[/bold] {', '.join(info_dict.get('depends_on', [])) or 'None'}")
+    lines.append("")
+    lines.append(f"  [bold]Agents:[/bold] {info_dict['total_agents']} total ({info_dict['orchestrators']} orchestrators, {info_dict['specialists']} specialists)")
+    lines.append(f"  [bold]Flow Templates:[/bold] {info_dict['total_flows']}")
+    lines.append(f"  [bold]Knowledge Nodes:[/bold] {node_count}")
+    lines.append(f"  [bold]Tags:[/bold] {', '.join(info_dict.get('tags', []))}")
+    lines.append("")
+    lines.append(f"  [bold]Path:[/bold] {d.root}")
+    lines.append(f"  [bold]Domain YAML:[/bold] {d.root / 'domain.yaml'}")
+
+    console.print(Panel("\n".join(lines), width=72))
+
+    # List agents
+    from rich.table import Table
+    agent_table = Table(title="Agent Blueprints", box=None, padding=(0, 2))
+    agent_table.add_column("ID", style="cyan")
+    agent_table.add_column("Type", style="yellow")
+    agent_table.add_column("Label (EN)", style="white")
+    agent_table.add_column("Skills", style="dim")
+
+    for agent in info_dict['agents']:
+        skills = agent.get("skills", [])
+        skills_str = ", ".join(skills[:3]) if isinstance(skills, list) else ""
+        if isinstance(skills, list) and len(skills) > 3:
+            skills_str += "..."
+        agent_table.add_row(
+            agent.get("id", "?"),
+            agent.get("type", "?"),
+            agent.get("label", {}).get("en", "?"),
+            skills_str,
+        )
+    console.print(agent_table)
+
+
+@domain.command()
+@click.argument("source", type=click.Path(exists=True, file_okay=False, dir_okay=True))
+@click.option("--name", help="Override domain name (default: source directory name)")
+def install(source, name):
+    """Install a domain plugin from a directory path."""
+    from ..domain.manager import DomainManager
+    mgr = DomainManager()
+
+    src = Path(source).resolve()
+    try:
+        d = mgr.install(src, name=name)
+        console.print(f"[green]✅ Domain [bold]{d.name}[/bold] v{d.version} installed![/green]")
+        console.print(f"   Path: {d.root}")
+        console.print(f"   Agents: {d.total_agents}  |  Flows: {d.total_flows}")
+    except FileExistsError as e:
+        console.print(f"[red]❌ {e}[/red]")
+        raise SystemExit(1)
+    except ValueError as e:
+        console.print(f"[red]❌ {e}[/red]")
+        raise SystemExit(1)
+
+
+@domain.command()
+@click.argument("name")
+@click.option("--permanent", is_flag=True, help="Delete domain directory from disk")
+def remove(name, permanent):
+    """Remove a domain plugin from the project."""
+    from ..domain.manager import DomainManager
+    mgr = DomainManager()
+
+    try:
+        mgr.remove(name, permanent=permanent)
+        if permanent:
+            console.print(f"[green]✅ Domain '{name}' permanently removed![/green]")
+        else:
+            console.print(f"[green]✅ Domain '{name}' removed from registry (files preserved).[/green]")
+    except KeyError as e:
+        console.print(f"[red]❌ {e}[/red]")
+        raise SystemExit(1)
+
+
+@domain.command()
+@click.option("--name", prompt=True, help="Domain name (e.g. accounting)")
+@click.option("--label", prompt=True, help="English label (e.g. Accounting)")
+@click.option("--label-fa", prompt=True, help="Persian label (e.g. حسابداری)")
+@click.option("--description", prompt=True, help="English description")
+def init(name, label, label_fa, description):
+    """Scaffold a new domain plugin in the project."""
+    from pathlib import Path
+
+    root = Path.cwd() / "domains" / name
+    if root.exists():
+        console.print(f"[red]❌ Domain directory already exists: {root}[/red]")
+        raise SystemExit(1)
+
+    # Create directory structure
+    (root / "agents" / "blueprints").mkdir(parents=True)
+    (root / "flows").mkdir(parents=True)
+    (root / "knowledge").mkdir(parents=True)
+
+    # domain.yaml
+    domain_yaml = f"""# ============================================================
+# {label} Domain — HiveOS Domain Plugin
+# ============================================================
+
+domain:
+  name: "{name}"
+  version: "1.0.0-dev"
+  label:
+    fa: "{label_fa}"
+    en: "{label}"
+  description:
+    fa: ""
+    en: "{description}"
+  depends_on: []
+  orchestrator_agent: ""
+  metadata:
+    authors: []
+    tags: []
+  agents: []
+  flows: []
+  knowledge_tree: "knowledge/tree.yaml"
+"""
+    (root / "domain.yaml").write_text(domain_yaml, encoding="utf-8")
+
+    # knowledge/tree.yaml
+    (root / "knowledge" / "tree.yaml").write_text(
+        "version: \"1.0.0\"\ndomain: \"" + name + "\"\nlabel:\n  fa: \"\"\n  en: \"Knowledge Tree\"\nnodes: {}\n",
+        encoding="utf-8",
+    )
+
+    # .gitkeep in blueprints
+    (root / "agents" / "blueprints" / ".gitkeep").write_text("")
+
+    # example flow
+    example = root / "flows" / "example.yaml"
+    if not example.exists():
+        example.write_text(f"""# Example Flow for {label}
+name: "Example Flow"
+version: "1.0.0"
+domain: "{name}"
+trigger:
+  type: manual
+agents:
+  - id: example-agent
+    name: "Example Agent"
+    role: domain agent
+    skills: []
+    depends_on: []
+    output: "output.md"
+    deliver:
+      format: markdown
+""", encoding="utf-8")
+
+    console.print(f"[green]✅ Domain scaffolded: {root}[/green]")
+    console.print(f"   Agents: {root / 'agents' / 'blueprints'}")
+    console.print(f"   Flows:  {root / 'flows'}")
+    console.print(f"   Knowledge: {root / 'knowledge'}")
+    console.print(f"\nNext: edit [cyan]{root / 'domain.yaml'}[/cyan] and add agents")

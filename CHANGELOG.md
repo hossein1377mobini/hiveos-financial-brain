@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.9.1] — 2026-07-14
+
+### Added
+- **S-06: Migration System** (`src/hiveos/storage/migrations.py`) — Schema versioning for SQLite StorageEngine. MigrationRunner tracks applied versions and auto-runs pending migrations on connect. Built-in migration #1 creates kv_store schema. (14 new tests)
+- **D-05: Domain Plugin CLI** (`src/hiveos/domain/manager.py`) — DomainManager scans `domains/` directory and loads domain.yaml manifests. `hive domain` CLI group with: **list**, **info**, **install**, **remove**, **init** commands. (20 new tests)
+- **D-04: Hermes Skills for 6 Accounting Orchestrators** — Hermes skill files (SKILL.md) for master-financial-assistant, financial-orchestrator, management-orchestrator, audit-orchestrator, tax-orchestrator, advisory-orchestrator
+
+### Changed
+- `StorageEngine._connect()` now runs built-in migrations automatically; exposes `.migration_runner` property
+- `hive util init` now creates `~/.hiveos/data/` directory for persistent storage
+
+### Tests
+- **413 total** — 34 new tests (14 migration + 20 domain), all existing tests preserved
+
+---
+
 ## [0.9.0] — 2026-07-14
 
 ### Added

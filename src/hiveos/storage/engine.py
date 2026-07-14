@@ -15,11 +15,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from hiveos.storage.migrations import MigrationRunner, get_builtin_migrations
+
 
 class StorageEngine:
     """Thin SQLite wrapper — each namespace is a key→JSON-value table.
 
-    Thread-safe via an exclusive lock.
+    Thread-safe via an exclusive lock. Schema migrations run automatically
+    on first connect.
     """
 
     def __init__(self, db_path: Optional[Path | str] = None):
@@ -27,6 +30,7 @@ class StorageEngine:
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
         self._lock = threading.Lock()
         self._conn: Optional[sqlite3.Connection] = None
+        self.migration_runner: Optional[MigrationRunner] = None
         self._connect()
 
     # ------------------------------------------------------------------
@@ -137,6 +141,10 @@ class StorageEngine:
             """
         )
         self._conn.commit()
+        # Run schema migrations
+        self.migration_runner = MigrationRunner(self._conn)
+        self.migration_runner.register_all(get_builtin_migrations())
+        self.migration_runner.run_all()
 
     @staticmethod
     def _default_path() -> Path:
