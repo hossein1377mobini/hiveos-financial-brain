@@ -1,5 +1,4 @@
-"""
-HiveOS Mothership — Central orchestrator for satellite nodes.
+"""HiveOS Mothership — Central orchestrator for satellite nodes.
 
 The Mothership provides:
 - Agent Registry — node registration, capability declaration, heartbeat monitoring
@@ -7,6 +6,7 @@ The Mothership provides:
 - Communication Bus — cross-node agent messaging
 - Resilience — failure detection, health checks, task reassignment
 - Server — HTTP API for satellite communication
+- RBAC — role-based access control (Phase 5 Enterprise)
 """
 
 from .agent_registry import AgentRegistry, AgentCapability, AgentStatus, CapabilityDeclaration

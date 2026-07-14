@@ -7,7 +7,10 @@ Exposes endpoints for:
 - Health monitoring
 - Communication bus message exchange
 - Package sync triggers
+- RBAC user and role management
 """
+
+from __future__ import annotations
 
 import json
 import threading
@@ -18,6 +21,8 @@ from urllib.parse import urlparse, parse_qs
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 from rich.console import Console
+
+from ..rbac import Resource, Action, RBACManager, User, Role
 
 console = Console()
 
@@ -42,6 +47,14 @@ def _json_body(handler: BaseHTTPRequestHandler) -> Dict[str, Any]:
     return json.loads(raw)
 
 
+def _auth_header(handler: BaseHTTPRequestHandler) -> str:
+    """Extract API key from Authorization header (Bearer <key> or plain <key>)."""
+    auth = handler.headers.get("Authorization", "")
+    if auth.startswith("Bearer "):
+        return auth[7:]
+    return auth
+
+
 # ── Handler ──────────────────────────────────────────────────────────
 
 class MothershipHandler(BaseHTTPRequestHandler):
@@ -49,6 +62,35 @@ class MothershipHandler(BaseHTTPRequestHandler):
 
     # Set by MothershipServer before starting
     mothership: "MothershipServer" = None
+
+    def _require_auth(self, resource: Resource, action: Action):
+        """
+        Authenticate via API key and check RBAC permission.
+        Returns authenticated user or sends 401/403 response.
+        """
+        rbac: RBACManager = self.mothership.rbac
+        if not rbac:
+            # RBAC disabled — allow all
+            return True
+
+        api_key = _auth_header(self)
+        if not api_key:
+            _json_response(self, {"error": "Authorization header required"}, 401)
+            return False
+
+        user = rbac.authenticate(api_key)
+        if not user:
+            _json_response(self, {"error": "Invalid API key or user disabled"}, 401)
+            return False
+
+        if not rbac.check_permission(user, resource, action):
+            _json_response(self, {
+                "error": f"Forbidden: user '{user.username}' (role={user.role}) "
+                         f"lacks '{resource.value}:{action.value}'"
+            }, 403)
+            return False
+
+        return True
 
     def log_message(self, format, *args):
         """Suppress default HTTP logging."""
@@ -60,10 +102,18 @@ class MothershipHandler(BaseHTTPRequestHandler):
         path = parsed.path.rstrip("/")
         params = {k: v[0] for k, v in parse_qs(parsed.query).items()}
 
-        # Routing
+        # Public (no auth required)
         if path == "/api/v1/status":
             return self._handle_status()
-        elif path == "/api/v1/agents":
+
+        # RBAC — admin only
+        if path == "/api/v1/rbac/users":
+            return self._handle_rbac_users_list()
+        elif path == "/api/v1/rbac/roles":
+            return self._handle_rbac_roles_list()
+
+        # Protected endpoints
+        if path == "/api/v1/agents":
             return self._handle_agents_list()
         elif path.startswith("/api/v1/agents/") and path.count("/") == 4:
             name = path.split("/")[-1]
@@ -114,6 +164,12 @@ class MothershipHandler(BaseHTTPRequestHandler):
         elif path == "/api/v1/messages/publish":
             return self._handle_message_publish()
 
+        # RBAC
+        elif path == "/api/v1/rbac/users":
+            return self._handle_rbac_user_create()
+        elif path == "/api/v1/rbac/roles":
+            return self._handle_rbac_role_create()
+
         _json_response(self, {"error": "Not found"}, 404)
 
     def do_PUT(self):
@@ -123,6 +179,35 @@ class MothershipHandler(BaseHTTPRequestHandler):
 
         if path == "/api/v1/config":
             return self._handle_config_update()
+
+        # RBAC
+        if path.startswith("/api/v1/rbac/users/") and path.endswith("/role"):
+            username = path.split("/")[-2]
+            return self._handle_rbac_user_update_role(username)
+        elif path.startswith("/api/v1/rbac/users/") and path.endswith("/apikey"):
+            username = path.split("/")[-2]
+            return self._handle_rbac_user_update_apikey(username)
+        elif path.startswith("/api/v1/rbac/users/") and path.endswith("/enable"):
+            username = path.split("/")[-2]
+            return self._handle_rbac_user_enable(username)
+        elif path.startswith("/api/v1/rbac/users/") and path.endswith("/disable"):
+            username = path.split("/")[-2]
+            return self._handle_rbac_user_disable(username)
+
+        _json_response(self, {"error": "Not found"}, 404)
+
+    def do_DELETE(self):
+        """Handle DELETE requests."""
+        parsed = urlparse(self.path)
+        path = parsed.path.rstrip("/")
+
+        # RBAC
+        if path.startswith("/api/v1/rbac/users/"):
+            username = path.split("/")[-1]
+            return self._handle_rbac_user_delete(username)
+        elif path.startswith("/api/v1/rbac/roles/"):
+            role_name = path.split("/")[-1]
+            return self._handle_rbac_role_delete(role_name)
 
         _json_response(self, {"error": "Not found"}, 404)
 
@@ -139,12 +224,163 @@ class MothershipHandler(BaseHTTPRequestHandler):
             "tasks_completed": server.metrics.get("tasks_completed", 0),
             "tasks_failed": server.metrics.get("tasks_failed", 0),
             "bus_messages": server.metrics.get("bus_messages", 0),
+            "rbac_enabled": server.rbac is not None,
         }
         _json_response(self, status)
+
+    # ── RBAC ─────────────────────────────────────────────────────────
+
+    def _handle_rbac_users_list(self):
+        if not self._require_auth(Resource.RBAC, Action.READ):
+            return
+        rbac = self.mothership.rbac
+        users = rbac.list_users()
+        data = []
+        for u in users.values():
+            data.append({
+                "username": u.username,
+                "role": u.role,
+                "enabled": u.enabled,
+                "email": u.email,
+                "created_at": u.created_at,
+            })
+        _json_response(self, {"users": data, "total": len(data)})
+
+    def _handle_rbac_user_create(self):
+        if not self._require_auth(Resource.RBAC, Action.CREATE):
+            return
+        try:
+            body = _json_body(self)
+            username = body.get("username")
+            role_name = body.get("role", "viewer")
+            if not username:
+                _json_response(self, {"error": "Missing 'username'"}, 400)
+                return
+            user = User(
+                username=username,
+                role=role_name,
+                api_key=body.get("api_key", ""),
+                email=body.get("email", ""),
+            )
+            rbac = self.mothership.rbac
+            # Validate role exists
+            if not rbac.get_role(role_name):
+                _json_response(self, {"error": f"Role '{role_name}' does not exist"}, 400)
+                return
+            is_new = rbac.add_user(user)
+            _json_response(self, {"username": username, "created": is_new}, 201)
+        except Exception as e:
+            _json_response(self, {"error": str(e)}, 500)
+
+    def _handle_rbac_user_delete(self, username):
+        if not self._require_auth(Resource.RBAC, Action.DELETE):
+            return
+        rbac = self.mothership.rbac
+        if rbac.remove_user(username):
+            _json_response(self, {"removed": True})
+        else:
+            _json_response(self, {"error": f"User '{username}' not found"}, 404)
+
+    def _handle_rbac_user_update_role(self, username):
+        if not self._require_auth(Resource.RBAC, Action.UPDATE):
+            return
+        try:
+            body = _json_body(self)
+            role_name = body.get("role")
+            if not role_name:
+                _json_response(self, {"error": "Missing 'role'"}, 400)
+                return
+            rbac = self.mothership.rbac
+            if rbac.update_user_role(username, role_name):
+                _json_response(self, {"updated": True, "username": username, "role": role_name})
+            else:
+                _json_response(self, {"error": f"User '{username}' not found"}, 404)
+        except Exception as e:
+            _json_response(self, {"error": str(e)}, 500)
+
+    def _handle_rbac_user_update_apikey(self, username):
+        if not self._require_auth(Resource.RBAC, Action.UPDATE):
+            return
+        try:
+            body = _json_body(self)
+            api_key = body.get("api_key")
+            if not api_key:
+                _json_response(self, {"error": "Missing 'api_key'"}, 400)
+                return
+            rbac = self.mothership.rbac
+            if rbac.update_user_api_key(username, api_key):
+                _json_response(self, {"updated": True, "username": username})
+            else:
+                _json_response(self, {"error": f"User '{username}' not found"}, 404)
+        except Exception as e:
+            _json_response(self, {"error": str(e)}, 500)
+
+    def _handle_rbac_user_enable(self, username):
+        if not self._require_auth(Resource.RBAC, Action.UPDATE):
+            return
+        rbac = self.mothership.rbac
+        if rbac.enable_user(username, True):
+            _json_response(self, {"updated": True, "username": username, "enabled": True})
+        else:
+            _json_response(self, {"error": f"User '{username}' not found"}, 404)
+
+    def _handle_rbac_user_disable(self, username):
+        if not self._require_auth(Resource.RBAC, Action.UPDATE):
+            return
+        rbac = self.mothership.rbac
+        if rbac.enable_user(username, False):
+            _json_response(self, {"updated": True, "username": username, "enabled": False})
+        else:
+            _json_response(self, {"error": f"User '{username}' not found"}, 404)
+
+    def _handle_rbac_roles_list(self):
+        if not self._require_auth(Resource.RBAC, Action.READ):
+            return
+        rbac = self.mothership.rbac
+        roles = rbac.list_roles()
+        data = []
+        for r in roles.values():
+            data.append(r.to_dict())
+        _json_response(self, {"roles": data, "total": len(data)})
+
+    def _handle_rbac_role_create(self):
+        if not self._require_auth(Resource.RBAC, Action.CREATE):
+            return
+        try:
+            body = _json_body(self)
+            name = body.get("name")
+            if not name:
+                _json_response(self, {"error": "Missing 'name'"}, 400)
+                return
+            from ..rbac.models import Permission as RBACPermission
+            permissions = {RBACPermission.from_str(p) for p in body.get("permissions", [])}
+            role = Role(
+                name=name,
+                description=body.get("description", ""),
+                permissions=permissions,
+            )
+            rbac = self.mothership.rbac
+            if rbac.add_role(role):
+                _json_response(self, {"name": name, "created": True, "is_builtin": False}, 201)
+            else:
+                _json_response(self, {"error": f"Cannot create role '{name}' (built-in conflict)"}, 409)
+        except Exception as e:
+            _json_response(self, {"error": str(e)}, 500)
+
+    def _handle_rbac_role_delete(self, role_name):
+        if not self._require_auth(Resource.RBAC, Action.DELETE):
+            return
+        rbac = self.mothership.rbac
+        if rbac.remove_role(role_name):
+            _json_response(self, {"removed": True})
+        else:
+            _json_response(self, {"error": f"Cannot remove role '{role_name}' (built-in or in-use)"}, 409)
 
     # ── Agent Registration ──────────────────────────────────────────
 
     def _handle_agent_register(self):
+        if not self._require_auth(Resource.AGENT, Action.CREATE):
+            return
         try:
             body = _json_body(self)
             name = body.get("name")
@@ -174,6 +410,8 @@ class MothershipHandler(BaseHTTPRequestHandler):
             _json_response(self, {"error": str(e)}, 500)
 
     def _handle_agent_unregister(self):
+        if not self._require_auth(Resource.AGENT, Action.DELETE):
+            return
         try:
             body = _json_body(self)
             name = body.get("name")
@@ -186,6 +424,8 @@ class MothershipHandler(BaseHTTPRequestHandler):
             _json_response(self, {"error": str(e)}, 500)
 
     def _handle_agents_list(self):
+        if not self._require_auth(Resource.AGENT, Action.READ):
+            return
         agents = self.mothership.registry.list()
         data = []
         for a in agents:
@@ -201,6 +441,8 @@ class MothershipHandler(BaseHTTPRequestHandler):
         _json_response(self, {"agents": data, "total": len(data)})
 
     def _handle_agent_get(self, name):
+        if not self._require_auth(Resource.AGENT, Action.READ):
+            return
         agent = self.mothership.registry.get(name)
         if not agent:
             _json_response(self, {"error": f"Agent '{name}' not found"}, 404)
@@ -223,6 +465,7 @@ class MothershipHandler(BaseHTTPRequestHandler):
     # ── Heartbeat ──────────────────────────────────────────────────
 
     def _handle_heartbeat(self, name):
+        # Satellites send heartbeats — no auth needed (identified by name)
         try:
             body = _json_body(self)
             load = body.get("load")
@@ -237,6 +480,8 @@ class MothershipHandler(BaseHTTPRequestHandler):
     # ── Health ──────────────────────────────────────────────────────
 
     def _handle_health(self):
+        if not self._require_auth(Resource.MOTHERSHIP, Action.READ):
+            return
         if self.mothership.resilience:
             results = self.mothership.health_checker.check_all()
             data = {
@@ -248,6 +493,8 @@ class MothershipHandler(BaseHTTPRequestHandler):
             _json_response(self, {"error": "Resilience engine not configured"}, 503)
 
     def _handle_agent_health(self, name):
+        if not self._require_auth(Resource.AGENT, Action.READ):
+            return
         if self.mothership.health_checker:
             result = self.mothership.health_checker.check_node(name)
             _json_response(self, {
@@ -263,12 +510,16 @@ class MothershipHandler(BaseHTTPRequestHandler):
     # ── Capabilities ────────────────────────────────────────────────
 
     def _handle_capabilities(self):
+        if not self._require_auth(Resource.AGENT, Action.READ):
+            return
         caps = self.mothership.registry.list_capabilities()
         _json_response(self, {"capabilities": caps})
 
     # ── Tasks ───────────────────────────────────────────────────────
 
     def _handle_tasks_list(self):
+        if not self._require_auth(Resource.FLOW, Action.READ):
+            return
         tasks = []
         for task in self.mothership._tasks.values():
             tasks.append({
@@ -283,6 +534,8 @@ class MothershipHandler(BaseHTTPRequestHandler):
         _json_response(self, {"tasks": tasks, "total": len(tasks)})
 
     def _handle_task_assign(self):
+        if not self._require_auth(Resource.FLOW, Action.EXECUTE):
+            return
         try:
             body = _json_body(self)
             agent_id = body.get("agent_id")
@@ -325,6 +578,8 @@ class MothershipHandler(BaseHTTPRequestHandler):
             _json_response(self, {"error": str(e)}, 500)
 
     def _handle_task_complete(self, task_id):
+        if not self._require_auth(Resource.FLOW, Action.UPDATE):
+            return
         try:
             body = _json_body(self)
             task = self.mothership._tasks.get(task_id)
@@ -347,6 +602,8 @@ class MothershipHandler(BaseHTTPRequestHandler):
             _json_response(self, {"error": str(e)}, 500)
 
     def _handle_task_failed(self, task_id):
+        if not self._require_auth(Resource.FLOW, Action.UPDATE):
+            return
         try:
             body = _json_body(self)
             task = self.mothership._tasks.get(task_id)
@@ -371,6 +628,8 @@ class MothershipHandler(BaseHTTPRequestHandler):
             _json_response(self, {"error": str(e)}, 500)
 
     def _handle_task_progress(self, task_id):
+        if not self._require_auth(Resource.FLOW, Action.READ):
+            return
         try:
             body = _json_body(self)
             task = self.mothership._tasks.get(task_id)
@@ -385,6 +644,8 @@ class MothershipHandler(BaseHTTPRequestHandler):
     # ── Circuits ────────────────────────────────────────────────────
 
     def _handle_circuits(self):
+        if not self._require_auth(Resource.MOTHERSHIP, Action.READ):
+            return
         if not self.mothership.resilience:
             _json_response(self, {"error": "Resilience not configured"}, 503)
             return
@@ -396,10 +657,13 @@ class MothershipHandler(BaseHTTPRequestHandler):
     # ── Messages ────────────────────────────────────────────────────
 
     def _handle_messages_list(self, params):
-        # Placeholder for message log
+        if not self._require_auth(Resource.MOTHERSHIP, Action.READ):
+            return
         _json_response(self, {"messages": [], "total": 0})
 
     def _handle_message_publish(self):
+        if not self._require_auth(Resource.MOTHERSHIP, Action.EXECUTE):
+            return
         try:
             body = _json_body(self)
             msg_type = body.get("type")
@@ -429,6 +693,8 @@ class MothershipHandler(BaseHTTPRequestHandler):
     # ── Sync ────────────────────────────────────────────────────────
 
     def _handle_sync(self):
+        if not self._require_auth(Resource.MOTHERSHIP, Action.EXECUTE):
+            return
         try:
             from ..sync import SyncService, NodeRegistry
             service = SyncService(
@@ -447,9 +713,10 @@ class MothershipHandler(BaseHTTPRequestHandler):
     # ── Config ──────────────────────────────────────────────────────
 
     def _handle_config_update(self):
+        if not self._require_auth(Resource.MOTHERSHIP, Action.UPDATE):
+            return
         try:
             body = _json_body(self)
-            # Update metrics or config
             if "heartbeat_timeout" in body:
                 self.mothership.registry.heartbeat_timeout = body["heartbeat_timeout"]
             _json_response(self, {"updated": True})
@@ -459,6 +726,8 @@ class MothershipHandler(BaseHTTPRequestHandler):
     # ── Metrics ─────────────────────────────────────────────────────
 
     def _handle_metrics(self):
+        if not self._require_auth(Resource.MOTHERSHIP, Action.READ):
+            return
         metrics = dict(self.mothership.metrics)
         if self.mothership.resilience:
             metrics["resilience"] = self.mothership.resilience.get_status()
@@ -477,6 +746,7 @@ class MothershipServer:
     - Report task completions/failures
     - Trigger sync operations
     - Publish messages to the bus
+    - Manage RBAC users and roles
     """
 
     def __init__(
@@ -491,6 +761,7 @@ class MothershipServer:
         knowledge_dir: Optional[Path] = None,
         flow_dir: Optional[Path] = None,
         node_registry: Any = None,
+        rbac: Optional[RBACManager] = None,
     ):
         self.registry = registry
         self.task_router = task_router
@@ -502,7 +773,8 @@ class MothershipServer:
         self.port = port
         self.knowledge_dir = knowledge_dir or Path("docs")
         self.flow_dir = flow_dir or Path("prototype")
-        self.node_registry = node_registry  # Legacy NodeRegistry for sync
+        self.node_registry = node_registry
+        self.rbac = rbac  # Optional RBACManager
 
         self._httpd: Optional[HTTPServer] = None
         self._thread: Optional[threading.Thread] = None
@@ -520,7 +792,6 @@ class MothershipServer:
 
     def start(self, background: bool = True):
         """Start the Mothership HTTP server."""
-        # Inject server reference into handler
         MothershipHandler.mothership = self
 
         self._httpd = HTTPServer((self.host, self.port), MothershipHandler)
@@ -529,6 +800,8 @@ class MothershipServer:
             self._thread = threading.Thread(target=self._serve, daemon=True)
             self._thread.start()
             console.print(f"[green]🌍 Mothership server started on http://{self.host}:{self.port}[/green]")
+            if self.rbac:
+                console.print(f"[dim]🔐 RBAC enabled ({len(self.rbac.list_users())} users)[/dim]")
         else:
             self._serve()
 

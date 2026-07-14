@@ -19,6 +19,7 @@ from ..utils.config import ConfigManager
 from ..sync import NodeRegistry, SyncService, SYNC_DIR
 from ..mothership.communication_bus import MessageType, MessagePriority
 from ..mothership.task_router import RouteStrategy
+from ..rbac import RBACManager, User, Permission, Resource, Action
 
 console = Console()
 
@@ -729,6 +730,7 @@ def _get_server():
     router = _get_task_router()
     bus = _get_comm_bus()
     resilience = _get_resilience()
+    rbac = _get_rbac()
     return MothershipServer(
         registry=registry,
         task_router=router,
@@ -736,7 +738,15 @@ def _get_server():
         resilience=resilience,
         health_checker=resilience.health_checker,
         node_registry=LegacyNodeRegistry(),
+        rbac=rbac,
     )
+
+
+def _get_rbac():
+    """Get RBACManager instance."""
+    config = _load_config()
+    data_dir = Path(config.get("rbac.data_dir", str(Path.home() / ".hiveos")))
+    return RBACManager(data_dir=data_dir)
 
 
 @mothership.group()
@@ -1241,3 +1251,221 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# ── RBAC Commands ──────────────────────────────────────────────────────
+
+@hive.group()
+def rbac():
+    """🔐 Role-Based Access Control."""
+    pass
+
+
+# ── RBAC Users ─────────────────────────────────────────────────────────
+
+@rbac.group()
+def user():
+    """Manage RBAC users."""
+    pass
+
+
+@user.command(name="list")
+def rbac_user_list():
+    """List all users."""
+    mgr = _get_rbac()
+    users = mgr.list_users()
+    if not users:
+        console.print("[yellow]No users found[/yellow]")
+        return
+    from rich.table import Table
+    table = Table(title="🔐 RBAC Users")
+    table.add_column("Username", style="cyan")
+    table.add_column("Role", style="green")
+    table.add_column("Enabled", style="white")
+    table.add_column("Email", style="dim")
+    for u in users.values():
+        table.add_row(u.username, u.role, "✅" if u.enabled else "❌", u.email or "-")
+    console.print(table)
+
+
+@user.command(name="add")
+@click.argument("username")
+@click.option("--role", default="viewer", help="Role name (default: viewer)")
+@click.option("--api-key", help="API key (auto-generated if omitted)")
+@click.option("--email", help="Email address")
+def rbac_user_add(username, role, api_key, email):
+    """Add a new RBAC user."""
+    mgr = _get_rbac()
+    existing = mgr.get_user(username)
+    if existing:
+        console.print(f"[red]❌ User '{username}' already exists[/red]")
+        raise SystemExit(1)
+    if not mgr.get_role(role):
+        console.print(f"[red]❌ Role '{role}' does not exist[/red]")
+        raise SystemExit(1)
+    import uuid
+    key = api_key or f"hive-{uuid.uuid4().hex[:16]}"
+    user_obj = User(
+        username=username,
+        role=role,
+        api_key=key,
+        email=email or "",
+    )
+    mgr.add_user(user_obj)
+    console.print(f"[green]✅ User '{username}' created (role: {role})[/green]")
+    console.print(f"[dim]   API Key: {key}[/dim]")
+
+
+@user.command(name="remove")
+@click.argument("username")
+def rbac_user_remove(username):
+    """Remove an RBAC user."""
+    mgr = _get_rbac()
+    if mgr.remove_user(username):
+        console.print(f"[green]🗑️ User '{username}' removed[/green]")
+    else:
+        console.print(f"[red]❌ User '{username}' not found[/red]")
+        raise SystemExit(1)
+
+
+@user.command(name="set-role")
+@click.argument("username")
+@click.argument("role")
+def rbac_user_set_role(username, role):
+    """Change a user's role."""
+    mgr = _get_rbac()
+    if not mgr.get_role(role):
+        console.print(f"[red]❌ Role '{role}' does not exist[/red]")
+        raise SystemExit(1)
+    if mgr.update_user_role(username, role):
+        console.print(f"[green]✅ User '{username}' role set to '{role}'[/green]")
+    else:
+        console.print(f"[red]❌ User '{username}' not found[/red]")
+        raise SystemExit(1)
+
+
+@user.command(name="set-api-key")
+@click.argument("username")
+@click.argument("api_key")
+def rbac_user_set_api_key(username, api_key):
+    """Update a user's API key."""
+    mgr = _get_rbac()
+    if mgr.update_user_api_key(username, api_key):
+        console.print(f"[green]✅ API key updated for '{username}'[/green]")
+    else:
+        console.print(f"[red]❌ User '{username}' not found[/red]")
+        raise SystemExit(1)
+
+
+@user.command(name="enable")
+@click.argument("username")
+def rbac_user_enable(username):
+    """Enable a user."""
+    mgr = _get_rbac()
+    if mgr.enable_user(username, True):
+        console.print(f"[green]✅ User '{username}' enabled[/green]")
+    else:
+        console.print(f"[red]❌ User '{username}' not found[/red]")
+        raise SystemExit(1)
+
+
+@user.command(name="disable")
+@click.argument("username")
+def rbac_user_disable(username):
+    """Disable a user."""
+    mgr = _get_rbac()
+    if mgr.enable_user(username, False):
+        console.print(f"[yellow]🔒 User '{username}' disabled[/yellow]")
+    else:
+        console.print(f"[red]❌ User '{username}' not found[/red]")
+        raise SystemExit(1)
+
+
+# ── RBAC Roles ─────────────────────────────────────────────────────────
+
+@rbac.group()
+def role():
+    """Manage RBAC roles."""
+    pass
+
+
+@role.command(name="list")
+def rbac_role_list():
+    """List all roles."""
+    mgr = _get_rbac()
+    roles = mgr.list_roles()
+    if not roles:
+        console.print("[yellow]No roles found[/yellow]")
+        return
+    from rich.table import Table
+    table = Table(title="🔐 RBAC Roles")
+    table.add_column("Role", style="cyan")
+    table.add_column("Description", style="white")
+    table.add_column("Permissions", style="dim")
+    table.add_column("Built-in", style="yellow")
+    for r in roles.values():
+        perms = sorted(p.to_str() for p in r.permissions)
+        perms_str = ", ".join(perms[:5])
+        if len(perms) > 5:
+            perms_str += f" ... (+{len(perms)-5})"
+        table.add_row(r.name, r.description, perms_str, "✅" if r.is_builtin else "❌")
+    console.print(table)
+
+
+@role.command(name="show")
+@click.argument("role_name")
+def rbac_role_show(role_name):
+    """Show role details."""
+    mgr = _get_rbac()
+    r = mgr.get_role(role_name)
+    if not r:
+        console.print(f"[red]❌ Role '{role_name}' not found[/red]")
+        raise SystemExit(1)
+    console.print(f"[bold]🔐 Role:[/bold] {r.name}")
+    console.print(f"[bold]Description:[/bold] {r.description or '-'}")
+    console.print(f"[bold]Built-in:[/bold] {'✅' if r.is_builtin else '❌'}")
+    console.print("")
+    perms = sorted(p.to_str() for p in r.permissions)
+    console.print(f"[bold]Permissions ({len(perms)}):[/bold]")
+    for p in perms:
+        console.print(f"  • {p}")
+
+
+@role.command(name="add")
+@click.argument("name")
+@click.option("--description", default="", help="Role description")
+@click.option("--permission", "permissions", multiple=True, help="Permission in 'resource:action' format (can repeat)")
+def rbac_role_add(name, description, permissions):
+    """Add a custom role."""
+    mgr = _get_rbac()
+    from ..rbac.models import Permission as RBACPermission
+    perms = set()
+    for p in permissions:
+        try:
+            perms.add(RBACPermission.from_str(p))
+        except ValueError as e:
+            console.print(f"[red]❌ Invalid permission '{p}': {e}[/red]")
+            raise SystemExit(1)
+    role_obj = Role(
+        name=name,
+        description=description,
+        permissions=perms,
+    )
+    if mgr.add_role(role_obj):
+        console.print(f"[green]✅ Role '{name}' created[/green]")
+        console.print(f"[dim]   Permissions: {len(perms)}[/dim]")
+    else:
+        console.print(f"[red]❌ Could not create role '{name}' (built-in conflict)[/red]")
+        raise SystemExit(1)
+
+
+@role.command(name="remove")
+@click.argument("name")
+def rbac_role_remove(name):
+    """Remove a custom role (not built-in)."""
+    mgr = _get_rbac()
+    if mgr.remove_role(name):
+        console.print(f"[green]🗑️ Role '{name}' removed[/green]")
+    else:
+        console.print(f"[red]❌ Could not remove role '{name}' (built-in or in-use)[/red]")
+        raise SystemExit(1)

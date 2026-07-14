@@ -5,24 +5,41 @@
 
 ---
 
-## 📌 Current Phase: Phase 4 — Mothership (Complete ✅)
+## 📌 Current Phase: Phase 5 — Enterprise (In Progress 🏗️)
 
-Phase 0 (Foundation) ✅ | Phase 1 (Playground) ✅ | Phase 2 (Integration) ✅ | Phase 3 (Packaging) ✅ | **Phase 4 (Mothership) ✅**
+Phase 0 (Foundation) ✅ | Phase 1 (Playground) ✅ | Phase 2 (Integration) ✅ | Phase 3 (Packaging) ✅ | Phase 4 (Mothership) ✅ | **Phase 5 (Enterprise) 🏗️**
 
 ---
 
-## 🎯 Next Up: Phase 4 — Mothership
+## 🎯 Current Work: Phase 5 — Enterprise
 
-File: `src/hiveos/mothership/`
+File: `src/hiveos/rbac/`
 
-- **Agent Registry** — node registration, capability declaration
-- **Task routing** — route tasks by capability + load
-- **Communication Bus** — cross-node agent messaging
-- **Resilience** — node failure → task reassignment
+- 🔐 **RBAC** — Role-based access control (✅ Complete)
+  - 4 built-in roles: admin, operator, viewer, deployer
+  - Custom roles with arbitrary permissions
+  - User management with API key auth
+  - `hive rbac` CLI with user/role subcommands
+  - HTTP server auth middleware on all endpoints
+- 📜 **Audit Trail** — ⏳ Next
+- 📊 **Dashboard** — ⏳ Planned
+- 🏢 **Multi-tenant** — ⏳ Planned
+- 💰 **Pricing model** — ⏳ Planned
 
 ---
 
 ## 📋 Session History
+
+### v0.5.0 (2026-07-14) — Phase 5: Enterprise (RBAC) ✅
+
+| Component | File | Description |
+|-----------|------|-------------|
+| RBAC Models | `src/hiveos/rbac/models.py` | Resource, Action, Permission, Role, User dataclasses + 4 built-in roles |
+| RBAC Manager | `src/hiveos/rbac/manager.py` | YAML-backed persistence, authenticate(), check_permission(), full CRUD |
+| RBAC Server Auth | `src/hiveos/mothership/server.py` | `_require_auth()` middleware on all HTTP endpoints, RBAC management API |
+| RBAC CLI | `src/hiveos/cli/main.py` | `hive rbac user` (add/list/remove/set-role/set-api-key/enable/disable) + `hive rbac role` (add/list/show/remove) |
+| RBAC tests | `tests/test_rbac.py` | 36 tests covering models, manager, permissions, persistence, auth |
+| Test results | 160/160 | `python -m pytest tests/ -v` → 160 passed in 9.3s |
 
 ### v0.4.0 (2026-07-14) — Phase 4: Mothership ✅
 
@@ -115,8 +132,13 @@ hive
 - [x] Mothership Server — FastAPI HTTP REST API for satellite nodes
 - [x] Mothership CLI — `hive mothership` with 5 subcommand groups
 
-### Phase 5: Enterprise
-- [ ] RBAC, Audit trail, Dashboard, Multi-tenant, Pricing
+### Phase 5: Enterprise 🏗️
+
+- [x] **RBAC** — Role-based access control (models, manager, server auth, CLI, 36 tests)
+- [ ] **Audit Trail** — Every action logged, traceable (uses gbrain PGLite)
+- [ ] **Dashboard** — Web UI to monitor agents, flows, and nodes
+- [ ] **Multi-tenant** — Isolated workspaces per team/org
+- [ ] **Pricing model** — License tiers
 
 ---
 
