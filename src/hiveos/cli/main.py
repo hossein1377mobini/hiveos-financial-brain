@@ -23,9 +23,9 @@ from ..rbac import RBACManager, User, Permission, Resource, Action
 
 console = Console()
 
-BANNER = """
+BANNER = """\
 ╔══════════════════════════════════════╗
-║           HiveOS v0.6.0              ║
+║           HiveOS v0.9.0              ║
 ║    Multi-Agent Operating System      ║
 ╚══════════════════════════════════════╝
 """
@@ -54,7 +54,7 @@ def hive(version):
     Orchestrate teams of AI agents with declarative YAML workflows.
     """
     if version:
-        rprint(Panel("[bold cyan]HiveOS v0.6.0[/bold cyan]\n"
+        rprint(Panel("[bold cyan]HiveOS v0.9.0[/bold cyan]\n"
                      "Multi-Agent Operating System", width=50))
         raise SystemExit(0)
 
@@ -507,8 +507,14 @@ deliver:
   format: markdown
 """)
     
+    # Initialize global data directory
+    from ..storage.engine import StorageEngine
+    data_dir = Path.home() / ".hiveos" / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    
     console.print("[green]✅ HiveOS project initialized![/green]")
     console.print(f"\nProject structure created at: {cwd}")
+    console.print(f"Global data directory: {data_dir}")
     console.print("\nNext steps:")
     console.print("  1. Edit flows/hello-world.yml")
     console.print("  2. Run: [cyan]hive flow run flows/hello-world.yml[/cyan]")
@@ -527,7 +533,7 @@ def info():
     info_table.add_column("Value", style="white")
     
     import sys
-    info_table.add_row("Version", "0.6.0")
+    info_table.add_row("Version", "0.9.0")
     info_table.add_row("Python", sys.version.split()[0])
     info_table.add_row("Config Path", str(config.config_path))
     info_table.add_row("Working Dir", str(Path.cwd()))

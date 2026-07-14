@@ -16,9 +16,11 @@
 | Phase 4 (Mothership) | ✅ | v0.4.0 |
 | Phase 5 (Enterprise) | ✅ | v0.6.0 |
 | Phase D1 (Accounting) | 🏗️ 70% | v0.6.0 |
-| Phase 6 (Playground) | ✅ Core APIs | v0.7.0 |
-| Phase 7 (Brain) | ✅ Core Engine | v0.7.0 |
-| Phase 8 (Learning) | ✅ Passive Logger | v0.7.0 |
+| Phase 6 (Playground) | ✅ Full (APIs + Canvas + Runner) | v0.8.0 |
+| Phase 7 (Brain) | ✅ Full (Engine + API + 3D Viz) | v0.8.0 |
+| Phase 8 (Learning) | ✅ Full (Logger + Analytics) | v0.8.0 |
+| Phase S (Storage) | ✅ SQLite Persistence | v0.9.0 |
+| **CL (Standardisation)** | **🏗️ CHANGELOG + CI** | **v0.9.0** |
 
 ---
 
@@ -40,7 +42,7 @@ HiveOS is a **Multi-Agent Operating System** with 5 pillars:
 
 ---
 
-## ✅ What's Built (v0.7.0 — 329 tests)
+## ✅ What's Built (v0.9.0 — 379 tests)
 
 ### Core Infrastructure
 | Component | Test Count | Status |
@@ -58,29 +60,45 @@ HiveOS is a **Multi-Agent Operating System** with 5 pillars:
 | Workspace (Multi-tenant) | 38 | ✅ |
 | License (Pricing) | 32 | ✅ |
 
-### ✅ Phase 6: Playground — Part 1 (v0.7.0)
+### ✅ Phase 6: Playground — Full (v0.8.0)
 | Task | Status | Description |
 |------|--------|-------------|
 | **P-01** `POST /api/playground/validate` | ✅ | Flow YAML validation with rich errors/warnings |
 | **P-02** `POST /api/playground/auto-agents` | ✅ | Task description → auto-select domain agents (keyword scoring) |
 | **P-03** `GET /api/playground/templates` | ✅ | Browse domain flow templates with metadata |
-| **P-04** Visual Canvas (React Flow) | ⏳ | Next session |
-| **P-05** Run/Debug + WebSocket | ⏳ | Next session |
+| **P-04** Visual Canvas (HTML5 Canvas in Dashboard) | ✅ | Drag & drop flow builder |
+| **P-05** `POST /api/playground/run` + WS streaming | ✅ | Async execution + WebSocket event stream |
 
-### ✅ Phase 7: Brain — Part 1 (v0.7.0)
+### ✅ Phase 7: Brain — Full (v0.8.0)
 | Task | Status | Description |
 |------|--------|-------------|
 | **B-01** Event Stream Pipeline | ✅ | Agent lifecycle events with filtering + stats |
 | **B-02** Decision Tracer | ✅ | Trace every decision path + step tracking |
 | **B-03** Approval Gate Engine | ✅ | Create/approve/reject/expire gates with stats |
 | **B-04** Brain API (REST) | ✅ | All routes: /api/brain/events, /traces, /gates |
-| **B-05** 3D Neural View | ⏳ | Next session |
+| **B-05** 3D Neural View (Three.js/WebGL) | ✅ | Interactive agent topology visualization |
 
-### ✅ Phase 8: Learning — Part 1 (v0.7.0)
+### ✅ Phase 8: Learning — Full (v0.8.0)
 | Task | Status | Description |
 |------|--------|-------------|
 | **L-01** Execution Logger | ✅ | Passive in-memory collection + stats + trends |
-| **L-02** Execution Analytics | ⏳ | Next session |
+| **L-02** Execution Analytics | ✅ | Trend analysis, bottleneck detection, failure patterns |
+
+### ✅ Phase S: Storage — SQLite Persistence (v0.9.0)
+| Task | Status | Description |
+|------|--------|-------------|
+| **S-01** StorageEngine (SQLite) | ✅ | Generic key-value store, WAL mode, thread-safe |
+| **S-02** Brain persistence | ✅ | EventStream, DecisionTracer, ApprovalGateEngine persist to SQLite |
+| **S-03** Learning persistence | ✅ | ExecutionLogger logs survive restarts |
+| **S-04** Playground persistence | ✅ | FlowRunner state saved/restored |
+| **S-05** Data directory init | ✅ | `~/.hiveos/data/` auto-created on first run and via `hive util init` |
+
+### ✅ CL: Standardisation (v0.9.0)
+| Task | Status | Description |
+|------|--------|-------------|
+| **CL-01** CHANGELOG.md | ✅ | Keep a Changelog format |
+| **CL-02** CI (GA pytest on push) | ✅ | `.github/workflows/test.yml` |
+| **CL-03** Auto-update skeleton | ⏳ | Next sprint |
 
 ### CLI Commands
 ```
@@ -99,20 +117,19 @@ hive
 
 ---
 
-## 🎯 Next: Phase 6 — Playground Canvas UI
+## 🎯 Next: Phase D1 — Accounting Domain + Storage Improvements
 
 ### What to Build Next
 
 | Priority | Task | Layer | Status |
 |----------|------|-------|--------|
-| 🔴 | **P-04** Visual Canvas — HTML5 Canvas flow builder in dashboard | 🎮 Playground | ✅ Done |
-| 🔴 | **P-05** `POST /api/playground/run` + `WS /api/playground/run/{id}/stream` | 🎮 Playground | ✅ Done |
-| 🔴 | **P-06** Approval Gates UI in dashboard | 🎮 Playground | ✅ Done |
-| 🔴 | **B-05** 3D Neural View — Three.js/WebGL in dashboard | 🧠 Brain | ✅ Done |
 | 🟡 | **P-07** Template Customizer | 🎮 Playground | ⏳ |
 | 🟡 | **P-08** Flow Library (save/share user flows) | 🎮 Playground | ⏳ |
-| 🟡 | **L-02** Execution Analytics + Pattern Recognition | 📈 Learning | ✅ Done |
 | 🟢 | **D-04** Hermes skills for accounting agents | 🧩 Domains | ⏳ |
+| 🟢 | **D-05** Domain Plugin CLI (`hive domain list/info/install`) | 🧩 Domains | ⏳ |
+| 🟢 | **S-06** Migration system for StorageEngine | 🗄️ Storage | ⏳ |
+| 🟢 | **CL-03** Auto-update skeleton | 🔧 Standardisation | ⏳ |
+| ⬜ | **v0.10.0** Windows Native Sprint (Tauri shell) | 🪟 All | ⏳ |
 
 ---
 
@@ -167,6 +184,8 @@ git add -A && git commit -m "..." && git push origin main
 | **2026-07-14** | **v0.7.0** | **Playground Core APIs + Brain Engine + Learning Logger (329 tests)** |
 | **Next** | **v0.8.0** | **Playground Canvas + Runner + Gates UI + Brain 3D + Learning Analytics** |
 | **2026-07-14** | **v0.8.0** | **Canvas+Viz Sprint: P-04 Flow Canvas, P-05 Runner+WS, P-06 Gates UI, B-05 3D Neural View, L-02 Analytics (366 tests)** |
+| **2026-07-14** | **v0.9.0** | **Persistence Sprint: S-01..S-05 StorageEngine + SQLite for all modules + CHANGELOG + CI (379 tests)** |
+| **Next** | **v0.10.0** | **Domain Sprint: D-04 Skills + D-05 Plugin CLI + S-06 Migrations + CL-03 Auto-update** |
 
 ---
 

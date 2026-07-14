@@ -20,12 +20,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Persistence for Playground:**
   - `PlaygroundRunner` — FlowRun state saved on every status change; restored from `playground:runs` namespace at startup
 - **Endgame Vision section** in `AGENTS.md` — phased roadmap to Windows Native (Tauri → PyInstaller → MSI → Auto-Update → CI/CD)
+- **Data directory init** — `hive util init` now creates `~/.hiveos/data/` directory for persistent storage
+- **GitHub Actions CI** — `.github/workflows/test.yml` runs pytest on push/PR to `main`
 
 ### Changed
 - `DashboardApp` — all modules now share a single `StorageEngine` instance via `data_dir/hiveos.db`
 - `DashboardServer` — `stop()` closes the storage connection; storage exposed via `_dashboard_app`
 - `PlaygroundRunner.__init__` — accepts optional `storage` parameter; class-level `_storage` and `_namespace` for cross-instance persistence
 - `EventStream.__init__`, `DecisionTracer.__init__`, `ApprovalGateEngine.__init__`, `ExecutionLogger.__init__` — accept optional `storage` parameter; restore on init
+- Bumped version strings to `0.9.0` in `__init__.py`, `config.py`, `cli/main.py` (banner, version flag, info command)
 
 ### Fixed
 - `TemporaryDirectory` cleanup errors in dashboard tests — added `storage.close()` in fixtures and `__del__` on `StorageEngine`

@@ -147,8 +147,8 @@ Instead of sequential phases, **every build session advances all 5 layers togeth
 |-------|-------|--------|
 | 🗄️ **Storage** | **S-01** SQLite StorageEngine ✅ · **S-02** Persist Brain (EventStream, Traces, Gates) ✅ | ✅ Done |
 | 🗄️ **Storage** | **S-03** Persist Learning (ExecutionLogs) ✅ · **S-04** Persist Playground (FlowRuns) ✅ | ✅ Done |
-| 🗄️ **Storage** | **S-05** Data directory init on first run · **S-06** Migration system | ⏳ |
-| 🔧 **Standardisation** | **CL-01** CHANGELOG.md · **CL-02** CI (GA pytest on push) · **CL-03** Auto-update skeleton | ⏳ |
+| 🗄️ **Storage** | **S-05** Data directory init on first run · **S-06** Migration system | ✅ S-05 · ⏳ S-06 |
+| 🔧 **Standardisation** | **CL-01** CHANGELOG.md · **CL-02** CI (GA pytest on push) · **CL-03** Auto-update skeleton | ✅ CL-01 · ✅ CL-02 · ⏳ CL-03 |
 
 ### Session N+3 — Windows Native Sprint 🪟 (v0.10.0)
 
@@ -228,9 +228,10 @@ flowchart LR
 
 ```
 |Phase 0-5 (Infrastructure):  ████████████████████████ 100%  (273 tests)
-|Layer 🗄️ Storage:            ████████████████████████  80%  (S-01..S-04 done)
+|Layer 🗄️ Storage:            ██████████████████████████  90%  (S-01..S-05 done)
 |Layer 🧩 Domains (D1):      ████████████████░░░░░░░░  70%
 |Layer 🎮 Playground:        ████████████████░░░░░░░░░  50%  (P-01..P-05 done)
 |Layer 🧠 Brain:             ██████████████████░░░░░░░░  40%  (B-01..B-05 done)
 |Layer 📈 Learning:          ██████████████████░░░░░░░░  40%  (L-01/L-02 done)
+|Layer 🔧 Standardisation:   ████████████████░░░░░░░░░  40%  (CL-01/CL-02 done)
 ```
