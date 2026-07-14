@@ -408,6 +408,7 @@ class DashboardApp:
                     "username": getattr(u, 'username', ''),
                     "role": getattr(u, 'role', ''),
                     "enabled": getattr(u, 'enabled', True),
+                    "workspace": getattr(u, 'workspace', 'default'),
                 })
             roles = []
             for r in getattr(self.rbac, '_roles', getattr(self.rbac, 'roles', {})).values():
@@ -458,3 +459,24 @@ class DashboardApp:
                         except Exception:
                             domains.append({"name": d.name, "label": d.name, "error": "parse failed"})
             return {"domains": domains}
+
+        @app.get("/api/workspaces")
+        async def list_workspaces():
+            """List workspaces from the WorkspaceManager."""
+            from ..workspace import WorkspaceManager
+            mgr = WorkspaceManager()
+            workspaces = mgr.list_workspaces()
+            return {
+                "workspaces": [
+                    {
+                        "id": ws.workspace_id,
+                        "name": ws.name,
+                        "description": ws.description,
+                        "owner": ws.owner,
+                        "members": ws.member_count,
+                        "active": ws.active,
+                        "created_at": ws.created_at[:10] if ws.created_at else "",
+                    }
+                    for ws in workspaces
+                ]
+            }

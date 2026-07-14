@@ -107,12 +107,13 @@ class Role:
 
 @dataclass
 class User:
-    """A user identity with assigned role(s) and API key."""
+    """A user identity with assigned role(s), API key, and workspace scope."""
     username: str
     role: str = "viewer"  # role name (references Role.name)
     api_key: str = ""
     enabled: bool = True
     email: str = ""
+    workspace: str = "default"  # workspace scope
     created_at: str = ""
 
     def __post_init__(self):
@@ -126,6 +127,7 @@ class User:
             "api_key": self.api_key,
             "enabled": self.enabled,
             "email": self.email,
+            "workspace": self.workspace,
             "created_at": self.created_at,
         }
 
@@ -137,6 +139,7 @@ class User:
             api_key=data.get("api_key", ""),
             enabled=data.get("enabled", True),
             email=data.get("email", ""),
+            workspace=data.get("workspace", "default"),
             created_at=data.get("created_at", ""),
         )
 

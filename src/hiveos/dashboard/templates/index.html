@@ -251,6 +251,7 @@
     <div class="nav-item" data-page="bus"><span class="nav-icon">📨</span> Bus</div>
     <div class="nav-item" data-page="audit"><span class="nav-icon">📜</span> Audit</div>
     <div class="nav-item" data-page="rbac"><span class="nav-icon">🔐</span> RBAC</div>
+    <div class="nav-item" data-page="workspaces"><span class="nav-icon">🏢</span> Workspaces</div>
     <div class="nav-item" data-page="domains"><span class="nav-icon">🧩</span> Domains</div>
   </nav>
 </aside>
@@ -321,9 +322,17 @@
       <h2>🔐 RBAC</h2>
     </div>
     <div class="grid grid-2">
-      <div class="card"><div class="card-header"><h3>👥 Users</h3></div><div class="table-wrap"><table><thead><tr><th>Username</th><th>Role</th><th>Enabled</th></tr></thead><tbody id="rbac-users-body"></tbody></table></div></div>
+      <div class="card"><div class="card-header"><h3>👥 Users</h3></div><div class="table-wrap"><table><thead><tr><th>Username</th><th>Role</th><th>Workspace</th><th>Enabled</th></tr></thead><tbody id="rbac-users-body"></tbody></table></div></div>
       <div class="card"><div class="card-header"><h3>🛡️ Roles</h3></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>Permissions</th></tr></thead><tbody id="rbac-roles-body"></tbody></table></div></div>
     </div>
+  </section>
+
+  <!-- WORKSPACES -->
+  <section class="page" id="page-workspaces">
+    <div class="page-header">
+      <h2>🏢 Workspaces</h2>
+    </div>
+    <div class="card"><div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Owner</th><th>Members</th><th>Active</th><th>Created</th></tr></thead><tbody id="workspaces-body"></tbody></table></div></div>
   </section>
 
   <!-- DOMAINS -->
@@ -498,8 +507,8 @@ async function loadRBAC() {
   const data = await api(BASE+'/api/rbac');
   if (!data.users) return;
   document.getElementById('rbac-users-body').innerHTML = (data.users||[]).map(u =>
-    '<tr><td><strong>'+u.username+'</strong></td><td>'+statusBadge(u.role)+'</td><td>'+(u.enabled ? '<span class="badge badge-green">✓ Enabled</span>' : '<span class="badge badge-red">✗ Disabled</span>')+'</td></tr>'
-  ).join('') || '<tr><td colspan="3"><div class="empty-state">No users</div></td></tr>';
+    '<tr><td><strong>'+u.username+'</strong></td><td>'+statusBadge(u.role)+'</td><td class="text-muted">'+(u.workspace||'default')+'</td><td>'+(u.enabled ? '<span class="badge badge-green">✓ Enabled</span>' : '<span class="badge badge-red">✗ Disabled</span>')+'</td></tr>'
+  ).join('') || '<tr><td colspan="4"><div class="empty-state">No users</div></td></tr>';
   document.getElementById('rbac-roles-body').innerHTML = (data.roles||[]).map(r =>
     '<tr><td><strong>'+r.name+'</strong></td><td class="text-muted">'+(r.permissions||[]).join(', ') || '—'+'</td></tr>'
   ).join('') || '<tr><td colspan="2"><div class="empty-state">No roles</div></td></tr>';
@@ -514,6 +523,15 @@ async function loadDomains() {
   ).join('') || '<tr><td colspan="4"><div class="empty-state">🧩 No domain plugins installed</div></td></tr>';
 }
 
+// ─── Workspaces ───
+async function loadWorkspaces() {
+  const data = await api(BASE+'/api/workspaces');
+  if (!data.workspaces) return;
+  document.getElementById('workspaces-body').innerHTML = (data.workspaces||[]).map(w =>
+    '<tr><td class="text-muted" style="font-family:var(--font-mono)">'+w.id+'</td><td><strong>'+w.name+'</strong><br><span class="text-muted" style="font-size:11px">'+w.description.slice(0,40)+'</span></td><td>'+w.owner+'</td><td>'+w.members+'</td><td>'+(w.active ? '<span class="badge badge-green">✓ Active</span>' : '<span class="badge badge-red">✗ Inactive</span>')+'</td><td class="text-muted">'+w.created_at+'</td></tr>'
+  ).join('') || '<tr><td colspan="6"><div class="empty-state">🏢 No workspaces</div></td></tr>';
+}
+
 // ─── Poll ───
 function loadAll() {
   loadOverview();
@@ -524,6 +542,7 @@ function loadAll() {
   loadAudit();
   loadRBAC();
   loadDomains();
+  loadWorkspaces();
 }
 
 loadAll();

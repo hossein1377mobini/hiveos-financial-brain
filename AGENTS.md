@@ -13,12 +13,12 @@ Phase 0 (Foundation) ✅ | Phase 1 (Playground) ✅ | Phase 2 (Integration) ✅ 
 
 ## 🎯 Current Work: Phase 5 — Enterprise
 
-File: `src/hiveos/rbac/`, `src/hiveos/audit/`, `src/hiveos/dashboard/`
+File: `src/hiveos/rbac/`, `src/hiveos/audit/`, `src/hiveos/dashboard/`, `src/hiveos/workspace/`
 
 - 🔐 **RBAC** — Role-based access control (✅ Complete)
 - 📜 **Audit Trail** — JSONL + gbrain PGLite (✅ Complete)
 - 📊 **Dashboard** — Web UI for agents/flows/nodes monitoring (✅ Complete)
-- 🏢 **Multi-tenant** — ⏳ Planned
+- 🏢 **Multi-tenant** — Workspace isolation per team/org (✅ Complete)
 - 💰 **Pricing model** — ⏳ Planned
 
 ---
@@ -215,3 +215,16 @@ git add -A && git commit -m "feat: ..." && git push origin master
 | Dashboard CLI | `src/hiveos/cli/main.py` | `hive dashboard start/stop/status` commands |
 | Dashboard tests | `tests/test_dashboard.py` | 23 tests covering API endpoints, server lifecycle, mock integration |
 | Test results | 203/203 | `python -m pytest tests/ -v` → 203 passed in 11.7s |
+
+### v0.5.3 (2026-07-14) — Phase 5: Multi-tenant ✅
+
+| Component | File | Description |
+|-----------|------|-------------|
+| Workspace Models | `src/hiveos/workspace/models.py` | Workspace, WorkspaceSettings, WorkspaceMember, WorkspaceRole (5-level hierarchy) |
+| Workspace Manager | `src/hiveos/workspace/manager.py` | YAML-backed CRUD, data isolation (agents/flows/audit/config dirs per workspace), member management |
+| RBAC Integration | `src/hiveos/rbac/models.py` | User.workspace field for workspace-scoped identity |
+| Workspace CLI | `src/hiveos/cli/main.py` | `hive workspace create/list/info/update/remove/activate` + `hive workspace member add/remove/set-role` |
+| Dashboard API | `src/hiveos/dashboard/server.py` | `GET /api/workspaces` endpoint + workspace column in RBAC users table |
+| Dashboard UI | `src/hiveos/dashboard/templates/index.html` | Workspaces tab in sidebar |
+| Workspace tests | `tests/test_workspace.py` | 38 tests covering models, manager, members, RBAC integration |
+| Test results | 241/241 | `python -m pytest tests/ -v` → 241 passed in 12.2s |

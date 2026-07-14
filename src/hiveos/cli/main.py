@@ -1687,3 +1687,132 @@ def dashboard_status():
         console.print(f"   URL: {status['url']}")
     else:
         console.print("[yellow]⏸️  Dashboard is not running[/yellow]")
+
+
+# ── Workspace Commands ───────────────────────────────────────────────
+
+@hive.group()
+def workspace():
+    """🏢 Workspaces — multi-tenant isolation per team/org."""
+    pass
+
+
+@workspace.command(name="create")
+@click.argument("name")
+@click.option("--description", default="", help="Workspace description")
+@click.option("--owner", default="admin", help="Owner username")
+@click.option("--id", "ws_id", default=None, help="Custom workspace ID")
+def workspace_create(name, description, owner, ws_id):
+    """Create a new workspace with isolated data directories."""
+    from ..workspace import WorkspaceManager
+    mgr = WorkspaceManager()
+    ws = mgr.create_workspace(
+        name=name,
+        description=description,
+        owner=owner,
+        workspace_id=ws_id,
+    )
+    mgr.display_info(ws)
+
+
+@workspace.command(name="list")
+@click.option("--all", "show_all", is_flag=True, help="Include inactive workspaces")
+def workspace_list(show_all):
+    """List all workspaces."""
+    from ..workspace import WorkspaceManager
+    mgr = WorkspaceManager()
+    workspaces = mgr.list_workspaces(include_inactive=show_all)
+    mgr.display_table(workspaces)
+
+
+@workspace.command(name="info")
+@click.argument("workspace_id")
+def workspace_info(workspace_id):
+    """Show detailed workspace information."""
+    from ..workspace import WorkspaceManager
+    mgr = WorkspaceManager()
+    ws = mgr.get_workspace(workspace_id)
+    if not ws:
+        console.print(f"[red]❌ Workspace '{workspace_id}' not found[/red]")
+        raise SystemExit(1)
+    mgr.display_info(ws)
+
+
+@workspace.command(name="update")
+@click.argument("workspace_id")
+@click.option("--name", help="New workspace name")
+@click.option("--description", help="New description")
+def workspace_update(workspace_id, name, description):
+    """Update workspace metadata."""
+    from ..workspace import WorkspaceManager
+    mgr = WorkspaceManager()
+    ws = mgr.update_workspace(workspace_id, name=name, description=description)
+    if ws:
+        mgr.display_info(ws)
+
+
+@workspace.command(name="remove")
+@click.argument("workspace_id")
+@click.option("--permanent", is_flag=True, help="Permanently delete all data")
+def workspace_remove(workspace_id, permanent):
+    """Remove/deactivate a workspace."""
+    from ..workspace import WorkspaceManager
+    mgr = WorkspaceManager()
+    mgr.remove_workspace(workspace_id, permanent=permanent)
+
+
+@workspace.command(name="activate")
+@click.argument("workspace_id")
+def workspace_activate(workspace_id):
+    """Reactivate a deactivated workspace."""
+    from ..workspace import WorkspaceManager
+    mgr = WorkspaceManager()
+    mgr.activate_workspace(workspace_id)
+
+
+@workspace.group()
+def member():
+    """Manage workspace members."""
+    pass
+
+
+@member.command(name="add")
+@click.argument("workspace_id")
+@click.argument("username")
+@click.option("--role", default="viewer", help="Workspace role: owner, admin, operator, contributor, viewer")
+def workspace_member_add(workspace_id, username, role):
+    """Add a member to a workspace."""
+    from ..workspace import WorkspaceManager, WorkspaceRole
+    mgr = WorkspaceManager()
+    try:
+        ws_role = WorkspaceRole(role)
+    except ValueError:
+        console.print(f"[red]❌ Invalid role '{role}'. Valid: owner, admin, operator, contributor, viewer[/red]")
+        raise SystemExit(1)
+    mgr.add_member(workspace_id, username, ws_role)
+
+
+@member.command(name="remove")
+@click.argument("workspace_id")
+@click.argument("username")
+def workspace_member_remove(workspace_id, username):
+    """Remove a member from a workspace."""
+    from ..workspace import WorkspaceManager
+    mgr = WorkspaceManager()
+    mgr.remove_member(workspace_id, username)
+
+
+@member.command(name="set-role")
+@click.argument("workspace_id")
+@click.argument("username")
+@click.argument("role")
+def workspace_member_set_role(workspace_id, username, role):
+    """Change a member's workspace role."""
+    from ..workspace import WorkspaceManager, WorkspaceRole
+    mgr = WorkspaceManager()
+    try:
+        ws_role = WorkspaceRole(role)
+    except ValueError:
+        console.print(f"[red]❌ Invalid role '{role}'. Valid: owner, admin, operator, contributor, viewer[/red]")
+        raise SystemExit(1)
+    mgr.set_member_role(workspace_id, username, ws_role)
