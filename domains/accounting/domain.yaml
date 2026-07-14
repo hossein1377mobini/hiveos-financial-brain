@@ -1,0 +1,471 @@
+# ============================================================
+# Accounting Domain — HiveOS Domain Plugin
+# ============================================================
+# اولین دامنه تخصصی HiveOS. منبع دانش:
+# - سرفصل رسمی کارشناسی حسابداری ۱۴۰۴ (وزارت علوم)
+# - سرفصل رسمی کارشناسی ارشد حسابداری ۱۴۰۲ (دانشگاه تهران)
+# ============================================================
+
+domain:
+  name: "accounting"
+  version: "1.0.0-dev"
+  label:
+    fa: "حسابداری"
+    en: "Accounting"
+  description:
+    fa: >
+      دامنه تخصصی حسابداری و مالی برای HiveOS.
+      شامل تمام شاخه‌های دانش حسابداری از ثبت رویدادهای مالی تا حسابرسی،
+      مالیات، مدیریت مالی، بازار سرمایه و فناوری‌های نوین.
+      این دامنه از سرفصل‌های رسمی آموزش عالی ایران استخراج شده و
+      برای ایجنت‌های تخصصی، جریان‌های کاری استاندارد و موتور قوانین طراحی شده است.
+    en: >
+      Accounting and finance domain for HiveOS.
+      Covers all branches: financial accounting, cost accounting, auditing,
+      taxation, capital markets, public sector, AI/ML in accounting, and governance.
+      Built from official Iranian higher education accounting curricula.
+
+  # وابستگی به دامنه‌های دیگر (فعلاً هیچ)
+  depends_on: []
+
+  # ایجنت هماهنگ‌کننده اصلی دامنه — درگاه ورود همه درخواست‌ها
+  orchestrator_agent: "master-financial-assistant"
+
+  metadata:
+    authors:
+      - "Hossein Mobini (PhD Researcher — CVC/Entrepreneurship)"
+    tags:
+      - accounting
+      - finance
+      - auditing
+      - taxation
+      - financial-reporting
+      - management-accounting
+      - capital-market
+      - public-sector
+      - ai-in-accounting
+    source_syllabus:
+      - "کارشناسی حسابداری ۱۴۰۴ — وزارت علوم، تحقیقات و فناوری"
+      - "کارشناسی ارشد حسابداری ۱۴۰۲ — دانشگاه تهران"
+    homepage: "https://github.com/hossein1377mobini/hiveos-financial-brain"
+
+  # ============================================================
+  # Agent Blueprints
+  # ============================================================
+  # هر ایجنت یک نقش تخصصی در تیم حسابداری است
+  agents:
+    - id: master-financial-assistant
+      label:
+        fa: "دستیار ارشد مالی"
+        en: "Master Financial Assistant"
+      description:
+        fa: "ایجنت Orchestrator سطح ۳ — نقطه ورود تمام سوالات مالی و حسابداری"
+        en: "Level 3 orchestrator — entry point for all accounting/finance queries"
+      type: orchestrator
+      sub_agents:
+        - financial-orchestrator
+        - management-orchestrator
+        - audit-orchestrator
+        - tax-orchestrator
+        - advisory-orchestrator
+
+    # ── سطح ۲: Orchestratorها ──
+    - id: financial-orchestrator
+      label:
+        fa: "هماهنگ‌کننده مالی"
+        en: "Financial Orchestrator"
+      description:
+        fa: "هماهنگی بین ثبت‌کننده و گزارش‌گر مالی — چرخه کامل بستن حساب"
+      type: orchestrator
+      sub_agents:
+        - financial-recorder
+        - financial-reporter
+        - standards-advisor
+      covers: ["A"]
+
+    - id: management-orchestrator
+      label:
+        fa: "هماهنگ‌کننده مدیریت"
+        en: "Management Orchestrator"
+      type: orchestrator
+      sub_agents:
+        - cost-analyst
+        - budget-planner
+        - performance-advisor
+        - strategy-advisor
+      covers: ["B"]
+
+    - id: audit-orchestrator
+      label:
+        fa: "هماهنگ‌کننده حسابرسی"
+        en: "Audit Orchestrator"
+      type: orchestrator
+      sub_agents:
+        - auditor
+        - internal-controller
+        - it-auditor
+        - forensic-accountant
+      covers: ["C"]
+
+    - id: tax-orchestrator
+      label:
+        fa: "هماهنگ‌کننده مالیاتی"
+        en: "Tax Orchestrator"
+      type: orchestrator
+      sub_agents:
+        - tax-specialist
+        - tax-strategist
+      covers: ["D"]
+
+    - id: advisory-orchestrator
+      label:
+        fa: "هماهنگ‌کننده مشاوره"
+        en: "Advisory Orchestrator"
+      type: orchestrator
+      sub_agents:
+        - investment-analyst
+        - valuation-expert
+        - financial-institutions-specialist
+        - public-sector-accountant
+      covers: ["E", "F"]
+
+    # ── سطح ۱: ایجنت‌های تخصصی ──
+    - id: financial-recorder
+      label:
+        fa: "ثبت‌کننده مالی"
+        en: "Financial Recorder"
+      description:
+        fa: "ثبت رویدادهای مالی، صدور اسناد حسابداری، اصلاحات و بستن حساب"
+      type: specialist
+      covers: ["A1", "A6"]
+      skills:
+        - journal-entry
+        - reconciliation
+        - trial-balance
+        - closing-entries
+      knowledge_paths: ["A1", "A6"]
+
+    - id: financial-reporter
+      label:
+        fa: "گزارش‌گر مالی"
+        en: "Financial Reporter"
+      type: specialist
+      covers: ["A2", "A3", "A4", "A5", "A7"]
+      skills:
+        - financial-statements
+        - consolidation
+        - disclosures
+        - cash-flow
+
+    - id: standards-advisor
+      label:
+        fa: "مشاور استانداردها"
+        en: "Standards Advisor"
+      type: specialist
+      covers: ["A6"]
+      skills:
+        - ifrs
+        - ir-gaap
+        - standards-comparison
+
+    - id: cost-analyst
+      label:
+        fa: "تحلیلگر بهای تمام شده"
+        en: "Cost Analyst"
+      type: specialist
+      covers: ["B1", "B3", "B6"]
+      skills:
+        - costing
+        - variance-analysis
+        - cvp-analysis
+        - abc-costing
+
+    - id: budget-planner
+      label:
+        fa: "برنامه‌ریز بودجه"
+        en: "Budget Planner"
+      type: specialist
+      covers: ["B2", "B4"]
+      skills:
+        - budgeting
+        - forecasting
+        - capital-budgeting
+        - kpi-dashboard
+
+    - id: performance-advisor
+      label:
+        fa: "مشاور عملکرد"
+        en: "Performance Advisor"
+      type: specialist
+      covers: ["B4", "B5"]
+      skills:
+        - balanced-scorecard
+        - performance-metrics
+        - value-chain
+
+    - id: strategy-advisor
+      label:
+        fa: "مشاور استراتژیک"
+        en: "Strategy Advisor"
+      type: specialist
+      covers: ["I3", "I4", "B5"]
+      skills:
+        - competitive-analysis
+        - industry-analysis
+        - strategic-planning
+
+    - id: auditor
+      label:
+        fa: "حسابرس"
+        en: "Auditor"
+      type: specialist
+      covers: ["C1", "C2", "C3", "C6"]
+      skills:
+        - audit-planning
+        - audit-sampling
+        - risk-assessment
+        - audit-evidence
+        - audit-reporting
+
+    - id: internal-controller
+      label:
+        fa: "کنترل‌گر داخلی"
+        en: "Internal Controller"
+      type: specialist
+      covers: ["C4", "H1"]
+      skills:
+        - internal-control
+        - coso-framework
+        - risk-management
+        - compliance
+
+    - id: it-auditor
+      label:
+        fa: "حسابرس سیستم‌های اطلاعاتی"
+        en: "IT Auditor"
+      type: specialist
+      covers: ["C5", "G3"]
+      skills:
+        - it-audit
+        - caats
+        - cybersecurity-audit
+        - erp-controls
+
+    - id: forensic-accountant
+      label:
+        fa: "حسابرس دادگاهی"
+        en: "Forensic Accountant"
+      type: specialist
+      covers: ["C6.2", "G2"]
+      skills:
+        - fraud-detection
+        - forensic-accounting
+        - anomaly-detection
+
+    - id: tax-specialist
+      label:
+        fa: "متخصص مالیاتی"
+        en: "Tax Specialist"
+      type: specialist
+      covers: ["D1", "D2", "D3"]
+      skills:
+        - tax-calculation
+        - tax-return
+        - vat
+        - tax-litigation
+
+    - id: tax-strategist
+      label:
+        fa: "استراتژیست مالیاتی"
+        en: "Tax Strategist"
+      type: specialist
+      covers: ["D4"]
+      skills:
+        - transfer-pricing
+        - tax-planning
+        - international-tax
+
+    - id: investment-analyst
+      label:
+        fa: "تحلیلگر سرمایه‌گذاری"
+        en: "Investment Analyst"
+      type: specialist
+      covers: ["E1", "E2", "E3"]
+      skills:
+        - fundamental-analysis
+        - technical-analysis
+        - portfolio-theory
+        - risk-analysis
+
+    - id: valuation-expert
+      label:
+        fa: "کارشناس ارزش‌گذاری"
+        en: "Valuation Expert"
+      type: specialist
+      covers: ["E4"]
+      skills:
+        - dcf-valuation
+        - multiples
+        - residual-income
+
+    - id: financial-institutions-specialist
+      label:
+        fa: "متخصص نهادهای مالی"
+        en: "Financial Institutions Specialist"
+      type: specialist
+      covers: ["E5"]
+      skills:
+        - banking-accounting
+        - insurance-accounting
+        - fund-accounting
+
+    - id: public-sector-accountant
+      label:
+        fa: "حسابدار بخش عمومی"
+        en: "Public Sector Accountant"
+      type: specialist
+      covers: ["F1", "F2", "F3", "F4", "F5"]
+      skills:
+        - government-accounting
+        - ipsas
+        - fund-accounting
+        - municipal-accounting
+
+    - id: data-analyst
+      label:
+        fa: "تحلیلگر داده"
+        en: "Data Analyst"
+      type: specialist
+      covers: ["G1", "J1"]
+      skills:
+        - data-preparation
+        - visualization
+        - dashboard
+        - statistical-analysis
+
+    - id: ml-engineer
+      label:
+        fa: "مهندس یادگیری ماشین"
+        en: "ML/AI Engineer"
+      type: specialist
+      covers: ["G2", "G3", "J2"]
+      skills:
+        - ml-models
+        - nlp-finance
+        - anomaly-detection
+        - time-series
+
+    - id: blockchain-accountant
+      label:
+        fa: "حسابدار بلاکچین"
+        en: "Blockchain Accountant"
+      type: specialist
+      covers: ["G4"]
+      skills:
+        - crypto-accounting
+        - defi-audit
+        - blockchain-analysis
+
+    - id: rpa-developer
+      label:
+        fa: "توسعه‌دهنده RPA"
+        en: "RPA Developer"
+      type: specialist
+      covers: ["G6"]
+      skills:
+        - invoice-processing
+        - auto-reconciliation
+        - report-automation
+
+    - id: compliance-officer
+      label:
+        fa: "مسئول انطباق و اخلاق"
+        en: "Ethics & Compliance Officer"
+      type: specialist
+      covers: ["H2", "H4"]
+      skills:
+        - ethics-check
+        - aml-screening
+        - kyc
+
+    - id: research-methodologist
+      label:
+        fa: "روش‌شناس پژوهش"
+        en: "Research Methodologist"
+      type: specialist
+      covers: ["J3"]
+      skills:
+        - research-design
+        - econometrics
+        - methodology
+
+  # ============================================================
+  # Flow Templates
+  # ============================================================
+  flows:
+    - id: financial-close
+      label:
+        fa: "بستن حساب پایان دوره"
+        en: "Period-End Closing"
+      file: "flows/financial-close.yaml"
+      agents_needed:
+        - financial-recorder
+        - financial-reporter
+        - financial-orchestrator
+
+    - id: tax-return-prep
+      label:
+        fa: "تهیه اظهارنامه مالیاتی"
+        en: "Tax Return Preparation"
+      file: "flows/tax-return.yaml"
+      agents_needed:
+        - tax-specialist
+        - tax-strategist
+        - financial-reporter
+
+    - id: audit-engagement
+      label:
+        fa: "انجام قرارداد حسابرسی"
+        en: "Audit Engagement"
+      file: "flows/audit-engagement.yaml"
+      agents_needed:
+        - auditor
+        - internal-controller
+        - it-auditor
+        - audit-orchestrator
+
+    - id: company-valuation
+      label:
+        fa: "ارزش‌گذاری شرکت"
+        en: "Company Valuation"
+      file: "flows/company-valuation.yaml"
+      agents_needed:
+        - investment-analyst
+        - valuation-expert
+        - financial-reporter
+
+    - id: budget-annual
+      label:
+        fa: "تهیه بودجه سالانه"
+        en: "Annual Budget Preparation"
+      file: "flows/annual-budget.yaml"
+      agents_needed:
+        - budget-planner
+        - performance-advisor
+        - cost-analyst
+
+    - id: fraud-investigation
+      label:
+        fa: "بررسی تقلب مالی"
+        en: "Fraud Investigation"
+      file: "flows/fraud-investigation.yaml"
+      agents_needed:
+        - forensic-accountant
+        - auditor
+        - ml-engineer
+        - compliance-officer
+
+  # ============================================================
+  # Knowledge Tree
+  # ============================================================
+  knowledge_tree: "knowledge/tree.yaml"

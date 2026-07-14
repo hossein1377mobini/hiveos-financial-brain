@@ -98,6 +98,32 @@ hive registry list/search/info     → all working
 
 ---
 
+## 🧩 Domain Plugin Architecture (NEW)
+
+HiveOS is a **domain-agnostic OS** — any knowledge domain (accounting, medical, legal, engineering) can be installed as a domain plugin.
+
+```
+hive-os/
+├── core/                      # Domain-agnostic (Flow Engine, Agent Registry, ...)
+├── domains/                   # ★ Domain plugins
+│   ├── accounting/            # First domain: Accounting & Finance
+│   │   ├── domain.yaml        # Domain manifest
+│   │   ├── knowledge/
+│   │   │   ├── tree.yaml      # ★ Knowledge tree (10 branches, 200+ nodes)
+│   │   │   └── references/    # Books, standards, laws
+│   │   ├── agents/
+│   │   │   └── blueprints/    # 24 agent blueprints
+│   │   └── flows/             # 6 flow templates
+│   └── <next-domain>/         # Future: Medical, Legal, ...
+└── registry/                  # Domain package catalog
+```
+
+**Documents created this session:**
+- `docs/01-Vision/02-domain-ecosystem-vision.md` — Multi-domain vision
+- `docs/02-Architecture/03-domain-plugin-system.md` — Domain plugin architecture
+- `domains/accounting/domain.yaml` — Accounting domain manifest (24 agents, 6 flows)
+- `domains/accounting/knowledge/tree.yaml` — Full knowledge tree from official curricula
+
 ## 🏗️ Architecture at a Glance
 
 ```

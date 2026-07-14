@@ -1,0 +1,2370 @@
+# ============================================================
+# Accounting Knowledge Tree 🌳
+# ============================================================
+# درخت دانش کامل حسابداری — استخراج شده از سرفصل‌های رسمی
+# کارشناسی ۱۴۰۴ و ارشد ۱۴۰۲ وزارت علوم ایران
+#
+# ساختار:
+#   A-Z = شاخه‌های اصلی
+#   A1-A9 = زیرشاخه سطح ۱
+#   A1.1-A1.9 = زیرشاخه سطح ۲
+#   A1.1.1-A1.1.9 = زیرشاخه سطح ۳ (جزئیات)
+#
+# هر گره می‌تواند دارای:
+#   - label: نام فارسی و انگلیسی
+#   - description: توضیح مختصر
+#   - ref: منابع اطلاعاتی مرتبط
+#   - tags: برچسب‌های جستجو
+#   - agent_id: ایجنت پیش‌فرضی که این گره را پوشش می‌دهد
+#   - priority: اولویت برای پیاده‌سازی (1=فوری, 2=مهم, 3=آینده)
+# ============================================================
+
+version: "1.0.0"
+domain: "accounting"
+label:
+  fa: "درخت دانش حسابداری"
+  en: "Accounting Knowledge Tree"
+
+nodes:
+  # ============================================================
+  # [A] FINANCIAL ACCOUNTING & REPORTING | حسابداری مالی و گزارشگری
+  # ============================================================
+  - id: "A"
+    label:
+      fa: "حسابداری مالی و گزارشگری"
+      en: "Financial Accounting & Reporting"
+    description:
+      fa: "ثبت، طبقه‌بندی و گزارش رویدادهای مالی بر اساس استانداردهای حسابداری"
+      en: "Recording, classifying, and reporting financial events per accounting standards"
+    children:
+
+      # ── A1: Transaction Recording ──
+      - id: "A1"
+        label:
+          fa: "ثبت رویدادهای مالی"
+          en: "Transaction Recording"
+        description:
+          fa: "ثبت رویدادهای اقتصادی در دفاتر حسابداری — از اسناد اولیه تا تراز آزمایشی"
+        priority: 1
+        agent_id: "financial-recorder"
+        ref:
+          books:
+            - "کتاب اصول حسابداری ۱ و ۲"
+            - "کتاب حسابداری میانه ۱"
+          standards:
+            - "IAS 1: Presentation of Financial Statements"
+            - "Conceptual Framework for Financial Reporting"
+        children:
+
+          - id: "A1.1"
+            label:
+              fa: "اسناد اولیه و مبانی ثبت"
+            priority: 1
+            children:
+              - id: "A1.1.1"
+                label:
+                  fa: "معادله حسابداری"
+              - id: "A1.1.2"
+                label:
+                  fa: "حساب‌های دائمی و موقت"
+              - id: "A1.1.3"
+                label:
+                  fa: "ثبت رویدادها در روزنامه"
+              - id: "A1.1.4"
+                label:
+                  fa: "انتقال به دفتر کل"
+              - id: "A1.1.5"
+                label:
+                  fa: "تهیه تراز آزمایشی"
+
+          - id: "A1.2"
+            label:
+              fa: "اصلاحات و بستن حساب‌ها"
+            priority: 1
+            children:
+              - id: "A1.2.1"
+                label:
+                  fa: "ثبت اصلاحی (Accruals & Deferrals)"
+              - id: "A1.2.2"
+                label:
+                  fa: "بستن حساب‌های موقت"
+              - id: "A1.2.3"
+                label:
+                  fa: "تراز آزمایشی پس از اصلاح"
+              - id: "A1.2.4"
+                label:
+                  fa: "تهیه صورت‌های مالی پایه"
+
+          - id: "A1.3"
+            label:
+              fa: "تطبیق حساب‌ها (Reconciliation)"
+            priority: 1
+            children:
+              - id: "A1.3.1"
+                label:
+                  fa: "تطبیق بانکی"
+              - id: "A1.3.2"
+                label:
+                  fa: "تطبیق حساب‌های دریافتنی"
+              - id: "A1.3.3"
+                label:
+                  fa: "تطبیق موجودی کالا"
+
+      # ── A2: Intermediate Accounting ──
+      - id: "A2"
+        label:
+          fa: "حسابداری میانه"
+          en: "Intermediate Accounting"
+        description:
+          fa: "حسابداری عناصر اصلی صورت‌های مالی — دارایی‌ها، بدهی‌ها، حقوق صاحبان سهام"
+        priority: 1
+        agent_id: "financial-reporter"
+        ref:
+          books:
+            - "کتاب حسابداری میانه ۱ و ۲"
+          standards:
+            - "IAS 2: Inventories"
+            - "IAS 7: Statement of Cash Flows"
+            - "IAS 16: Property, Plant & Equipment"
+            - "IAS 36: Impairment of Assets"
+            - "IAS 37: Provisions, Contingent Liabilities & Contingent Assets"
+        children:
+
+          - id: "A2.1"
+            label:
+              fa: "وجه نقد و دریافتنی‌ها"
+            priority: 1
+            children:
+              - id: "A2.1.1"
+                label:
+                  fa: "مدیریت وجه نقد"
+              - id: "A2.1.2"
+                label:
+                  fa: "حساب‌ها و اسناد دریافتنی"
+              - id: "A2.1.3"
+                label:
+                  fa: "ذخیره مطالبات مشکوک‌الوصول"
+
+          - id: "A2.2"
+            label:
+              fa: "موجودی کالا (Inventory)"
+            priority: 1
+            children:
+              - id: "A2.2.1"
+                label:
+                  fa: "روش‌های قیمت‌گذاری موجودی (FIFO, LIFO, میانگین)"
+              - id: "A2.2.2"
+                label:
+                  fa: "سیستم ادواری و دائمی"
+              - id: "A2.2.3"
+                label:
+                  fa: "کاهش ارزش موجودی (LCM)"
+              - id: "A2.2.4"
+                label:
+                  fa: "تخمین موجودی (روش ناخالص و خرده‌فروشی)"
+
+          - id: "A2.3"
+            label:
+              fa: "دارایی‌های ثابت و استهلاک"
+            priority: 1
+            children:
+              - id: "A2.3.1"
+                label:
+                  fa: "شناسایی و اندازه‌گیری اولیه"
+              - id: "A2.3.2"
+                label:
+                  fa: "روش‌های استهلاک (خط مستقیم، نزولی، مجموع سنوات)"
+              - id: "A2.3.3"
+                label:
+                  fa: "تجدید ارزیابی و کاهش ارزش"
+              - id: "A2.3.4"
+                label:
+                  fa: "مخارج بعد از تحصیل (تعمیرات اساسی)"
+
+          - id: "A2.4"
+            label:
+              fa: "دارایی‌های نامشهود"
+            priority: 2
+            children:
+              - id: "A2.4.1"
+                label:
+                  fa: "شناسایی و اندازه‌گیری"
+              - id: "A2.4.2"
+                label:
+                  fa: "استهلاک و کاهش ارزش دارایی‌های نامشهود"
+              - id: "A2.4.3"
+                label:
+                  fa: "سرقفلی (Goodwill)"
+              - id: "A2.4.4"
+                label:
+                  fa: "تحقیق و توسعه"
+
+          - id: "A2.5"
+            label:
+              fa: "بدهی‌ها و ذخایر"
+            priority: 1
+            children:
+              - id: "A2.5.1"
+                label:
+                  fa: "بدهی‌های جاری"
+              - id: "A2.5.2"
+                label:
+                  fa: "بدهی‌های بلندمدت و اوراق قرضه"
+              - id: "A2.5.3"
+                label:
+                  fa: "ذخایر و بدهی‌های احتمالی"
+              - id: "A2.5.4"
+                label:
+                  fa: "اجاره‌ها (Leases) — IFRS 16"
+
+          - id: "A2.6"
+            label:
+              fa: "حقوق صاحبان سهام"
+            priority: 1
+            children:
+              - id: "A2.6.1"
+                label:
+                  fa: "سرمایه و انواع سهام"
+              - id: "A2.6.2"
+                label:
+                  fa: "سود انباشته و اندوخته‌ها"
+              - id: "A2.6.3"
+                label:
+                  fa: "سود تقسیمی (Dividends)"
+              - id: "A2.6.4"
+                label:
+                  fa: "خرید سهام و سود هر سهم (EPS)"
+              - id: "A2.6.5"
+                label:
+                  fa: "سود جامع (Other Comprehensive Income)"
+
+          - id: "A2.7"
+            label:
+              fa: "شناسایی درآمد"
+            priority: 1
+            children:
+              - id: "A2.7.1"
+                label:
+                  fa: "مدل ۵ مرحله‌ای شناسایی درآمد — IFRS 15"
+              - id: "A2.7.2"
+                label:
+                  fa: "قراردادهای بلندمدت (درصد پیشرفت)"
+              - id: "A2.7.3"
+                label:
+                  fa: "فروش اقساطی و نسیه"
+
+      # ── A3: Advanced Accounting ──
+      - id: "A3"
+        label:
+          fa: "حسابداری پیشرفته"
+          en: "Advanced Accounting"
+        priority: 2
+        agent_id: "financial-reporter"
+        ref:
+          books:
+            - "کتاب حسابداری پیشرفته ۱ و ۲"
+          standards:
+            - "IFRS 3: Business Combinations"
+            - "IFRS 10: Consolidated Financial Statements"
+            - "IAS 21: Foreign Exchange"
+        children:
+
+          - id: "A3.1"
+            label:
+              fa: "صورت‌های مالی تلفیقی"
+            priority: 2
+            children:
+              - id: "A3.1.1"
+                label:
+                  fa: "روش خرید و تلفیق کامل"
+              - id: "A3.1.2"
+                label:
+                  fa: "سهم اقلیت و عدم کنترل"
+              - id: "A3.1.3"
+                label:
+                  fa: "حذف معاملات درون‌گروهی"
+              - id: "A3.1.4"
+                label:
+                  fa: "روش ارزش ویژه در سرمایه‌گذاری"
+
+          - id: "A3.2"
+            label:
+              fa: "حسابداری ارز خارجی"
+            priority: 3
+            children:
+              - id: "A3.2.1"
+                label:
+                  fa: "تبدیل ارز و تفاوت نرخ"
+              - id: "A3.2.2"
+                label:
+                  fa: "عملیات خارجی — IAS 21"
+
+          - id: "A3.3"
+            label:
+              fa: "حسابداری مشارکت‌ها"
+            priority: 3
+            children:
+              - id: "A3.3.1"
+                label:
+                  fa: "شرکت‌های تضامنی و سهامی خاص"
+              - id: "A3.3.2"
+                label:
+                  fa: "انحلال و تصفیه"
+
+          - id: "A3.4"
+            label:
+              fa: "ترکیب واحدهای تجاری"
+            priority: 2
+            children:
+              - id: "A3.4.1"
+                label:
+                  fa: "شناسایی و اندازه‌گیری — IFRS 3"
+              - id: "A3.4.2"
+                label:
+                  fa: "سرقفلی و سود خرید"
+
+      # ── A4: Financial Statements ──
+      - id: "A4"
+        label:
+          fa: "صورت‌های مالی"
+          en: "Financial Statements"
+        priority: 1
+        agent_id: "financial-reporter"
+        children:
+
+          - id: "A4.1"
+            label:
+              fa: "ترازنامه (Balance Sheet)"
+          - id: "A4.2"
+            label:
+              fa: "صورت سود و زیان"
+          - id: "A4.3"
+            label:
+              fa: "صورت جریان وجوه نقد (Cash Flow)"
+            children:
+              - id: "A4.3.1"
+                label:
+                  fa: "روش مستقیم"
+              - id: "A4.3.2"
+                label:
+                  fa: "روش غیرمستقیم"
+          - id: "A4.4"
+            label:
+              fa: "صورت تغییرات حقوق صاحبان سهام"
+          - id: "A4.5"
+            label:
+              fa: "یادداشت‌های توضیحی و افشا"
+
+      # ── A5: Accounting Theory ──
+      - id: "A5"
+        label:
+          fa: "تئوری حسابداری"
+          en: "Accounting Theory"
+        priority: 3
+        agent_id: "financial-reporter"
+        ref:
+          books:
+            - "کتاب تئوری حسابداری ۱ و ۲ — مهرانی و کرمی"
+            - "Scott, W. Financial Accounting Theory"
+            - "Watts & Zimmerman. Positive Accounting Theory"
+        children:
+
+          - id: "A5.1"
+            label:
+              fa: "چارچوب مفهومی گزارشگری مالی"
+            priority: 2
+            children:
+              - id: "A5.1.1"
+                label:
+                  fa: "بدیهیات، مفروضات و اصول"
+              - id: "A5.1.2"
+                label:
+                  fa: "ویژگی‌های کیفی اطلاعات مالی"
+              - id: "A5.1.3"
+                label:
+                  fa: "عناصر صورت‌های مالی"
+
+          - id: "A5.2"
+            label:
+              fa: "تئوری‌های اندازه‌گیری"
+            priority: 3
+            children:
+              - id: "A5.2.1"
+                label:
+                  fa: "بهای تاریخی در برابر بهای جاری"
+              - id: "A5.2.2"
+                label:
+                  fa: "خالص ارزش فروش و ارزش جایگزینی"
+              - id: "A5.2.3"
+                label:
+                  fa: "اندازه‌گیری در شرایط تورمی"
+
+          - id: "A5.3"
+            label:
+              fa: "تئوری اثباتی حسابداری (PAT)"
+            priority: 3
+            children:
+              - id: "A5.3.1"
+                label:
+                  fa: "فرضیه پاداش (Bonus Plan)"
+              - id: "A5.3.2"
+                label:
+                  fa: "فرضیه بدهی (Debt Covenant)"
+              - id: "A5.3.3"
+                label:
+                  fa: "فرضیه هزینه سیاسی (Political Cost)"
+
+          - id: "A5.4"
+            label:
+              fa: "تحقیقات بازار سرمایه"
+            priority: 3
+            children:
+              - id: "A5.4.1"
+                label:
+                  fa: "محتوای اطلاعاتی سود (Ball & Brown)"
+              - id: "A5.4.2"
+                label:
+                  fa: "ضریب واکنش سود (ERC)"
+              - id: "A5.4.3"
+                label:
+                  fa: "تئوری بازار کارا"
+
+          - id: "A5.5"
+            label:
+              fa: "تئوری نمایندگی و مدیریت سود"
+            priority: 2
+            children:
+              - id: "A5.5.1"
+                label:
+                  fa: "مسأله نمایندگی و خطر اخلاقی"
+              - id: "A5.5.2"
+                label:
+                  fa: "مدیریت سود (انواع، الگوها، انگیزه‌ها)"
+              - id: "A5.5.3"
+                label:
+                  fa: "مدیریت سود خوب در برابر بد"
+
+          - id: "A5.6"
+            label:
+              fa: "پارادایم‌های تحقیق در حسابداری"
+            priority: 3
+            children:
+              - id: "A5.6.1"
+                label:
+                  fa: "روش‌شناسی اثباتی، تفسیری و انتقادی"
+              - id: "A5.6.2"
+                label:
+                  fa: "شش پارادایم معروف حسابداری"
+
+      # ── A6: Standards ──
+      - id: "A6"
+        label:
+          fa: "استانداردهای حسابداری"
+          en: "Accounting Standards"
+        priority: 1
+        agent_id: "standards-advisor"
+        description:
+          fa: "استانداردهای حسابداری ایران و بین‌المللی — الزامات گزارشگری مالی"
+        ref:
+          standards:
+            - "استانداردهای حسابداری ایران (سازمان حسابرسی)"
+            - "IFRS Standards (IASB)"
+          books:
+            - "مجموعه استانداردهای حسابداری ایران"
+        children:
+
+          - id: "A6.1"
+            label:
+              fa: "استانداردهای بین‌المللی (IFRS)"
+            priority: 1
+            children:
+              - id: "A6.1.1"
+                label:
+                  fa: "IFRS 1 — اولین پذیرش"
+              - id: "A6.1.2"
+                label:
+                  fa: "IFRS 3 — ترکیب واحدهای تجاری"
+              - id: "A6.1.3"
+                label:
+                  fa: "IFRS 7 — ابزارهای مالی (افشا)"
+              - id: "A6.1.4"
+                label:
+                  fa: "IFRS 9 — ابزارهای مالی"
+              - id: "A6.1.5"
+                label:
+                  fa: "IFRS 15 — درآمد"
+              - id: "A6.1.6"
+                label:
+                  fa: "IFRS 16 — اجاره‌ها"
+              - id: "A6.1.7"
+                label:
+                  fa: "IFRS 17 — قراردادهای بیمه"
+              - id: "A6.1.8"
+                label:
+                  fa: "IAS 1 تا ۴۱ — استانداردهای قدیمی"
+
+          - id: "A6.2"
+            label:
+              fa: "استانداردهای حسابداری ایران (IR-GAAP)"
+            priority: 1
+            children:
+              - id: "A6.2.1"
+                label:
+                  fa: "تفاوت IFRS با استانداردهای ایران"
+              - id: "A6.2.2"
+                label:
+                  fa: "الزامات افشا و گزارشگری ایران"
+              - id: "A6.2.3"
+                label:
+                  fa: "بخشنامه‌های سازمان حسابرسی"
+
+          - id: "A6.3"
+            label:
+              fa: "صنایع خاص"
+            priority: 2
+            children:
+              - id: "A6.3.1"
+                label:
+                  fa: "حسابداری نفت و گاز"
+              - id: "A6.3.2"
+                label:
+                  fa: "حسابداری بیمه"
+              - id: "A6.3.3"
+                label:
+                  fa: "حسابداری بانکداری"
+              - id: "A6.3.4"
+                label:
+                  fa: "حسابداری کشاورزی (IAS 41)"
+
+      # ── A7: Specific Topics ──
+      - id: "A7"
+        label:
+          fa: "موارد خاص در حسابداری"
+          en: "Specific Topics in Accounting"
+        priority: 2
+        agent_id: "financial-reporter"
+        ref:
+          books:
+            - "کتاب بررسی موارد خاص در حسابداری"
+        children:
+
+          - id: "A7.1"
+            label:
+              fa: "فعالیت ساخت املاک"
+            children:
+              - id: "A7.1.1"
+                label:
+                  fa: "شناسایی درآمد پروژه‌های ساختمانی"
+              - id: "A7.1.2"
+                label:
+                  fa: "حسابداری قراردادهای بلندمدت ساخت"
+
+          - id: "A7.2"
+            label:
+              fa: "طرح‌ها و مزایای بازنشستگی"
+            children:
+              - id: "A7.2.1"
+                label:
+                  fa: "طرح‌های با مزایای مشخص"
+              - id: "A7.2.2"
+                label:
+                  fa: "طرح‌های با مشارکت مشخص"
+              - id: "A7.2.3"
+                label:
+                  fa: "محاسبه بدهی بازنشستگی — IAS 19"
+
+          - id: "A7.3"
+            label:
+              fa: "ورشکستگی و تصفیه"
+            children:
+              - id: "A7.3.1"
+                label:
+                  fa: "علائم هشدار ورشکستگی"
+              - id: "A7.3.2"
+                label:
+                  fa: "حسابداری تصفیه"
+
+          - id: "A7.4"
+            label:
+              fa: "تغییر روش و اصلاح اشتباهات — IAS 8"
+
+  # ============================================================
+  # [B] MANAGEMENT ACCOUNTING | حسابداری مدیریت
+  # ============================================================
+  - id: "B"
+    label:
+      fa: "حسابداری مدیریت و بهای تمام شده"
+      en: "Management & Cost Accounting"
+    description:
+      fa: "اطلاعات مالی برای تصمیم‌گیری داخلی مدیریت — بهایابی، بودجه‌بندی، ارزیابی عملکرد"
+      en: "Internal financial information for management decision-making"
+    children:
+
+      # ── B1: Cost Accounting ──
+      - id: "B1"
+        label:
+          fa: "حسابداری بهای تمام شده"
+          en: "Cost Accounting"
+        priority: 1
+        agent_id: "cost-analyst"
+        ref:
+          books:
+            - "کتاب حسابداری بهای تمام شده ۱، ۲ و ۳"
+            - "Horngren, Datar & Foster. Cost Accounting: A Managerial Emphasis"
+            - "Blocher, Stout, Cokins & Chen. Cost Management"
+        children:
+
+          - id: "B1.1"
+            label:
+              fa: "سیستم‌های هزینه‌یابی"
+            priority: 1
+            children:
+              - id: "B1.1.1"
+                label:
+                  fa: "هزینه‌یابی سفارش کار (Job Order Costing)"
+              - id: "B1.1.2"
+                label:
+                  fa: "هزینه‌یابی مرحله‌ای (Process Costing)"
+              - id: "B1.1.3"
+                label:
+                  fa: "هزینه‌یابی ترکیبی"
+
+          - id: "B1.2"
+            label:
+              fa: "هزینه‌یابی بر مبنای فعالیت (ABC)"
+            priority: 1
+            children:
+              - id: "B1.2.1"
+                label:
+                  fa: "مفاهیم و مراحل پیاده‌سازی ABC"
+              - id: "B1.2.2"
+                label:
+                  fa: "مدیریت بر مبنای فعالیت (ABM)"
+              - id: "B1.2.3"
+                label:
+                  fa: "هزینه‌یابی مبتنی بر زمان (TDABC)"
+
+          - id: "B1.3"
+            label:
+              fa: "هزینه‌یابی استاندارد و تحلیل انحرافات"
+            priority: 1
+            children:
+              - id: "B1.3.1"
+                label:
+                  fa: "استاندارد مواد، دستمزد و سربار"
+              - id: "B1.3.2"
+                label:
+                  fa: "انحرافات مواد (قیمت و مصرف)"
+              - id: "B1.3.3"
+                label:
+                  fa: "انحرافات دستمزد (نرخ و کارایی)"
+              - id: "B1.3.4"
+                label:
+                  fa: "انحرافات سربار (قابل کنترل و حجم)"
+
+          - id: "B1.4"
+            label:
+              fa: "هزینه‌یابی محصولات مشترک"
+            priority: 3
+            children:
+              - id: "B1.4.1"
+                label:
+                  fa: "محصولات اصلی مشترک و فرعی"
+              - id: "B1.4.2"
+                label:
+                  fa: "روش‌های تخصیص (فیزیکی، ارزش فروش، NRV)"
+
+      # ── B2: Budgeting ──
+      - id: "B2"
+        label:
+          fa: "بودجه‌بندی"
+          en: "Budgeting"
+        priority: 1
+        agent_id: "budget-planner"
+        children:
+
+          - id: "B2.1"
+            label:
+              fa: "بودجه عملیاتی"
+            priority: 1
+            children:
+              - id: "B2.1.1"
+                label:
+                  fa: "بودجه فروش و تولید"
+              - id: "B2.1.2"
+                label:
+                  fa: "بودجه مواد، دستمزد و سربار"
+              - id: "B2.1.3"
+                label:
+                  fa: "بودجه سود و زیان"
+
+          - id: "B2.2"
+            label:
+              fa: "بودجه سرمایه‌ای"
+            priority: 1
+            children:
+              - id: "B2.2.1"
+                label:
+                  fa: "NPV — خالص ارزش فعلی"
+              - id: "B2.2.2"
+                label:
+                  fa: "IRR — نرخ بازده داخلی"
+              - id: "B2.2.3"
+                label:
+                  fa: "دوره بازگشت سرمایه"
+              - id: "B2.2.4"
+                label:
+                  fa: "تحلیل حساسیت و سناریو"
+
+          - id: "B2.3"
+            label:
+              fa: "بودجه انعطاف‌پذیر"
+            priority: 2
+
+          - id: "B2.4"
+            label:
+              fa: "پیش‌بینی غلتان (Rolling Forecast)"
+            priority: 2
+
+          - id: "B2.5"
+            label:
+              fa: "بودجه‌بندی بر مبنای صفر (ZBB)"
+            priority: 3
+
+      # ── B3: Decision Making ──
+      - id: "B3"
+        label:
+          fa: "تصمیم‌گیری مدیریتی"
+          en: "Managerial Decision Making"
+        priority: 1
+        agent_id: "cost-analyst"
+        children:
+
+          - id: "B3.1"
+            label:
+              fa: "تحلیل هزینه-حجم-سود (CVP)"
+            priority: 1
+            children:
+              - id: "B3.1.1"
+                label:
+                  fa: "نقطه سر به سر (BEP)"
+              - id: "B3.1.2"
+                label:
+                  fa: "حاشیه ایمنی و اهرم عملیاتی"
+              - id: "B3.1.3"
+                label:
+                  fa: "تحلیل CVP با ترکیب فروش چند محصولی"
+
+          - id: "B3.2"
+            label:
+              fa: "تصمیم‌گیری قیمت‌گذاری"
+            priority: 1
+            children:
+              - id: "B3.2.1"
+                label:
+                  fa: "قیمت‌گذاری بر مبنای هزینه"
+              - id: "B3.2.2"
+                label:
+                  fa: "قیمت‌گذاری بر مبنای بازار"
+              - id: "B3.2.3"
+                label:
+                  fa: "قیمت‌گذاری انتقالی"
+
+          - id: "B3.3"
+            label:
+              fa: "تصمیم‌گیری‌های کوتاه‌مدت"
+            priority: 1
+            children:
+              - id: "B3.3.1"
+                label:
+                  fa: "ساخت یا خرید (Make or Buy)"
+              - id: "B3.3.2"
+                label:
+                  fa: "حذف یا ادامه خط تولید"
+              - id: "B3.3.3"
+                label:
+                  fa: "پذیرش یا رد سفارش ویژه"
+              - id: "B3.3.4"
+                label:
+                  fa: "استفاده بهینه از منابع محدود (TOC)"
+
+          - id: "B3.4"
+            label:
+              fa: "تجزیه و تحلیل ریسک"
+            priority: 2
+            children:
+              - id: "B3.4.1"
+                label:
+                  fa: "تحلیل ریسک اعتباری"
+              - id: "B3.4.2"
+                label:
+                  fa: "درخت تصمیم و شبیه‌سازی"
+
+      # ── B4: Performance Management ──
+      - id: "B4"
+        label:
+          fa: "ارزیابی عملکرد"
+          en: "Performance Management"
+        priority: 2
+        agent_id: "performance-advisor"
+        children:
+
+          - id: "B4.1"
+            label:
+              fa: "کارت امتیازی متوازن (BSC)"
+            priority: 2
+            children:
+              - id: "B4.1.1"
+                label:
+                  fa: "چهار منظر BSC"
+              - id: "B4.1.2"
+                label:
+                  fa: "نقشه استراتژی"
+              - id: "B4.1.3"
+                label:
+                  fa: "شاخص‌های کلیدی عملکرد (KPI)"
+
+          - id: "B4.2"
+            label:
+              fa: "مراکز مسئولیت و قیمت‌گذاری انتقالی"
+            priority: 2
+            children:
+              - id: "B4.2.1"
+                label:
+                  fa: "مراکز هزینه، درآمد، سود و سرمایه‌گذاری"
+              - id: "B4.2.2"
+                label:
+                  fa: "ROI و RI (باقیمانده سود)"
+              - id: "B4.2.3"
+                label:
+                  fa: "ارزش افزوده اقتصادی (EVA®)"
+
+          - id: "B4.3"
+            label:
+              fa: "کنترل اقلام بهای تمام شده"
+            priority: 2
+            children:
+              - id: "B4.3.1"
+                label:
+                  fa: "تحلیل انحرافات و گزارش مدیریت"
+
+      # ── B5: Strategic Management ──
+      - id: "B5"
+        label:
+          fa: "مدیریت استراتژیک"
+          en: "Strategic Management Accounting"
+        priority: 2
+        agent_id: "strategy-advisor"
+        children:
+
+          - id: "B5.1"
+            label:
+              fa: "تحلیل زنجیره ارزش"
+            priority: 2
+          - id: "B5.2"
+            label:
+              fa: "بهایابی هدف (Target Costing)"
+            priority: 2
+          - id: "B5.3"
+            label:
+              fa: "مهندسی ارزش و کایزن"
+            priority: 3
+          - id: "B5.4"
+            label:
+              fa: "حسابداری ناب (Lean Accounting)"
+            priority: 3
+          - id: "B5.5"
+            label:
+              fa: "مدیریت استراتژیک جامع"
+            priority: 3
+
+      # ── B6: Supply Chain & Inventory ──
+      - id: "B6"
+        label:
+          fa: "مدیریت زنجیره عرضه و موجودی"
+          en: "Supply Chain & Inventory Management"
+        priority: 2
+        agent_id: "cost-analyst"
+        children:
+
+          - id: "B6.1"
+            label:
+              fa: "مدیریت موجودی"
+            children:
+              - id: "B6.1.1"
+                label:
+                  fa: "EOQ — مقدار سفارش اقتصادی"
+              - id: "B6.1.2"
+                label:
+                  fa: "JIT — تولید به هنگام"
+              - id: "B6.1.3"
+                label:
+                  fa: "سیستم ABC در انبار"
+
+          - id: "B6.2"
+            label:
+              fa: "هزینه‌یابی زنجیره تامین"
+            priority: 3
+          - id: "B6.3"
+            label:
+              fa: "منحنی یادگیری"
+            priority: 3
+
+  # ============================================================
+  # [C] AUDIT & ASSURANCE | حسابرسی و اطمینان‌بخشی
+  # ============================================================
+  - id: "C"
+    label:
+      fa: "حسابرسی و اطمینان‌بخشی"
+      en: "Audit & Assurance"
+    description:
+      fa: "بررسی مستقل صورت‌های مالی و سیستم‌های کنترل داخلی برای اظهارنظر و اطمینان‌بخشی"
+      en: "Independent examination of financial statements and internal controls"
+    children:
+
+      # ── C1: Audit Framework ──
+      - id: "C1"
+        label:
+          fa: "چارچوب حسابرسی"
+          en: "Audit Framework"
+        priority: 1
+        agent_id: "auditor"
+        ref:
+          books:
+            - "کتاب اصول حسابرسی ۱ و ۲"
+            - "استانداردهای حسابرسی ایران"
+          standards:
+            - "ISA — International Standards on Auditing"
+        children:
+
+          - id: "C1.1"
+            label:
+              fa: "استانداردهای حسابرسی (ISA/IAS)"
+            priority: 1
+            children:
+              - id: "C1.1.1"
+                label:
+                  fa: "ISA 200 — اهداف و اصول کلی"
+              - id: "C1.1.2"
+                label:
+                  fa: "ISA 230 — مستندسازی حسابرسی"
+              - id: "C1.1.3"
+                label:
+                  fa: "ISA 260 — ارتباط با صاحبان کار"
+              - id: "C1.1.4"
+                label:
+                  fa: "ISA 700 — تشکیل گزارش حسابرس"
+
+          - id: "C1.2"
+            label:
+              fa: "اخلاق و استقلال حسابرس"
+            priority: 1
+            children:
+              - id: "C1.2.1"
+                label:
+                  fa: "کد اخلاق حرفه‌ای"
+              - id: "C1.2.2"
+                label:
+                  fa: "تهدیدات استقلال (خودمنافعی، آشنایی، ...)"
+              - id: "C1.2.3"
+                label:
+                  fa: "سازمان‌های حرفه‌ای (IFAC, IESBA)"
+
+          - id: "C1.3"
+            label:
+              fa: "برنامه‌ریزی حسابرسی"
+            priority: 1
+            children:
+              - id: "C1.3.1"
+                label:
+                  fa: "قبول صاحب کار و ارزیابی اولیه"
+              - id: "C1.3.2"
+                label:
+                  fa: "برنامه حسابرسی و زمان‌بندی"
+              - id: "C1.3.3"
+                label:
+                  fa: "استفاده از کار کارشناسان"
+
+      # ── C2: Risk Assessment ──
+      - id: "C2"
+        label:
+          fa: "ارزیابی ریسک در حسابرسی"
+          en: "Audit Risk Assessment"
+        priority: 1
+        agent_id: "auditor"
+        children:
+
+          - id: "C2.1"
+            label:
+              fa: "مدل ریسک حسابرسی"
+            priority: 1
+            children:
+              - id: "C2.1.1"
+                label:
+                  fa: "ریسک ذاتی (Inherent Risk)"
+              - id: "C2.1.2"
+                label:
+                  fa: "ریسک کنترلی (Control Risk)"
+              - id: "C2.1.3"
+                label:
+                  fa: "ریسک کشف (Detection Risk)"
+
+          - id: "C2.2"
+            label:
+              fa: "اهمیت نسبی (Materiality)"
+            priority: 1
+
+          - id: "C2.3"
+            label:
+              fa: "شناسایی و ارزیابی ریسک تقلب"
+            priority: 1
+            children:
+              - id: "C2.3.1"
+                label:
+                  fa: "مثلث تقلب (فشار، فرصت، توجیه)"
+              - id: "C2.3.2"
+                label:
+                  fa: "گزارشگری مالی متقلبانه"
+              - id: "C2.3.3"
+                label:
+                  fa: "سوءاستفاده از دارایی‌ها"
+
+      # ── C3: Audit Procedures ──
+      - id: "C3"
+        label:
+          fa: "رسیدگی‌های حسابرسی"
+          en: "Audit Procedures"
+        priority: 1
+        agent_id: "auditor"
+        children:
+
+          - id: "C3.1"
+            label:
+              fa: "آزمون کنترل‌ها (Tests of Controls)"
+            priority: 1
+          - id: "C3.2"
+            label:
+              fa: "رسیدگی‌های محتوایی (Substantive Procedures)"
+            priority: 1
+            children:
+              - id: "C3.2.1"
+                label:
+                  fa: "رسیدگی تفصیلی"
+              - id: "C3.2.2"
+                label:
+                  fa: "رسیدگی تحلیلی"
+          - id: "C3.3"
+            label:
+              fa: "نمونه‌گیری حسابرسی"
+            priority: 1
+            children:
+              - id: "C3.3.1"
+                label:
+                  fa: "نمونه‌گیری آماری"
+              - id: "C3.3.2"
+                label:
+                  fa: "نمونه‌گیری غیرآماری"
+              - id: "C3.3.3"
+                label:
+                  fa: "خطر نمونه‌گیری"
+          - id: "C3.4"
+            label:
+              fa: "شواهد حسابرسی"
+            priority: 1
+            children:
+              - id: "C3.4.1"
+                label:
+                  fa: "انواع شواهد (بازرسی، مشاهده، استعلام)"
+              - id: "C3.4.2"
+                label:
+                  fa: "قابلیت اتکای شواهد"
+              - id: "C3.4.3"
+                label:
+                  fa: "استعلام بانکی و تجاری"
+
+      # ── C4: Internal Controls ──
+      - id: "C4"
+        label:
+          fa: "کنترل داخلی"
+          en: "Internal Control"
+        priority: 1
+        agent_id: "internal-controller"
+        children:
+
+          - id: "C4.1"
+            label:
+              fa: "چارچوب COSO"
+            priority: 1
+            children:
+              - id: "C4.1.1"
+                label:
+                  fa: "COSO 2013 — پنج مؤلفه"
+              - id: "C4.1.2"
+                label:
+                  fa: "هفده اصل کنترل داخلی"
+              - id: "C4.1.3"
+                label:
+                  fa: "COSO ERM — مدیریت ریسک سازمانی"
+
+          - id: "C4.2"
+            label:
+              fa: "ICFR — کنترل داخلی بر گزارشگری مالی"
+            priority: 1
+
+          - id: "C4.3"
+            label:
+              fa: "تفکیک وظایف"
+            priority: 1
+
+      # ── C5: IT Audit ──
+      - id: "C5"
+        label:
+          fa: "حسابرسی سیستم‌های اطلاعاتی"
+          en: "IT Audit"
+        priority: 1
+        agent_id: "it-auditor"
+        ref:
+          books:
+            - "کتاب حسابرسی سیستم‌های اطلاعاتی"
+          standards:
+            - "ISACA — CISA framework"
+            - "COBIT 2019"
+        children:
+
+          - id: "C5.1"
+            label:
+              fa: "ابزارهای کامپیوتری حسابرسی (CAATs)"
+            priority: 1
+            children:
+              - id: "C5.1.1"
+                label:
+                  fa: "ACL و IDEA"
+              - id: "C5.1.2"
+                label:
+                  fa: "تحلیل داده در حسابرسی"
+
+          - id: "C5.2"
+            label:
+              fa: "حسابرسی امنیت سایبری"
+            priority: 2
+            children:
+              - id: "C5.2.1"
+                label:
+                  fa: "ارزیابی امنیت شبکه"
+              - id: "C5.2.2"
+                label:
+                  fa: "مدیریت دسترسی و احراز هویت"
+
+          - id: "C5.3"
+            label:
+              fa: "کنترل‌های سیستم‌های ERP"
+            priority: 2
+            children:
+              - id: "C5.3.1"
+                label:
+                  fa: "SAP, Oracle Controls"
+              - id: "C5.3.2"
+                label:
+                  fa: "کنترل‌های عمومی (GITCs)"
+              - id: "C5.3.3"
+                label:
+                  fa: "کنترل‌های کاربردی (Application Controls)"
+
+      # ── C6: Advanced Audit ──
+      - id: "C6"
+        label:
+          fa: "حسابرسی پیشرفته و موضوعات خاص"
+          en: "Advanced & Specialized Auditing"
+        priority: 2
+        agent_id: "auditor"
+        children:
+
+          - id: "C6.1"
+            label:
+              fa: "حسابرسی گروه (Group Audits)"
+            priority: 2
+          - id: "C6.2"
+            label:
+              fa: "حسابداری دادگاهی (Forensic Accounting)"
+            priority: 2
+            agent_id: "forensic-accountant"
+            children:
+              - id: "C6.2.1"
+                label:
+                  fa: "تشخیص تقلب در صورت‌های مالی"
+              - id: "C6.2.2"
+                label:
+                  fa: "نظارت پزشکی قانونی مالی"
+              - id: "C6.2.3"
+                label:
+                  fa: "شواهد دیجیتال در حسابرسی"
+          - id: "C6.3"
+            label:
+              fa: "حسابرسی پیوسته (Continuous Audit)"
+            priority: 2
+          - id: "C6.4"
+            label:
+              fa: "گزارش حسابرسی و انواع آن"
+            priority: 1
+
+  # ============================================================
+  # [D] TAXATION | مالیات
+  # ============================================================
+  - id: "D"
+    label:
+      fa: "مالیات"
+      en: "Taxation"
+    description:
+      fa: "قوانین، مقررات و محاسبات مالیاتی — از تشخیص تا دادرسی"
+      en: "Tax laws, regulations, calculations, and litigation"
+    children:
+
+      # ── D1: Direct Tax ──
+      - id: "D1"
+        label:
+          fa: "مالیات مستقیم"
+          en: "Direct Taxation"
+        priority: 1
+        agent_id: "tax-specialist"
+        ref:
+          books:
+            - "کتاب حسابداری مالیاتی ۱ و ۲"
+            - "قانون مالیات‌های مستقیم ایران"
+          standards:
+            - "قانون مالیات‌های مستقیم (اصلاحیه‌ها)"
+        children:
+
+          - id: "D1.1"
+            label:
+              fa: "مالیات اشخاص حقوقی (شرکت‌ها)"
+            priority: 1
+            children:
+              - id: "D1.1.1"
+                label:
+                  fa: "نرخ مالیات و نحوه محاسبه"
+              - id: "D1.1.2"
+                label:
+                  fa: "انواع درآمد مشمول مالیات"
+              - id: "D1.1.3"
+                label:
+                  fa: "معافیت‌های مالیاتی شرکتی"
+              - id: "D1.1.4"
+                label:
+                  fa: "استهلاک و مشوق‌های سرمایه‌گذاری"
+
+          - id: "D1.2"
+            label:
+              fa: "مالیات بر درآمد اشخاص حقیقی"
+            priority: 1
+            children:
+              - id: "D1.2.1"
+                label:
+                  fa: "مالیات بر درآمد حقوق"
+              - id: "D1.2.2"
+                label:
+                  fa: "مالیات بر درآمد مشاغل"
+              - id: "D1.2.3"
+                label:
+                  fa: "مالیات بر درآمد املاک و اجاره"
+              - id: "D1.2.4"
+                label:
+                  fa: "مالیات بر درآمد کشاورزی و دامداری"
+
+          - id: "D1.3"
+            label:
+              fa: "مالیات تکلیفی"
+            priority: 1
+            children:
+              - id: "D1.3.1"
+                label:
+                  fa: "مالیات حق العمل کاری و قراردادها"
+              - id: "D1.3.2"
+                label:
+                  fa: "مالیات اجاره"
+              - id: "D1.3.3"
+                label:
+                  fa: "مالیات سود سهام"
+
+          - id: "D1.4"
+            label:
+              fa: "معافیت‌ها و مشوق‌ها"
+            priority: 2
+
+      # ── D2: Indirect Tax ──
+      - id: "D2"
+        label:
+          fa: "مالیات غیرمستقیم"
+          en: "Indirect Taxation"
+        priority: 1
+        agent_id: "tax-specialist"
+        children:
+
+          - id: "D2.1"
+            label:
+              fa: "مالیات بر ارزش افزوده (VAT)"
+            priority: 1
+            children:
+              - id: "D2.1.1"
+                label:
+                  fa: "مشمولیت و نرخ‌ها"
+              - id: "D2.1.2"
+                label:
+                  fa: "اعتبار مالیاتی (ورودی و خروجی)"
+              - id: "D2.1.3"
+                label:
+                  fa: "اظهارنامه و مهلت‌های قانونی"
+              - id: "D2.1.4"
+                label:
+                  fa: "جرایم و دادرسی VAT"
+
+          - id: "D2.2"
+            label:
+              fa: "مالیات گمرکی و عوارض"
+            priority: 3
+
+      # ── D3: Tax Procedure ──
+      - id: "D3"
+        label:
+          fa: "دادرسی مالیاتی"
+          en: "Tax Litigation & Procedure"
+        priority: 1
+        agent_id: "tax-specialist"
+        children:
+
+          - id: "D3.1"
+            label:
+              fa: "تشخیص مالیات"
+            priority: 1
+            children:
+              - id: "D3.1.1"
+                label:
+                  fa: "مراجع تشخیص (ادارات مالیاتی)"
+              - id: "D3.1.2"
+                label:
+                  fa: "مواد قانونی ۲۱۹ الی ۲۵۳"
+
+          - id: "D3.2"
+            label:
+              fa: "اعتراض و تجدیدنظر"
+            priority: 1
+            children:
+              - id: "D3.2.1"
+                label:
+                  fa: "مراحل اعتراض در هیئت حل اختلاف"
+              - id: "D3.2.2"
+                label:
+                  fa: "مواد قانونی ۲۴۴ الی ۲۵۱"
+
+          - id: "D3.3"
+            label:
+              fa: "جرایم مالیاتی"
+            priority: 2
+            children:
+              - id: "D3.3.1"
+                label:
+                  fa: "جرایم عدم تسلیم اظهارنامه"
+              - id: "D3.3.2"
+                label:
+                  fa: "جرایم عدم پرداخت مالیات"
+              - id: "D3.3.3"
+                label:
+                  fa: "جرایم مربوط به VAT"
+
+      # ── D4: International Tax ──
+      - id: "D4"
+        label:
+          fa: "مالیات بین‌المللی"
+          en: "International Taxation"
+        priority: 3
+        agent_id: "tax-strategist"
+        children:
+
+          - id: "D4.1"
+            label:
+              fa: "قیمت‌گذاری انتقالی (Transfer Pricing)"
+            priority: 2
+          - id: "D4.2"
+            label:
+              fa: "موافقتنامه‌های اجتناب از مالیات مضاعف (DTA)"
+            priority: 3
+          - id: "D4.3"
+            label:
+              fa: "BEPS — فرسایش پایه و انتقال سود"
+            priority: 3
+
+  # ============================================================
+  # [E] CAPITAL MARKETS & INVESTMENT | بازار سرمایه و سرمایه‌گذاری
+  # ============================================================
+  - id: "E"
+    label:
+      fa: "بازار سرمایه و سرمایه‌گذاری"
+      en: "Capital Markets & Investment"
+    description:
+      fa: "بازارهای مالی، تحلیل سرمایه‌گذاری، مدیریت پرتفوی و ارزش‌گذاری"
+      en: "Financial markets, investment analysis, portfolio management and valuation"
+    children:
+
+      # ── E1: Financial Markets ──
+      - id: "E1"
+        label:
+          fa: "بازارهای مالی"
+          en: "Financial Markets"
+        priority: 2
+        agent_id: "investment-analyst"
+        children:
+
+          - id: "E1.1"
+            label:
+              fa: "بورس اوراق بهادار"
+            children:
+              - id: "E1.1.1"
+                label:
+                  fa: "ساختار و ارکان بورس"
+              - id: "E1.1.2"
+                label:
+                  fa: "انواع اوراق بهادار"
+
+          - id: "E1.2"
+            label:
+              fa: "بازار بدهی"
+            children:
+              - id: "E1.2.1"
+                label:
+                  fa: "اوراق مشارکت و صکوک"
+              - id: "E1.2.2"
+                label:
+                  fa: "اوراق بدهی دولتی و شرکتی"
+
+          - id: "E1.3"
+            label:
+              fa: "ابزارهای مشتقه"
+            children:
+              - id: "E1.3.1"
+                label:
+                  fa: "قراردادهای آتی"
+              - id: "E1.3.2"
+                label:
+                  fa: "اختیار معامله (Option)"
+              - id: "E1.3.3"
+                label:
+                  fa: "سوآپ (Swap)"
+
+      # ── E2: Investment Analysis ──
+      - id: "E2"
+        label:
+          fa: "تحلیل سرمایه‌گذاری"
+          en: "Investment Analysis"
+        priority: 2
+        agent_id: "investment-analyst"
+        children:
+
+          - id: "E2.1"
+            label:
+              fa: "تحلیل بنیادی"
+            priority: 2
+            children:
+              - id: "E2.1.1"
+                label:
+                  fa: "تحلیل اقتصاد کلان (Top-Down)"
+              - id: "E2.1.2"
+                label:
+                  fa: "تحلیل صنعت"
+              - id: "E2.1.3"
+                label:
+                  fa: "تحلیل شرکت و صورت‌های مالی"
+
+          - id: "E2.2"
+            label:
+              fa: "تحلیل تکنیکال"
+            priority: 3
+            children:
+              - id: "E2.2.1"
+                label:
+                  fa: "الگوهای قیمتی و نموداری"
+              - id: "E2.2.2"
+                label:
+                  fa: "اندیکاتورهای تکنیکال"
+
+          - id: "E2.3"
+            label:
+              fa: "مالی رفتاری (Behavioral Finance)"
+            priority: 3
+            children:
+              - id: "E2.3.1"
+                label:
+                  fa: "سویه‌های رفتاری در سرمایه‌گذاری"
+              - id: "E2.3.2"
+                label:
+                  fa: "تئوری چشم‌انداز"
+
+      # ── E3: Portfolio Management ──
+      - id: "E3"
+        label:
+          fa: "مدیریت پرتفوی"
+          en: "Portfolio Management"
+        priority: 2
+        agent_id: "investment-analyst"
+        children:
+
+          - id: "E3.1"
+            label:
+              fa: "تئوری مدرن پرتفوی (MPT)"
+            priority: 2
+            children:
+              - id: "E3.1.1"
+                label:
+                  fa: "مرز کارا و بهینه‌سازی"
+              - id: "E3.1.2"
+                label:
+                  fa: "مدل بازار و بتا"
+
+          - id: "E3.2"
+            label:
+              fa: "CAPM و مدل‌های فاکتوری"
+            priority: 2
+            children:
+              - id: "E3.2.1"
+                label:
+                  fa: "خط بازار سرمایه (CML)"
+              - id: "E3.2.2"
+                label:
+                  fa: "خط بازار اوراق بهادار (SML)"
+              - id: "E3.2.3"
+                label:
+                  fa: "مدل سه فاکتوری Fama-French"
+
+          - id: "E3.3"
+            label:
+              fa: "مدیریت ریسک سرمایه‌گذاری"
+            priority: 2
+            children:
+              - id: "E3.3.1"
+                label:
+                  fa: "VaR — ارزش در معرض خطر"
+              - id: "E3.3.2"
+                label:
+                  fa: "CVaR و سایر معیارها"
+
+      # ── E4: Valuation ──
+      - id: "E4"
+        label:
+          fa: "ارزش‌گذاری شرکت"
+          en: "Company Valuation"
+        priority: 2
+        agent_id: "valuation-expert"
+        children:
+
+          - id: "E4.1"
+            label:
+              fa: "ارزش‌گذاری تنزیل جریان نقد (DCF)"
+            priority: 2
+            children:
+              - id: "E4.1.1"
+                label:
+                  fa: "FCFF و FCFE"
+              - id: "E4.1.2"
+                label:
+                  fa: "محاسبه WACC"
+              - id: "E4.1.3"
+                label:
+                  fa: "ارزش نهایی (Terminal Value)"
+
+          - id: "E4.2"
+            label:
+              fa: "ارزش‌گذاری نسبی"
+            priority: 2
+            children:
+              - id: "E4.2.1"
+                label:
+                  fa: "نسبت P/E, P/B, EV/EBITDA"
+              - id: "E4.2.2"
+                label:
+                  fa: "گزینش شرکت‌های همتا"
+
+          - id: "E4.3"
+            label:
+              fa: "مدل سود باقیمانده"
+            priority: 3
+
+      # ── E5: Financial Institutions ──
+      - id: "E5"
+        label:
+          fa: "حسابداری نهادهای مالی"
+          en: "Financial Institutions Accounting"
+        priority: 2
+        agent_id: "financial-institutions-specialist"
+        children:
+
+          - id: "E5.1"
+            label:
+              fa: "حسابداری بانک‌ها"
+            priority: 2
+            children:
+              - id: "E5.1.1"
+                label:
+                  fa: "حسابداری تسهیلات و سپرده‌ها"
+              - id: "E5.1.2"
+                label:
+                  fa: "ذخیره مطالبات مشکوک‌الوصول بانکی"
+              - id: "E5.1.3"
+                label:
+                  fa: "گزارشگری بانک‌ها"
+
+          - id: "E5.2"
+            label:
+              fa: "حسابداری شرکت‌های بیمه"
+            priority: 2
+            children:
+              - id: "E5.2.1"
+                label:
+                  fa: "حسابداری حق بیمه و خسارت"
+              - id: "E5.2.2"
+                label:
+                  fa: "ذخایر فنی بیمه‌گری"
+
+          - id: "E5.3"
+            label:
+              fa: "صندوق‌های سرمایه‌گذاری"
+            priority: 3
+
+  # ============================================================
+  # [F] PUBLIC SECTOR | بخش عمومی
+  # ============================================================
+  - id: "F"
+    label:
+      fa: "بخش عمومی و دولتی"
+      en: "Public Sector & Government"
+    description:
+      fa: "حسابداری و گزارشگری مالی در بخش عمومی — بودجه، خزانه، شهرداری"
+      en: "Public sector financial management and reporting"
+    children:
+
+      # ── F1: Government Accounting ──
+      - id: "F1"
+        label:
+          fa: "حسابداری دولتی"
+          en: "Government Accounting"
+        priority: 2
+        agent_id: "public-sector-accountant"
+        ref:
+          books:
+            - "کتاب حسابداری بخش عمومی ۱ و ۲"
+            - "کتاب اصول بودجه‌ریزی دولتی"
+        children:
+
+          - id: "F1.1"
+            label:
+              fa: "بودجه‌ریزی دولتی"
+            priority: 2
+            children:
+              - id: "F1.1.1"
+                label:
+                  fa: "مراحل بودجه (تدوین، تصویب، اجرا، نظارت)"
+              - id: "F1.1.2"
+                label:
+                  fa: "طبقه‌بندی بودجه (عملیاتی و عمرانی)"
+
+          - id: "F1.2"
+            label:
+              fa: "حسابداری حساب‌های مستقل"
+            priority: 2
+            children:
+              - id: "F1.2.1"
+                label:
+                  fa: "حساب مستقل فعالیت‌های بازرگانی"
+              - id: "F1.2.2"
+                label:
+                  fa: "حساب مستقل خدمات و تدارکات داخلی"
+
+          - id: "F1.3"
+            label:
+              fa: "خزانه‌داری و مدیریت نقدینگی"
+            priority: 2
+
+      # ── F2: Municipal Accounting ──
+      - id: "F2"
+        label:
+          fa: "حسابداری شهرداری‌ها"
+          en: "Municipal Accounting"
+        priority: 2
+        agent_id: "public-sector-accountant"
+
+      # ── F3: Public Sector Audit ──
+      - id: "F3"
+        label:
+          fa: "حسابرسی بخش عمومی"
+          en: "Public Sector Audit"
+        priority: 2
+
+      # ── F4: IPSAS ──
+      - id: "F4"
+        label:
+          fa: "استانداردهای حسابداری بخش عمومی (IPSAS)"
+          en: "International Public Sector Accounting Standards"
+        priority: 3
+        ref:
+          standards:
+            - "IPSAS Standards (IFAC)"
+
+      # ── F5: Public Financial Management ──
+      - id: "F5"
+        label:
+          fa: "مدیریت مالی عمومی"
+          en: "Public Financial Management (PFM)"
+        priority: 3
+
+  # ============================================================
+  # [G] TECHNOLOGY, DATA & AI | فناوری، داده و هوش مصنوعی
+  # ============================================================
+  # ★ این شاخه مزیت رقابتی HiveOS است — دروس جدید سرفصل ۱۴۰۴
+  - id: "G"
+    label:
+      fa: "فناوری، داده و هوش مصنوعی در حسابداری"
+      en: "Technology, Data & AI in Accounting"
+    description:
+      fa: "کاربرد فناوری‌های نوین — هوش مصنوعی، یادگیری ماشین، بلاکچین، RPA — در حسابداری و مالی"
+      en: "Cutting-edge technology applications in accounting and finance"
+    priority: 1
+    ref:
+      syllabus:
+        - "تحلیل کلان داده و هوش مصنوعی در حسابداری (ارشد)"
+        - "تحلیل‌های حسابداری مبتنی بر هوش مصنوعی (کارشناسی ۱۴۰۴)"
+        - "حسابداری رمزارزها و بلاکچین (کارشناسی ۱۴۰۴)"
+        - "سیستم‌های اطلاعاتی حسابداری"
+        - "حسابرسی سیستم‌های اطلاعاتی"
+    children:
+
+      # ── G1: Data Analytics ──
+      - id: "G1"
+        label:
+          fa: "تحلیل داده در حسابداری"
+          en: "Data Analytics in Accounting"
+        priority: 1
+        agent_id: "data-analyst"
+        ref:
+          syllabus:
+            - "تحلیل کلان داده و هوش مصنوعی در حسابداری"
+            - "تحلیل‌های حسابداری مبتنی بر هوش مصنوعی"
+        children:
+
+          - id: "G1.1"
+            label:
+              fa: "تحلیل توصیفی (Descriptive)"
+            priority: 1
+            children:
+              - id: "G1.1.1"
+                label:
+                  fa: "داشبوردهای مالی"
+              - id: "G1.1.2"
+                label:
+                  fa: "تحلیل روند"
+              - id: "G1.1.3"
+                label:
+                  fa: "تحلیل نسبت‌های مالی"
+
+          - id: "G1.2"
+            label:
+              fa: "تحلیل تبیینی (Diagnostic)"
+            priority: 1
+            children:
+              - id: "G1.2.1"
+                label:
+                  fa: "تحلیل ریشه‌ای (Root Cause Analysis)"
+              - id: "G1.2.2"
+                label:
+                  fa: "تحلیل همبستگی و واریانس"
+
+          - id: "G1.3"
+            label:
+              fa: "تحلیل پیش‌بینی (Predictive)"
+            priority: 1
+            children:
+              - id: "G1.3.1"
+                label:
+                  fa: "پیش‌بینی فروش و درآمد"
+              - id: "G1.3.2"
+                label:
+                  fa: "پیش‌بینی جریان نقد"
+              - id: "G1.3.3"
+                label:
+                  fa: "پیش‌بینی ورشکستگی"
+
+          - id: "G1.4"
+            label:
+              fa: "تحلیل تجویزی (Prescriptive)"
+            priority: 2
+            children:
+              - id: "G1.4.1"
+                label:
+                  fa: "بهینه‌سازی بودجه"
+              - id: "G1.4.2"
+                label:
+                  fa: "تخصیص بهینه سرمایه"
+
+      # ── G2: ML in Accounting ──
+      - id: "G2"
+        label:
+          fa: "یادگیری ماشین در حسابداری"
+          en: "Machine Learning in Accounting"
+        priority: 1
+        agent_id: "ml-engineer"
+        ref:
+          syllabus:
+            - "تحلیل‌های حسابداری مبتنی بر هوش مصنوعی"
+            - "تحلیل کلان داده و هوش مصنوعی در حسابداری"
+        children:
+
+          - id: "G2.1"
+            label:
+              fa: "دسته‌بندی (Classification)"
+            priority: 1
+            children:
+              - id: "G2.1.1"
+                label:
+                  fa: "کشف تقلب در صورت‌های مالی"
+              - id: "G2.1.2"
+                label:
+                  fa: "پیش‌بینی درماندگی مالی"
+              - id: "G2.1.3"
+                label:
+                  fa: "دسته‌بندی حساب‌ها و اسناد"
+
+          - id: "G2.2"
+            label:
+              fa: "رگرسیون (Regression)"
+            priority: 1
+            children:
+              - id: "G2.2.1"
+                label:
+                  fa: "پیش‌بینی قیمت سهام"
+              - id: "G2.2.2"
+                label:
+                  fa: "پیش‌بینی سودآوری"
+              - id: "G2.2.3"
+                label:
+                  fa: "برآورد هزینه و درآمد"
+
+          - id: "G2.3"
+            label:
+              fa: "خوشه‌بندی (Clustering)"
+            priority: 2
+            children:
+              - id: "G2.3.1"
+                label:
+                  fa: "بخش‌بندی مشتریان و ذینفعان"
+              - id: "G2.3.2"
+                label:
+                  fa: "کشف الگوی تراکنش‌ها"
+
+          - id: "G2.4"
+            label:
+              fa: "پردازش زبان طبیعی (NLP) در مالی"
+            priority: 1
+            children:
+              - id: "G2.4.1"
+                label:
+                  fa: "تحلیل یادداشت‌های توضیحی صورت‌های مالی"
+              - id: "G2.4.2"
+                label:
+                  fa: "تحلیل احساسات اخبار مالی"
+              - id: "G2.4.3"
+                label:
+                  fa: "استخراج اطلاعات از گزارش‌های سالانه"
+
+          - id: "G2.5"
+            label:
+              fa: "پیش‌بینی سری‌های زمانی"
+            priority: 1
+            children:
+              - id: "G2.5.1"
+                label:
+                  fa: "ARIMA و GARCH در مالی"
+              - id: "G2.5.2"
+                label:
+                  fa: "LSTM و Transformer برای پیش‌بینی مالی"
+
+      # ── G3: AI in Audit ──
+      - id: "G3"
+        label:
+          fa: "هوش مصنوعی در حسابرسی"
+          en: "AI in Audit"
+        priority: 1
+        agent_id: "it-auditor"
+        children:
+
+          - id: "G3.1"
+            label:
+              fa: "رسیدگی خودکار (Automated Testing)"
+            priority: 1
+          - id: "G3.2"
+            label:
+              fa: "کشف ناهنجاری (Anomaly Detection)"
+            priority: 1
+          - id: "G3.3"
+            label:
+              fa: "حسابرسی مستمر مبتنی بر AI"
+            priority: 2
+          - id: "G3.4"
+            label:
+              fa: "چارچوب IAASB برای AI در حسابرسی"
+            priority: 2
+
+      # ── G4: Blockchain & Crypto ──
+      - id: "G4"
+        label:
+          fa: "بلاکچین و رمزارزها"
+          en: "Blockchain & Cryptocurrency"
+        priority: 2
+        agent_id: "blockchain-accountant"
+        ref:
+          syllabus:
+            - "حسابداری رمزارزها و بلاکچین (کارشناسی ۱۴۰۴)"
+        children:
+
+          - id: "G4.1"
+            label:
+              fa: "حسابداری دارایی‌های رمزارزی"
+            priority: 2
+            children:
+              - id: "G4.1.1"
+                label:
+                  fa: "شناسایی و اندازه‌گیری رمزارزها"
+              - id: "G4.1.2"
+                label:
+                  fa: "ذخیره کاهش ارزش دارایی‌های رمزارزی"
+
+          - id: "G4.2"
+            label:
+              fa: "مالی غیرمتمرکز (DeFi)"
+            priority: 3
+          - id: "G4.3"
+            label:
+              fa: "حسابرسی بلاکچین و قراردادهای هوشمند"
+            priority: 3
+
+      # ── G5: Accounting Software ──
+      - id: "G5"
+        label:
+          fa: "نرم‌افزارهای حسابداری"
+          en: "Accounting Software & Systems"
+        priority: 1
+        agent_id: "data-analyst"
+        ref:
+          syllabus:
+            - "کاربرد نرم‌افزار در حسابداری (کارشناسی)"
+            - "سیستم‌های اطلاعاتی حسابداری (کارشناسی)"
+        children:
+
+          - id: "G5.1"
+            label:
+              fa: "سیستم‌های ERP"
+            priority: 1
+            children:
+              - id: "G5.1.1"
+                label:
+                  fa: "SAP Finance"
+              - id: "G5.1.2"
+                label:
+                  fa: "Oracle Financials"
+              - id: "G5.1.3"
+                label:
+                  fa: "Microsoft Dynamics"
+
+          - id: "G5.2"
+            label:
+              fa: "نرم‌افزارهای ابری"
+            priority: 1
+            children:
+              - id: "G5.2.1"
+                label:
+                  fa: "راهکاران (ایران)"
+              - id: "G5.2.2"
+                label:
+                  fa: "هلو (ایران)"
+              - id: "G5.2.3"
+                label:
+                  fa: "QuickBooks Online"
+              - id: "G5.2.4"
+                label:
+                  fa: "Xero"
+
+          - id: "G5.3"
+            label:
+              fa: "API و اتصال به سامانه‌ها"
+            priority: 1
+            children:
+              - id: "G5.3.1"
+                label:
+                  fa: "اتصال به سامانه مودیان (مالیاتی)"
+              - id: "G5.3.2"
+                label:
+                  fa: "اتصال به نرم‌افزارهای بانکی"
+              - id: "G5.3.3"
+                label:
+                  fa: "اتصال به صندوق‌های فروش"
+
+      # ── G6: RPA ──
+      - id: "G6"
+        label:
+          fa: "اتوماسیون فرآیندهای حسابداری (RPA)"
+          en: "Robotic Process Automation in Accounting"
+        priority: 1
+        agent_id: "rpa-developer"
+        children:
+
+          - id: "G6.1"
+            label:
+              fa: "پردازش خودکار فاکتورها"
+            priority: 1
+          - id: "G6.2"
+            label:
+              fa: "تطبیق خودکار حساب‌ها"
+            priority: 1
+          - id: "G6.3"
+            label:
+              fa: "تولید خودکار گزارش‌ها"
+            priority: 1
+          - id: "G6.4"
+            label:
+              fa: "حسابداری خودکار (Full Automation)"
+            priority: 2
+
+  # ============================================================
+  # [H] GOVERNANCE, ETHICS & REGULATION | حاکمیت شرکتی، اخلاق و مقررات
+  # ============================================================
+  - id: "H"
+    label:
+      fa: "حاکمیت شرکتی، اخلاق حرفه‌ای و مقررات"
+      en: "Corporate Governance, Professional Ethics & Regulations"
+    description:
+      fa: "اصول حاکمیت شرکتی، اخلاق حرفه‌ای، قوانین تجارت و انطباق"
+      en: "Corporate governance, professional ethics, business laws and compliance"
+    children:
+
+      # ── H1: Corporate Governance ──
+      - id: "H1"
+        label:
+          fa: "حاکمیت شرکتی"
+          en: "Corporate Governance"
+        priority: 2
+        agent_id: "internal-controller"
+        children:
+
+          - id: "H1.1"
+            label:
+              fa: "ساختار هیئت مدیره و کمیته‌ها"
+          - id: "H1.2"
+            label:
+              fa: "کنترل داخلی و مدیریت ریسک"
+          - id: "H1.3"
+            label:
+              fa: "افشا و شفافیت"
+          - id: "H1.4"
+            label:
+              fa: "حقوق سهامداران"
+
+      # ── H2: Professional Ethics ──
+      - id: "H2"
+        label:
+          fa: "اخلاق حرفه‌ای"
+          en: "Professional Ethics"
+        priority: 2
+        agent_id: "compliance-officer"
+        children:
+
+          - id: "H2.1"
+            label:
+              fa: "کد اخلاق حرفه‌ای حسابداران"
+          - id: "H2.2"
+            label:
+              fa: "استقلال و بی‌طرفی"
+          - id: "H2.3"
+            label:
+              fa: "رازداری و حفظ اسرار حرفه‌ای"
+
+      # ── H3: Business Law ──
+      - id: "H3"
+        label:
+          fa: "حقوق تجارت"
+          en: "Commercial & Business Law"
+        priority: 2
+        children:
+
+          - id: "H3.1"
+            label:
+              fa: "قانون تجارت"
+            children:
+              - id: "H3.1.1"
+                label:
+                  fa: "شرکت‌های تجاری"
+              - id: "H3.1.2"
+                label:
+                  fa: "اسناد تجاری (برات، سفته، چک)"
+              - id: "H3.1.3"
+                label:
+                  fa: "ورشکستگی و تصفیه"
+
+          - id: "H3.2"
+            label:
+              fa: "قانون کار و تامین اجتماعی"
+            priority: 2
+
+          - id: "H3.3"
+            label:
+              fa: "قانون بازار اوراق بهادار"
+            priority: 2
+
+      # ── H4: AML & Compliance ──
+      - id: "H4"
+        label:
+          fa: "مبارزه با پولشویی و انطباق"
+          en: "AML & Compliance"
+        priority: 2
+        agent_id: "compliance-officer"
+        children:
+
+          - id: "H4.1"
+            label:
+              fa: "مشتری‌شناسی (KYC)"
+            priority: 2
+          - id: "H4.2"
+            label:
+              fa: "توصیه‌های FATF"
+            priority: 2
+          - id: "H4.3"
+            label:
+              fa: "گزارش تراکنش‌های مشکوک (STR)"
+            priority: 2
+          - id: "H4.4"
+            label:
+              fa: "قانون مبارزه با پولشویی ایران"
+            priority: 1
+
+  # ============================================================
+  # [I] BUSINESS & ECONOMICS CONTEXT | اقتصاد و کسب‌وکار
+  # ============================================================
+  - id: "I"
+    label:
+      fa: "اقتصاد و فضای کسب‌وکار"
+      en: "Business & Economics Context"
+    description:
+      fa: "مفاهیم پایه‌ای اقتصاد و مدیریت که برای تحلیل مالی ضروری است"
+      en: "Foundational economics and business concepts for financial analysis"
+    children:
+
+      - id: "I1"
+        label:
+          fa: "اقتصاد خرد"
+          en: "Microeconomics"
+        priority: 2
+        children:
+          - id: "I1.1"
+            label:
+              fa: "تقاضا، عرضه و تعادل بازار"
+          - id: "I1.2"
+            label:
+              fa: "کشش قیمتی و درآمدی"
+          - id: "I1.3"
+            label:
+              fa: "تئوری رفتار مصرف‌کننده و تولیدکننده"
+          - id: "I1.4"
+            label:
+              fa: "ساختار بازار (رقابت کامل، انحصار)"
+
+      - id: "I2"
+        label:
+          fa: "اقتصاد کلان"
+          en: "Macroeconomics"
+        priority: 2
+        children:
+          - id: "I2.1"
+            label:
+              fa: "حسابداری درآمد ملی"
+          - id: "I2.2"
+            label:
+              fa: "تورم، بیکاری و نرخ بهره"
+          - id: "I2.3"
+            label:
+              fa: "سیاست مالی و پولی"
+          - id: "I2.4"
+            label:
+              fa: "تجارت بین‌الملل و نرخ ارز"
+
+      - id: "I3"
+        label:
+          fa: "مدل‌های کسب‌وکار"
+          en: "Business Models"
+        priority: 2
+        agent_id: "strategy-advisor"
+
+      - id: "I4"
+        label:
+          fa: "تحلیل صنعت"
+          en: "Industry Analysis"
+        priority: 2
+        children:
+          - id: "I4.1"
+            label:
+              fa: "پنج نیروی پورتر"
+          - id: "I4.2"
+            label:
+              fa: "تحلیل SWOT"
+          - id: "I4.3"
+            label:
+              fa: "تحلیل PESTEL"
+
+  # ============================================================
+  # [J] RESEARCH & QUANTITATIVE METHODS | پژوهش و روش‌های کمی
+  # ============================================================
+  - id: "J"
+    label:
+      fa: "پژوهش و روش‌های کمی"
+      en: "Research & Quantitative Methods"
+    description:
+      fa: "روش‌های تحقیق، آمار و اقتصادسنجی برای پژوهش‌های حسابداری و مالی"
+      en: "Research methods, statistics and econometrics for accounting research"
+    children:
+
+      # ── J1: Statistics ──
+      - id: "J1"
+        label:
+          fa: "آمار کاربردی"
+          en: "Applied Statistics"
+        priority: 2
+        children:
+
+          - id: "J1.1"
+            label:
+              fa: "آمار توصیفی"
+            children:
+              - id: "J1.1.1"
+                label:
+                  fa: "شاخص‌های مرکزی و پراکندگی"
+              - id: "J1.1.2"
+                label:
+                  fa: "جدول‌های فراوانی و نمودارها"
+
+          - id: "J1.2"
+            label:
+              fa: "آمار استنباطی"
+            children:
+              - id: "J1.2.1"
+                label:
+                  fa: "برآورد و فاصله اطمینان"
+              - id: "J1.2.2"
+                label:
+                  fa: "آزمون فرضیه (t-test, Chi-square, ANOVA)"
+              - id: "J1.2.3"
+                label:
+                  fa: "رگرسیون خطی ساده و چندگانه"
+              - id: "J1.2.4"
+                label:
+                  fa: "شاخص‌های اقتصادی (CPI, Gini, Lorenz)"
+
+      # ── J2: Econometrics ──
+      - id: "J2"
+        label:
+          fa: "اقتصادسنجی"
+          en: "Econometrics"
+        priority: 3
+        children:
+
+          - id: "J2.1"
+            label:
+              fa: "سری‌های زمانی"
+            children:
+              - id: "J2.1.1"
+                label:
+                  fa: "ایستایی و ریشه واحد"
+              - id: "J2.1.2"
+                label:
+                  fa: "هم‌انباشتگی (Cointegration)"
+              - id: "J2.1.3"
+                label:
+                  fa: "مدل‌های VAR و VECM"
+
+          - id: "J2.2"
+            label:
+              fa: "داده‌های تابلویی (Panel Data)"
+            children:
+              - id: "J2.2.1"
+                label:
+                  fa: "اثرات ثابت و تصادفی"
+              - id: "J2.2.2"
+                label:
+                  fa: "GMM و متغیر ابزاری"
+
+          - id: "J2.3"
+            label:
+              fa: "استنتاج علّی"
+            children:
+              - id: "J2.3.1"
+                label:
+                  fa: "Did — تفاوت در تفاوت"
+              - id: "J2.3.2"
+                label:
+                  fa: "RDD — رگرسیون ناپیوستگی"
+
+      # ── J3: Research Methodology ──
+      - id: "J3"
+        label:
+          fa: "روش پژوهش در حسابداری"
+          en: "Accounting Research Methodology"
+        priority: 2
+        agent_id: "research-methodologist"
+        children:
+
+          - id: "J3.1"
+            label:
+              fa: "پژوهش کمی"
+            children:
+              - id: "J3.1.1"
+                label:
+                  fa: "طراحی تحقیق تجربی"
+              - id: "J3.1.2"
+                label:
+                  fa: "تحلیل همبستگی و علیت"
+
+          - id: "J3.2"
+            label:
+              fa: "پژوهش کیفی"
+            children:
+              - id: "J3.2.1"
+                label:
+                  fa: "مطالعه موردی"
+              - id: "J3.2.2"
+                label:
+                  fa: "تحلیل محتوا"
+              - id: "J3.2.3"
+                label:
+                  fa: "نظریه داده‌بنیاد"
+
+          - id: "J3.3"
+            label:
+              fa: "پژوهش آمیخته (Mixed Methods)"
+
+      # ── J4: Corporate Finance Theory ──
+      - id: "J4"
+        label:
+          fa: "تئوری مالی شرکتی"
+          en: "Corporate Finance Theory"
+        priority: 2
+        children:
+
+          - id: "J4.1"
+            label:
+              fa: "ساختار سرمایه"
+            children:
+              - id: "J4.1.1"
+                label:
+                  fa: "تئوری Modigliani-Miller"
+              - id: "J4.1.2"
+                label:
+                  fa: "نظریه توازی و سلسله مراتبی"
+
+          - id: "J4.2"
+            label:
+              fa: "سیاست تقسیم سود"
+          - id: "J4.3"
+            label:
+              fa: "تئوری نمایندگی در مالی"

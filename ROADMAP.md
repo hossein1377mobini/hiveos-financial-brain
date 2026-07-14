@@ -63,3 +63,26 @@ Live product roadmap. Updated after every session.
 - [ ] **Dashboard** — Web UI to monitor agents, flows, and nodes
 - [ ] **Multi-tenant** — Isolated workspaces per team/org
 - [ ] **Pricing model** — License tiers
+
+---
+
+## 🎯 Domain System Phases (NEW)
+
+### Phase D1: Accounting Domain 🏗️
+- [x] Knowledge tree from official curricula (Bachelor's 1404 + Master's 1402)
+- [x] Domain manifest (domain.yaml) with 24 agent blueprints
+- [x] Domain plugin architecture docs (vision + arch)
+- [ ] Agent blueprints (YAML definitions in `agents/blueprints/`)
+- [ ] Flow templates (YAML flows for common accounting workflows)
+- [ ] Hermes skills for each agent (domain-specific knowledge prompts)
+
+### Phase D2: Domain Plugin System (⏳ Planned)
+- [ ] `hive domain` CLI (list, info, install, remove, init)
+- [ ] Domain registry (discover/shared domains)
+- [ ] Domain loading in Mothership
+- [ ] Cross-domain dependency resolution
+
+### Phase D3: Next Domain (⏳ Planned)
+- [ ] Choose next domain (medical, legal, engineering, ...)
+- [ ] Build its knowledge tree + agents + flows
+- [ ] Publish to domain registry
