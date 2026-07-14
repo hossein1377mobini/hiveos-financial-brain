@@ -21,11 +21,12 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -e .
-          pip install pytest
+          pip install pytest pywebview
 
       - name: Run tests
-        run: python -m pytest tests/ -v --tb=short
+        run: python -m pytest tests/ -v --tb=short --no-header
         continue-on-error: true
+        shell: pwsh
 
       - name: Upload test results
         if: always()

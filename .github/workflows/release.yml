@@ -19,74 +19,66 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Test (non-blocking)
-        id: test
-        continue-on-error: true
-        run: |
-          pip install -e . 2>&1
-          pip install pytest 2>&1
-          python -m pytest tests/ -v --tb=short 2>&1 | tail -20
-        shell: pwsh
-
-      - name: Install build deps
+      - name: Install HiveOS + build deps
         run: |
           pip install -e .
-          pip install pyinstaller
-          pip install pywebview
-        shell: pwsh
+          pip install pyinstaller pywebview
 
       - name: Build .exe (PyInstaller)
-        run: python build/build_exe.py
         env:
-          PYTHONOPTIMIZE: 1
-        shell: pwsh
-
-      - name: Install Inno Setup (Chocolatey)
-        run: choco install innosetup -y --no-progress --allow-empty-checksums
-        shell: pwsh
-
-      - name: Refresh PATH
+          PYTHONOPTIMIZE: 2
         run: |
-          $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-          $isccPath = Get-Command iscc.exe -ErrorAction SilentlyContinue
-          if (-not $isccPath) {
-            $paths = @(
-              "${env:ProgramFiles}\Inno Setup 6",
-              "${env:ProgramFiles(x86)}\Inno Setup 6",
-              "${env:LOCALAPPDATA}\Programs\Inno Setup 6"
-            )
-            foreach ($p in $paths) {
-              if (Test-Path "$p\iscc.exe") {
-                Write-Host "Found iscc at $p"
-                echo "$p" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-                break
-              }
-            }
+          pyinstaller --noconfirm --clean --onedir --name=HiveOS `
+            --distpath=dist --workpath=build\pyinstaller --specpath=build `
+            --exclude-module=pythoncom --exclude-module=pywin32 `
+            --hidden-import=hiveos `
+            --hidden-import=hiveos.cli.main --hidden-import=hiveos.desktop `
+            --hidden-import=hiveos.desktop.app --hidden-import=hiveos.dashboard `
+            --hidden-import=hiveos.dashboard.server --hidden-import=hiveos.playground `
+            --hidden-import=hiveos.playground.playground --hidden-import=hiveos.playground.runner `
+            --hidden-import=hiveos.playground.library --hidden-import=hiveos.brain `
+            --hidden-import=hiveos.learning --hidden-import=hiveos.storage --hidden-import=hiveos.domain `
+            --hidden-import=hiveos.update --hidden-import=uvicorn --hidden-import=uvicorn.logging `
+            --hidden-import=uvicorn.loops.auto --hidden-import=uvicorn.protocols.http.auto `
+            --hidden-import=websockets --collect-all=hiveos `
+            --add-data="domains;domains" `
+            --windowed `
+            src\hiveos\desktop\app.py
+        shell: pwsh
+
+      - name: Verify build
+        run: |
+          if (Test-Path "dist\HiveOS\HiveOS.exe") {
+            $size = [math]::Round((Get-Item "dist\HiveOS\HiveOS.exe").Length / 1MB, 1)
+            Write-Host "✅ HiveOS.exe built: $size MB"
+            Get-ChildItem -Recurse dist\HiveOS\ | Measure-Object | % { Write-Host "   Total files: $($_.Count)" }
+          } else {
+            Write-Error "❌ HiveOS.exe not found!"
+            exit 1
           }
+        shell: pwsh
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
         shell: pwsh
 
       - name: Build MSI Installer
         run: |
           $iscc = Get-Command iscc.exe -ErrorAction SilentlyContinue
           if (-not $iscc) {
-            # Try common paths
-            $candidates = @(
-              "${env:ProgramFiles}\Inno Setup 6\iscc.exe",
-              "${env:ProgramFiles(x86)}\Inno Setup 6\iscc.exe",
-              "${env:LOCALAPPDATA}\Programs\Inno Setup 6\iscc.exe"
-            )
-            $isccPath = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-            if (-not $isccPath) {
-              Write-Warning "iscc.exe not found, skipping MSI build"
-              return
+            "${env:ProgramFiles(x86)}\Inno Setup 6",
+            "${env:ProgramFiles}\Inno Setup 6",
+            "${env:LOCALAPPDATA}\Programs\Inno Setup 6" | ForEach-Object {
+              if (Test-Path "$_\iscc.exe") {
+                Write-Host "Found iscc at $_"
+                return
+              }
             }
-            & $isccPath "build\installer.iss"
-          } else {
-            & $iscc "build\installer.iss"
           }
-          # Check if MSI was created
-          Get-ChildItem -Path dist\ -Filter "HiveOS-Setup-*" -ErrorAction SilentlyContinue | ForEach-Object {
-            Write-Host "✅ MSI created: $($_.Name) ($([math]::Round($_.Length/1MB,1)) MB)"
+          iscc.exe build\installer.iss
+          if ($LASTEXITCODE -ne 0) { Write-Warning "MSI build had warnings, checking output..." }
+          Get-ChildItem dist\ -Filter "HiveOS-Setup-*" | ForEach-Object {
+            Write-Host "✅ MSI: $($_.Name) ($([math]::Round($_.Length/1MB,1)) MB)"
           }
         shell: pwsh
 
@@ -97,7 +89,7 @@ jobs:
           path: |
             dist\HiveOS-Setup-*.exe
             dist\HiveOS\HiveOS.exe
-          if-no-files-found: warn
+          if-no-files-found: error
 
   release:
     needs: build
@@ -113,12 +105,12 @@ jobs:
       - name: Display build artifacts
         run: |
           ls -la dist/
-          ls -la dist/ | grep -c "HiveOS" && echo "✅ Found artifacts" || echo "⚠️ No artifacts found"
+          ls -la dist/HiveOS/ 2>/dev/null || echo "No HiveOS dir"
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          name: HiveOS ${{ github.ref_name }}
+          name: HiveOS Desktop ${{ github.ref_name }}
           body_path: CHANGELOG.md
           files: |
             dist/HiveOS-Setup-*.exe
