@@ -1,6 +1,6 @@
 # HiveOS 🐝 — Multi-Agent Operating System
 
-**Version 0.8.0** | [فارسی](README.fa.md)
+**Version 0.10.0** | [فارسی](README.fa.md)
 
 **Orchestrate teams of AI agents. Package workflows. Ship them anywhere.**
 
