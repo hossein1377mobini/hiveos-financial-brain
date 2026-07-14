@@ -39,6 +39,7 @@ from ..brain import EventStream, DecisionTracer, ApprovalGateEngine
 from ..learning import ExecutionLogger
 from ..learning.analytics import AnalyticsEngine
 from ..storage import StorageEngine
+from ..domain.registry import DomainRegistry
 
 console = Console()
 
@@ -180,6 +181,17 @@ class DashboardApp:
             approval_gates=self.approval_gates,
             storage=self.storage,
         )
+
+        # ── Domain Registry ────────────────────────────────────────────
+        domains_root = self.data_dir / "domains" if self.data_dir else Path.cwd() / "domains"
+        if not domains_root.exists():
+            # Fall back to project-level domains (installed package)
+            from pathlib import Path as _P
+            project_domains = _P(__file__).parent.parent.parent.parent / "domains"
+            if project_domains.exists():
+                domains_root = project_domains
+        self.domain_registry = DomainRegistry(storage=self.storage, domains_root=domains_root)
+        self.domain_registry.scan()  # auto-scan on startup
 
         self.app = FastAPI(title="HiveOS Dashboard", version="0.5.0")
         self._register_routes()
@@ -477,25 +489,84 @@ class DashboardApp:
 
         @app.get("/api/domains")
         async def list_domains():
-            """List installed domain plugins."""
-            domains = []
-            domains_path = self.data_dir / "domains"
-            if domains_path.exists():
-                for d in sorted(domains_path.iterdir()):
-                    if d.is_dir() and (d / "domain.yaml").exists():
-                        try:
-                            import yaml
-                            manifest = yaml.safe_load((d / "domain.yaml").read_text(encoding="utf-8"))
-                            domains.append({
-                                "name": manifest.get("name", d.name),
-                                "label": manifest.get("label", d.name),
-                                "version": manifest.get("version", "0.0.0"),
-                                "agents": len(manifest.get("agents", [])),
-                                "flows": len(manifest.get("flows", [])),
-                            })
-                        except Exception:
-                            domains.append({"name": d.name, "label": d.name, "error": "parse failed"})
+            """List all known domains from the registry."""
+            domains = self.domain_registry.list_domains()
             return {"domains": domains}
+
+        @app.get("/api/domains/installed")
+        async def list_installed_domains():
+            """List installed domains only."""
+            return {"domains": self.domain_registry.list_installed()}
+
+        @app.get("/api/domains/search")
+        async def search_domains(q: str = ""):
+            """Search domains by name, label, or tags."""
+            if not q:
+                return {"results": self.domain_registry.list_domains()}
+            return {"results": self.domain_registry.search(q)}
+
+        @app.get("/api/domains/{name}")
+        async def get_domain(name: str):
+            """Get detailed metadata for a domain."""
+            meta = self.domain_registry.get_domain(name)
+            if not meta:
+                return {"error": f"Domain '{name}' not found"}
+            # Add installed status and learned insights
+            meta["installed"] = self.domain_registry.is_installed(name)
+            learned = self.domain_registry.get_learned(name)
+            if learned:
+                meta["learned"] = learned
+            return {"domain": meta}
+
+        @app.post("/api/domains/{name}/install")
+        async def install_domain(name: str):
+            """Mark a domain as installed."""
+            try:
+                result = self.domain_registry.install(name)
+                return {"status": "ok", "domain": result}
+            except KeyError as e:
+                return {"error": str(e)}
+
+        @app.delete("/api/domains/{name}")
+        async def remove_domain(name: str):
+            """Remove a domain from the registry."""
+            self.domain_registry.remove(name)
+            return {"status": "removed", "domain": name}
+
+        @app.post("/api/domains/{name}/learn")
+        async def learn_domain(name: str):
+            """Analyse a domain and store insights."""
+            try:
+                insights = self.domain_registry.learn(name)
+                return {"status": "ok", "insights": insights}
+            except KeyError as e:
+                return {"error": str(e)}
+
+        @app.get("/api/domains/learning/insights")
+        async def list_learning_insights():
+            """List all learning insights across domains."""
+            return {"insights": self.domain_registry.list_learned()}
+
+        @app.get("/api/domains/learning/suggestions")
+        async def suggest_domains(tags: str = ""):
+            """Get domain suggestions based on usage and tags."""
+            tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else None
+            suggestions = self.domain_registry.suggest_domains(tags=tag_list)
+            return {"suggestions": suggestions}
+
+        @app.get("/api/domains/usage/stats")
+        async def domain_usage_stats():
+            """Get aggregated domain usage statistics."""
+            return self.domain_registry.get_usage_stats()
+
+        @app.get("/api/domains/{name}/dependencies")
+        async def domain_dependencies(name: str):
+            """Resolve domain dependencies."""
+            try:
+                deps = self.domain_registry.resolve_dependencies(name)
+                return {"dependencies": deps}
+            except ValueError as e:
+                return {"error": str(e)}
 
         @app.get("/api/workspaces")
         async def list_workspaces():

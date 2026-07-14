@@ -2129,6 +2129,119 @@ agents:
     console.print(f"\nNext: edit [cyan]{root / 'domain.yaml'}[/cyan] and add agents")
 
 
+@domain.command()
+@click.argument("query")
+def search(query):
+    """🔍 Search domain registry by name, label, or tags."""
+    from ..domain.registry import DomainRegistry
+    from ..storage import StorageEngine
+    from pathlib import Path
+
+    storage = StorageEngine()
+    mgr = DomainRegistry(storage=storage)
+    results = mgr.search(query)
+
+    if not results:
+        console.print(f"[yellow]No domains matching '{query}'[/yellow]")
+        return
+
+    from rich.table import Table
+    table = Table(title=f"🔍 Search Results for '{query}'")
+    table.add_column("Name", style="cyan")
+    table.add_column("Version", style="green")
+    table.add_column("Label", style="white")
+    table.add_column("Agents", style="yellow")
+    table.add_column("Flows", style="blue")
+    table.add_column("Status", style="dim")
+
+    installed = {d["name"] for d in mgr.list_installed()}
+    for d in results:
+        status = "✅ Installed" if d["name"] in installed else "○ Available"
+        table.add_row(d["name"], d["version"], d.get("label_en", ""),
+                      str(d["total_agents"]), str(d["total_flows"]), status)
+    console.print(table)
+
+
+@domain.command()
+@click.argument("name")
+def learn(name):
+    """🧠 Analyse a domain and store learning insights."""
+    from ..domain.registry import DomainRegistry
+    from ..storage import StorageEngine
+
+    storage = StorageEngine()
+    mgr = DomainRegistry(storage=storage)
+    mgr.scan()
+
+    try:
+        insights = mgr.learn(name)
+        console.print(f"[green]✅ Learned from domain [bold]{name}[/bold][/green]")
+        console.print(f"   👤 {insights['total_agents']} agents analysed")
+        console.print(f"   📚 {insights['knowledge_tree_nodes']} knowledge nodes")
+        console.print(f"   🏷️  Coverage: {', '.join(insights['coverage_areas'])}")
+    except KeyError as e:
+        console.print(f"[red]❌ {e}[/red]")
+        raise SystemExit(1)
+
+
+@domain.command("suggestions")
+def domain_suggestions():
+    """💡 Get domain suggestions based on usage and tags."""
+    from ..domain.registry import DomainRegistry
+    from ..storage import StorageEngine
+
+    storage = StorageEngine()
+    mgr = DomainRegistry(storage=storage)
+    suggestions = mgr.suggest_domains()
+
+    if not suggestions:
+        console.print("[yellow]No suggestions yet. Install and learn from domains to get recommendations.[/yellow]")
+        return
+
+    from rich.table import Table
+    table = Table(title="💡 Suggested Domains")
+    table.add_column("Name", style="cyan")
+    table.add_column("Version", style="green")
+    table.add_column("Label", style="white")
+    table.add_column("Agents", style="yellow")
+    table.add_column("Tags", style="dim")
+
+    for s in suggestions:
+        tags_str = ", ".join(s.get("tags", [])[:3])
+        table.add_row(s["name"], s["version"], s.get("label_en", ""),
+                      str(s["total_agents"]), tags_str)
+    console.print(table)
+
+
+@domain.command()
+def verify():
+    """🔍 Verify integrity of all installed domains."""
+    from ..domain.registry import DomainRegistry
+    from ..storage import StorageEngine
+    from rich.table import Table
+
+    storage = StorageEngine()
+    mgr = DomainRegistry(storage=storage)
+    mgr.scan()
+
+    issues = mgr.verify_integrity()
+    if not issues:
+        console.print("[green]✅ All installed domains verified — no issues found.[/green]")
+        return
+
+    table = Table(title="⚠️ Domain Integrity Issues")
+    table.add_column("Domain", style="cyan")
+    table.add_column("Severity", style="yellow")
+    table.add_column("Message", style="white")
+
+    for iss in issues:
+        sev = iss["severity"]
+        sev_style = f"[bold red]{sev}[/bold red]" if sev == "error" else f"[yellow]{sev}[/yellow]"
+        table.add_row(iss["domain"], sev_style, iss["message"])
+    console.print(table)
+    console.print(f"\n[yellow]Total issues: {len(issues)} ({sum(1 for i in issues if i['severity'] == 'error')} errors)[/yellow]")
+
+
 # ── Update Commands ────────────────────────────────────────────────────
 
 @hive.group()
