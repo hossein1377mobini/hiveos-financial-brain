@@ -1,0 +1,91 @@
+name: Release — Build & Publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          pip install -e .
+          pip install pytest
+      - name: Run tests
+        run: python -m pytest tests/ -v --tb=short
+
+  build:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install HiveOS + build deps
+        run: |
+          pip install -e .
+          pip install pyinstaller
+          pip install pywebview
+
+      - name: Build .exe (PyInstaller)
+        run: |
+          python build/build_exe.py
+        env:
+          PYTHONOPTIMIZE: 1
+
+      - name: Install Inno Setup (Chocolatey)
+        shell: pwsh
+        run: choco install innosetup -y --no-progress
+
+      - name: Build MSI Installer
+        shell: pwsh
+        run: |
+          # Inno Setup needs the .iss file
+          iscc.exe "build\installer.iss"
+        env:
+          PATH: "$env:USERPROFILE\\innosetup;$env:PATH"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: HiveOS-Setup
+          path: |
+            dist\HiveOS-Setup-*.exe
+            dist\HiveOS\HiveOS.exe
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: HiveOS-Setup
+          path: dist
+
+      - name: Display structure
+        run: ls -la dist/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: HiveOS ${{ github.ref_name }}
+          body_path: CHANGELOG.md
+          files: |
+            dist/HiveOS-Setup-*.exe
+            dist/HiveOS.exe
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

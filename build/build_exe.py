@@ -65,6 +65,8 @@ def build_exe():
         "--distpath=" + str(DIST_DIR),
         "--workpath=" + str(BUILD_DIR),
         "--specpath=" + str(PROJECT_ROOT / "build"),
+        "--exclude-module=pythoncom",
+        "--exclude-module=pywin32",
         "--hidden-import=hiveos",
         "--hidden-import=hiveos.cli.main",
         "--hidden-import=hiveos.desktop",
