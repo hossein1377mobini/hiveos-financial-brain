@@ -1,182 +1,197 @@
 # HiveOS — Agent Boot File 🐝
 
-> This file is auto-loaded by Hermes when working in the hive-os project.
-> It contains the COMPLETE project state so you never lose context between sessions.
+> Auto-loaded by Hermes when working in hive-os.
+> Contains COMPLETE project state for cross-session continuity.
 
 ---
 
-## 📌 Current Phase: Phase 5 — Enterprise ✅
+## 📌 Current Phase
 
-Phase 0 (Foundation) ✅ | Phase 1 (Playground) ✅ | Phase 2 (Integration) ✅ | Phase 3 (Packaging) ✅ | Phase 4 (Mothership) ✅ | **Phase 5 (Enterprise) ✅** | **Phase D1 (Accounting) 🏗️**
-
----
-
-## 🎯 Current Work: Phase D1 — Accounting Domain
-
-- 💰 **Pricing model** — License tiers (✅ Complete — v0.6.0)
-  - 4 tiers: Free, Pro, Enterprise, Ultimate
-  - Feature flags with gating
-  - Resource limits enforcement
-  - Demo key activation
-  - `hive license` CLI (info/activate/deactivate/upgrade/tiers/check)
-  - Dashboard `/api/license` endpoint
-  - 32 tests
-
-### Phase D1: Next Steps
-- 🏢 **Agent Blueprints** — YAML definitions in `domains/accounting/agents/blueprints/`
-- 🔄 **Flow Templates** — YAML flows for common accounting workflows
-- 🧠 **Hermes Skills** — Domain-specific knowledge prompts
+| Phase | Status | Version |
+|-------|--------|---------|
+| Phase 0 (Foundation) | ✅ | v0.1.0 |
+| Phase 1 (Playground CLI) | ✅ | v0.2.0 |
+| Phase 2 (Integration) | ✅ | v0.3.0 |
+| Phase 3 (Packaging) | ✅ | v0.4.0 |
+| Phase 4 (Mothership) | ✅ | v0.4.0 |
+| Phase 5 (Enterprise) | ✅ | v0.6.0 |
+| Phase D1 (Accounting) | 🏗️ 70% | v0.6.0 |
+| Phase 6 (Playground UI) | ⏳ | — |
+| Phase 7 (Brain) | ⏳ | — |
+| Phase 8 (Learning) | ⏳ | — |
 
 ---
 
-## 📋 Session History
+## 🎯 Project Vision (v2.0)
 
-### v0.5.0 (2026-07-14) — Phase 5: Enterprise (RBAC) ✅
+HiveOS is a **Multi-Agent Operating System** with 5 pillars:
 
-| Component | File | Description |
-|-----------|------|-------------|
-| RBAC Models | `src/hiveos/rbac/models.py` | Resource, Action, Permission, Role, User dataclasses + 4 built-in roles |
-| RBAC Manager | `src/hiveos/rbac/manager.py` | YAML-backed persistence, authenticate(), check_permission(), full CRUD |
-| RBAC Server Auth | `src/hiveos/mothership/server.py` | `_require_auth()` middleware on all HTTP endpoints, RBAC management API |
-| RBAC CLI | `src/hiveos/cli/main.py` | `hive rbac user` (add/list/remove/set-role/set-api-key/enable/disable) + `hive rbac role` (add/list/show/remove) |
-| RBAC tests | `tests/test_rbac.py` | 36 tests covering models, manager, permissions, persistence, auth |
-| Test results | 160/160 | `python -m pytest tests/ -v` → 160 passed in 9.3s |
+1. **Engine** — Core OS (Flow DSL, Engine, Mothership, Enterprise features) ✅
+2. **Domains** — Pluggable knowledge domains (Accounting D1 🏗️)
+3. **Playground** — Visual interactive flow builder ⏳
+4. **Brain** — 3D neural glass-box visualization ⏳
+5. **Learning** — Self-improving system ⏳
 
-### v0.5.1 (2026-07-14) — Phase 5: Audit Trail ✅
+**Guiding Principles:**
+- **Glass Box** — Every action visible, traceable, explainable
+- **Human-in-the-Loop** — Critical decisions need human approval
+- **Domain-Native** — Domains are first-class plugins
+- **Self-Learning** — Every execution makes the system smarter
 
-| Component | File | Description |
-|-----------|------|-------------|
-| Audit Models | `src/hiveos/audit/models.py` | AuditEntry dataclass, AuditAction/Resource/Result enums, JSONL + gbrain markdown formats |
-| Audit Trail | `src/hiveos/audit/trail.py` | JSONL daily files, local search, stats, rotate, gbrain sync (`gbrain put`), 20 tests |
-| Server Audit | `src/hiveos/mothership/server.py` | `_audit_log()` middleware, logged on agent register/unregister, task assign/complete/fail, config updates, auth denials |
-| Audit CLI | `src/hiveos/cli/main.py` | `hive audit list/search/stats/search-gbrain/sync-gbrain/rotate` |
-| Audit tests | `tests/test_audit.py` | 20 tests covering models, JSONL persist, search, stats, rotate |
-| Test results | 180/180 | `python -m pytest tests/ -v` → 180 passed in 9.6s |
+---
 
-### v0.4.0 (2026-07-14) — Phase 4: Mothership ✅
+## 🔧 Architecture Overview
 
-| Component | File | Description |
-|-----------|------|-------------|
-| Agent Registry | `src/hiveos/mothership/agent_registry.py` | Node registration, capability declaration, heartbeat monitoring, health checks |
-| Task Router | `src/hiveos/mothership/task_router.py` | 5 routing strategies: BEST_FIT, LEAST_LOADED, ROUND_ROBIN, CAPABILITY_FIRST, AFFINITY |
-| Communication Bus | `src/hiveos/mothership/communication_bus.py` | Pub/sub, request/response, 2 backends (InMemory + File-based) |
-| Resilience Engine | `src/hiveos/mothership/resilience.py` | Health checker, failure detector, circuit breaker, task reassignment |
-| Mothership Server | `src/hiveos/mothership/server.py` | FastAPI HTTP REST API for satellite communication |
-| Mothership CLI | `src/hiveos/cli/main.py` | `hive mothership agent/route/bus/health/server` subcommands |
-| Mothership tests | `tests/test_agent_registry.py`, `test_task_router.py`, `test_comm_bus.py`, `test_resilience.py` | 76 new tests |
-
-### v0.3.0 (2026-07-13) — Phase 3: Package Registry ✅
-
-| Component | File | Description |
-|-----------|------|-------------|
-| Package Registry | `src/hiveos/registry/registry.py` | YAML-based local catalog: publish, search, list, get latest, remove, install counter |
-| Remote Registry Client | `src/hiveos/registry/remote.py` | HTTP client for remote registries: push/pull/search packages |
-| Registry CLI | `src/hiveos/cli/main.py` | `hive registry list/search/info/remove/verify` |
-| `hive package publish` | `src/hiveos/cli/main.py` | Build + publish in one command |
-| Registry tests | `tests/test_registry.py` | 20 tests for registry, builder, installer, E2E |
-
-### v0.2.0 (2026-07-13) — Phase 2: Integration ✅
-
-| Component | File | Description |
-|-----------|------|-------------|
-| Node Registry | `src/hiveos/sync/node_registry.py` | YAML satellite node registration, heartbeat, CRUD |
-| Sync Service | `src/hiveos/sync/sync_service.py` | tar.gz sync packages, HTTP push, dry-run |
-| Mothership CLI | `src/hiveos/cli/main.py` | `hive mothership node/sync/info/preview` |
-| Sync tests | `tests/test_sync.py` | 12 unit tests for NodeRegistry |
-
-### Test results: 124/124 ✅
 ```
-python -m pytest tests/ -v         → 124 passed in 9.3s
-hive mothership agent list/info    → all working
-hive mothership health status      → working
-hive flow validate prototype/      → valid flows
-hive registry list/search/info     → all working
+┌──────────────────────────────────────────────────────────────┐
+│                         🧠 BRAIN                            │
+│              3D Neural Visualization — Glass Box            │
+├──────────────────────────────────────────────────────────────┤
+│                         🎮 PLAYGROUND                       │
+│          Visual Flow Builder — Drag, Drop, Configure        │
+├──────────────────────────────────────────────────────────────┤
+│                         🔧 ENGINE                           │
+│  CLI • Flow Engine • Mothership • RBAC • Audit • Workspace  │
+│  License • Dashboard • Registry • Package • Communication   │
+├──────────────────────────────────────────────────────────────┤
+│                         🧩 DOMAINS                          │
+│     Accounting (D1) • Medical • Legal • Engineering ...     │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🧩 Domain Plugin Architecture (NEW)
+## ✅ What's Built (v0.6.0 — 273 tests)
 
-HiveOS is a **domain-agnostic OS** — any knowledge domain (accounting, medical, legal, engineering) can be installed as a domain plugin.
+### Core Infrastructure
+| Component | Test Count | Status |
+|-----------|-----------|--------|
+| Flow Engine | 13 | ✅ |
+| Agent Registry | 20 | ✅ |
+| Task Router | 16 | ✅ |
+| Communication Bus | 14 | ✅ |
+| Resilience Engine | 20 | ✅ |
+| Sync (Node Registry) | 12 | ✅ |
+| Package Registry | 16 | ✅ |
+| RBAC | 36 | ✅ |
+| Audit Trail | 20 | ✅ |
+| Dashboard | 23 | ✅ |
+| Workspace (Multi-tenant) | 38 | ✅ |
+| License (Pricing) | 32 | ✅ |
 
-```
-hive-os/
-├── core/                      # Domain-agnostic (Flow Engine, Agent Registry, ...)
-├── domains/                   # ★ Domain plugins
-│   ├── accounting/            # First domain: Accounting & Finance
-│   │   ├── domain.yaml        # Domain manifest
-│   │   ├── knowledge/
-│   │   │   ├── tree.yaml      # ★ Knowledge tree (10 branches, 200+ nodes)
-│   │   │   └── references/    # Books, standards, laws
-│   │   ├── agents/
-│   │   │   └── blueprints/    # 24 agent blueprints
-│   │   └── flows/             # 6 flow templates
-│   └── <next-domain>/         # Future: Medical, Legal, ...
-└── registry/                  # Domain package catalog
-```
-
-**Documents created this session:**
-- `docs/01-Vision/02-domain-ecosystem-vision.md` — Multi-domain vision
-- `docs/02-Architecture/03-domain-plugin-system.md` — Domain plugin architecture
-- `domains/accounting/domain.yaml` — Accounting domain manifest (24 agents, 6 flows)
-- `domains/accounting/knowledge/tree.yaml` — Full knowledge tree from official curricula
-
-## 🏗️ Architecture at a Glance
-
-```
-User → Flow DSL YAML → Flow Engine (topological sort)
-                         ├── Agent 1 (skills: A, B) ──┐
-                         ├── Agent 2 (depends: 1) ───┤→ Hermes subagent (chat -q)
-                         ├── Agent 3 (depends: 1) ───┘
-                         └── Agent 4 (depends: 2, 3) → Final output → deliver
-```
-
-### CLI Structure
+### CLI Commands
 ```
 hive
  ├── flow run/validate/list/state/clear-state
  ├── package build/install/list/publish
  ├── registry list/search/info/remove/verify
- ├── mothership
- │    ├── agent register/list/info/remove/capabilities/heartbeat
- │    ├── route assign/reroute/metrics/rules
- │    ├── bus publish/subscribe/stats
- │    ├── health check/monitor/status/failures/circuits/reassignments
- │    └── server start/stop/status
+ ├── mothership agent/route/bus/health/server
+ ├── rbac user/role
+ ├── audit list/search/stats/search-gbrain/sync-gbrain/rotate
+ ├── dashboard start/stop/status
+ ├── workspace create/list/info/update/remove/activate member
+ ├── license info/activate/deactivate/upgrade/tiers/check
  └── util init/info
+```
+
+### Domain System (Accounting — D1)
+```
+domains/accounting/
+├── domain.yaml                     ★ Domain manifest
+├── knowledge/
+│   ├── tree.yaml                   ★ 200+ node knowledge tree (A-J)
+│   └── references/                 Official Iranian curricula
+├── agents/
+│   └── blueprints/                 ★ 29 agent blueprint YAMLs
+│       ├── 6 orchestrators         (master-financial-assistant, etc.)
+│       └── 23 specialists          (financial-recorder, auditor, etc.)
+└── flows/                          ★ 6 flow template YAMLs
+    ├── financial-close.yaml        بستن حساب
+    ├── tax-return.yaml             اظهارنامه مالیاتی
+    ├── audit-engagement.yaml       حسابرسی
+    ├── company-valuation.yaml      ارزش‌گذاری
+    ├── annual-budget.yaml          بودجه
+    └── fraud-investigation.yaml    تقلب
 ```
 
 ---
 
-## 🎯 Full Task Backlog
+## 🏗️ Next: Phase 6 — Playground
 
-### Phase 2: Integration ✅
-- [x] P1: Connect Hermes subagent
-- [x] P2: State persistence
-- [x] P3: Error handling — retry, cascade skip, status tracking
-- [x] P4: Knowledge sync — mothership pushes skills to satellites (via mothership sync)
+### What to Build First
 
-### Phase 3: Packaging ✅
-- [x] Package registry — YAML catalog for sharing packages
-- [x] `hive package publish` — build + publish to registry
-- [x] `hive registry` CLI — list, search, info, remove, verify
-- [x] Remote Registry Client — HTTP client for remote registries
+**Step 1: Core APIs** (session 1)
+- `POST /api/playground/validate` — Validate flow YAML
+- `POST /api/playground/auto-agents` — Task → auto agent team (domain.yaml + blueprints)
+- `GET /api/templates/` — List domain flow templates
 
-### Phase 4: Mothership ✅
-- [x] Agent Registry — node registration, capability declaration, heartbeat monitoring
-- [x] Task routing — 5 strategies: best-fit, least-loaded, round-robin, capability-first, affinity
-- [x] Communication Bus — pub/sub messaging, request/response, two backends
-- [x] Resilience — health checker, failure detection, circuit breaker, task reassignment
-- [x] Mothership Server — FastAPI HTTP REST API for satellite nodes
-- [x] Mothership CLI — `hive mothership` with 5 subcommand groups
+**Step 2: Visual Canvas** (session 2)
+- Integrate React Flow library into dashboard
+- Drag & drop agent nodes, gates, conditions
+- Edge drawing for dependencies
+- Node configuration panels
 
-### Phase 5: Enterprise 🏗️
+**Step 3: Run & Debug** (session 3)
+- `POST /api/playground/run` — Execute flow
+- `WS /api/playground/run/{id}/stream` — Live logs + status
+- Run progress visualization
+- Approval gate interaction
 
-- [x] **RBAC** — Role-based access control (models, manager, server auth, CLI, 36 tests)
-- [ ] **Audit Trail** — Every action logged, traceable (uses gbrain PGLite)
-- [ ] **Dashboard** — Web UI to monitor agents, flows, and nodes
-- [ ] **Multi-tenant** — Isolated workspaces per team/org
-- [ ] **Pricing model** — License tiers
+**Step 4: Polish** (session 4)
+- Template customizer
+- User flow library
+- Visual conditions builder
+- Subflow support
+
+### Flow Components to Implement
+- [ ] Trigger (manual, cron, webhook)
+- [ ] Task (agent node)
+- [ ] Condition (if/else)
+- [ ] Switch (multi-branch)
+- [ ] Loop (repeat)
+- [ ] Parallel (concurrent)
+- [ ] Join (sync)
+- [ ] Approval Gate (human-in-loop)
+- [ ] Timer (delay)
+- [ ] Error Handler (retry/skip/abort)
+- [ ] Transform (data mapping)
+
+---
+
+## 🧠 Next: Phase 7 — Brain
+
+### What to Build
+
+**Core Engine (server-side):**
+- Event Stream pipeline (agent lifecycle → events)
+- Decision Tracer (trace every decision path)
+- Approval Gate Engine (create → notify → approve/reject → log)
+- Brain API: `WS /api/brain/stream`, `GET /api/brain/state`, `GET /api/brain/decision/{id}`
+
+**3D Visualization (client-side):**
+- Three.js/WebGL neural network renderer
+- Agents as glowing spheres with status colors
+- Data flow particles between agents
+- Click → inspect agent details
+- Decision path overlay on neural view
+- Approval gate UI (pending gates list, approve/reject actions)
+
+---
+
+## 📁 Key Files
+
+| File | Purpose |
+|------|---------|
+| `docs/01-Vision/01-product-vision.md` | Full product vision v2.0 (5 pillars) |
+| `docs/01-Vision/03-playground-vision.md` | Playground detailed spec |
+| `docs/01-Vision/04-brain-vision.md` | Brain + Glass Box detailed spec |
+| `docs/01-Vision/02-domain-ecosystem-vision.md` | Multi-domain ecosystem |
+| `docs/02-Architecture/01-high-level-arch.md` | Architecture docs |
+| `docs/02-Architecture/03-domain-plugin-system.md` | Domain plugin architecture |
+| `ROADMAP.md` | Roadmap with Phases 6/7/8 |
+| `MANIFEST.md` | Product manifesto |
+| `AGENTS.md` | This file — full project context |
+| `hiveos-skill.md` | Hermes skill definition (needs update) |
 
 ---
 
@@ -185,66 +200,49 @@ hive
 ```bash
 cd "C:\Users\Hossein Mobini\Desktop\hive-os"
 source .venv/Scripts/activate
-uv pip install .                           # after code changes
-.venv/Scripts/hive flow run prototype/hello-flow/hello.yml
-.venv/Scripts/hive flow validate prototype/
-.venv/Scripts/hive registry list
-.venv/Scripts/hive registry search <query>
-.venv/Scripts/hive registry verify
-.venv/Scripts/hive mothership agent list
-.venv/Scripts/hive mothership health status
-.venv/Scripts/hive mothership server status
-python -m pytest tests/ -v                 # run tests
-git add -A && git commit -m "feat: ..." && git push origin master
+uv pip install -e .                    # after code changes
+# CLI
+hive --version
+hive license activate hive-pro-demo
+hive flow validate prototype/
+hive flow run prototype/hello-flow/hello.yml
+# Tests
+python -m pytest tests/ -v
+python -m pytest tests/test_license.py -v
+# Git
+git add -A && git commit -m "..." && git push origin main
 ```
 
 ---
 
-## 📚 Key Files
+## 📋 Session History
 
-| File | Path |
-|------|------|
-|| Product Vision | `docs/01-Vision/01-product-vision.md` |
-|| High-Level Arch | `docs/02-Architecture/01-high-level-arch.md` |
-|| Flow DSL Spec | `docs/02-Architecture/02-flow-dsl.md` |
-|| ADR: File-Based Memory | `docs/02-Architecture/ADR/001-use-file-based-memory.md` |
-|| Roadmap | `ROADMAP.md` |
-|| Hermes Skill | `hiveos-skill.md` |
-|| Prototype flows | `prototype/hello-flow/hello.yml`, `prototype/failure-test/error-handling.yml` |
+| Date | Version | What Was Done |
+|------|---------|---------------|
+| 2026-07-13 | v0.1–0.5 | Foundation, Playground CLI, Integration, Packaging, Mothership |
+| 2026-07-14 | v0.5.0 | RBAC — 36 tests |
+| 2026-07-14 | v0.5.1 | Audit Trail — 20 tests |
+| 2026-07-14 | v0.5.2 | Dashboard — FastAPI + SPA — 23 tests |
+| 2026-07-14 | v0.5.3 | Multi-tenant Workspaces — 38 tests |
+| 2026-07-14 | v0.6.0 | License pricing + 29 agent blueprints + 6 flow templates + bilingual README |
+| **Next** | **v0.7.0** | **Phase 6: Playground Core APIs** |
 
-### v0.5.2 (2026-07-14) — Phase 5: Dashboard ✅
+---
 
-| Component | File | Description |
-|-----------|------|-------------|
-| Dashboard Server | `src/hiveos/dashboard/server.py` | FastAPI-based REST API with 10 endpoints aggregating all subsystems |
-| Dashboard UI | `src/hiveos/dashboard/templates/index.html` | Dark SPA with 8 views: Overview, Agents, Tasks, Health, Bus, Audit, RBAC, Domains |
-| Dashboard CLI | `src/hiveos/cli/main.py` | `hive dashboard start/stop/status` commands |
-| Dashboard tests | `tests/test_dashboard.py` | 23 tests covering API endpoints, server lifecycle, mock integration |
-| Test results | 203/203 | `python -m pytest tests/ -v` → 203 passed in 11.7s |
+## 🎯 Full Task Backlog (for next session)
 
-### v0.6.0 (2026-07-14) — Phase 5: Enterprise ✅ + Domain D1: Blueprints & Flows 🏗️
+### Phase 6: Playground — Part 1 (Core APIs)
+- [ ] **P6.1** — `POST /api/playground/validate` endpoint in dashboard server
+- [ ] **P6.2** — Auto-agent generation API (parse task → match domain agents)
+- [ ] **P6.3** — Template browser API (list domain flow templates)
+- [ ] **P6.4** — Integrate React Flow into dashboard HTML
+- [ ] **P6.5** — Canvas: drag-drop agents, draw edges, node config panels
+- [ ] **P6.6** — `POST /api/playground/run` — execute flow from dashboard
+- [ ] **P6.7** — WebSocket streaming of execution progress + logs
+- [ ] **P6.8** — Approval gate UI + engine
+- [ ] **Tests** — Playground module tests
+- [ ] **Docs** — Update ROADMAP, AGENTS
 
-| Component | File | Description |
-|-----------|------|-------------|
-| License Models | `src/hiveos/license/models.py` | LicenseTier (4 tiers), FeatureFlag (24 flags), License dataclass, TIER_FEATURES, TIER_LIMITS |
-| License Manager | `src/hiveos/license/manager.py` | YAML-backed persistence, demo key activation, feature gating, resource limit enforcement |
-| License CLI | `src/hiveos/cli/main.py` | `hive license info/activate/deactivate/upgrade/tiers/check` |
-| License API | `src/hiveos/dashboard/server.py` | `GET /api/license` endpoint with tier, features, limits |
-| License Gating | `src/hiveos/workspace/manager.py` | Workspace creation license-check integration |
-| License tests | `tests/test_license.py` | 32 tests for models, features, limits, activation |
-| Agent Blueprints | `domains/accounting/agents/blueprints/*.yaml` | 29 YAML agent blueprint files (6 orchestrators + 23 specialists) |
-| Flow Templates | `domains/accounting/flows/*.yaml` | 6 YAML flow templates with bilingual labels, dependency chains |
-| Updated docs | `README.md`, `README.fa.md`, `ROADMAP.md`, `AGENTS.md` | Full bilingual documentation |
-| Test results | 273/273 | `python -m pytest tests/ -v` → 273 passed in 12.2s |
-| Version | v0.6.0 | Bumped from v0.5.0
-
-| Component | File | Description |
-|-----------|------|-------------|
-| Workspace Models | `src/hiveos/workspace/models.py` | Workspace, WorkspaceSettings, WorkspaceMember, WorkspaceRole (5-level hierarchy) |
-| Workspace Manager | `src/hiveos/workspace/manager.py` | YAML-backed CRUD, data isolation (agents/flows/audit/config dirs per workspace), member management |
-| RBAC Integration | `src/hiveos/rbac/models.py` | User.workspace field for workspace-scoped identity |
-| Workspace CLI | `src/hiveos/cli/main.py` | `hive workspace create/list/info/update/remove/activate` + `hive workspace member add/remove/set-role` |
-| Dashboard API | `src/hiveos/dashboard/server.py` | `GET /api/workspaces` endpoint + workspace column in RBAC users table |
-| Dashboard UI | `src/hiveos/dashboard/templates/index.html` | Workspaces tab in sidebar |
-| Workspace tests | `tests/test_workspace.py` | 38 tests covering models, manager, members, RBAC integration |
-| Test results | 241/241 | `python -m pytest tests/ -v` → 241 passed in 12.2s |
+### Phase D1: Remaining
+- [ ] Hermes skills for accounting agents
+- [ ] `hive domain` CLI

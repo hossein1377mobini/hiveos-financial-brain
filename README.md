@@ -186,20 +186,60 @@ Agent registry with capabilities, task routing (5 strategies), communication bus
 ### ✅ Phase 5: Enterprise
 RBAC (36 tests), Audit Trail (20 tests), Dashboard (23 tests), Multi-tenant workspaces (38 tests), Pricing/license tiers (32 tests)
 
-### 🏗️ Phase D1: Accounting Domain
+### 🏗️ Phase D1: Accounting Domain 🏗️
 - ✅ Knowledge tree (200+ nodes, 10 branches)
 - ✅ Domain manifest (29 agents, 6 flows)
 - ✅ Domain architecture docs
 - ✅ 29 agent blueprints (YAML)
 - ✅ 6 flow templates (YAML)
 - ⏳ Hermes skills for each agent
-- ⏳ `hive domain` CLI
+- ⏳ Agent auto-generation API
+- ⏳ Template browser API
 
 ### ⏳ Phase D2: Domain Plugin System
-CLI, registry, mothership loading, cross-domain resolution
+- `hive domain` CLI, registry, mothership loading
 
-### ⏳ Phase D3: Next Domain
-Medical, Legal, Engineering, ...
+---
+
+## 🎯 Upcoming: Phase 6 — Playground (Interactive UI)
+
+**Goal:** Replace YAML-only flows with a visual drag-and-drop flow builder.
+
+| Priority | Feature |
+|----------|---------|
+| 🔴 | Flow Validator API + Auto-Agent API |
+| 🔴 | Template Browser (preview domain flows) |
+| 🔴 | Visual Canvas (React Flow, drag & drop) |
+| 🔴 | Run/Debug with live streaming logs |
+| 🟡 | Approval Gates (human-in-the-loop) |
+| 🟡 | Template Customizer + Flow Library |
+| 🟢 | Visual Conditions + Subflows |
+
+Flow components: Trigger, Task, Condition, Switch, Loop, Parallel, Join, Approval Gate, Timer, Error Handler, Transform, Subflow
+
+---
+
+## 🎯 Upcoming: Phase 7 — Brain (3D Glass Box)
+
+**Goal:** Complete transparency with real-time 3D neural visualization.
+
+| Priority | Feature |
+|----------|---------|
+| 🔴 | Event Stream — agent lifecycle pipeline |
+| 🔴 | Decision Tracer — trace every path |
+| 🔴 | Approval Gate Engine |
+| 🟡 | 3D Neural View (Three.js/WebGL) |
+| 🟡 | Real-time WebSocket streaming |
+| 🟢 | Interactive exploration + Historical replay |
+
+---
+
+## 🎯 Upcoming: Phase 8 — Learning
+
+- Execution Analytics
+- Pattern Recognition → Template Suggestions
+- Knowledge Accumulation
+- Adaptive Routing
 
 ---
 
