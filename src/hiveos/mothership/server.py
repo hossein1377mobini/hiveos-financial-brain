@@ -23,6 +23,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from rich.console import Console
 
 from ..rbac import Resource, Action, RBACManager, User, Role
+from ..audit import AuditTrail, AuditAction, AuditResource, AuditResult
 
 console = Console()
 
@@ -70,20 +71,37 @@ class MothershipHandler(BaseHTTPRequestHandler):
         """
         rbac: RBACManager = self.mothership.rbac
         if not rbac:
-            # RBAC disabled — allow all
             return True
 
         api_key = _auth_header(self)
         if not api_key:
+            self._audit_log(
+                AuditAction.READ, AuditResource.MOTHERSHIP,
+                result=AuditResult.DENIED, status_code=401,
+                message="Missing Authorization header",
+            )
             _json_response(self, {"error": "Authorization header required"}, 401)
             return False
 
         user = rbac.authenticate(api_key)
         if not user:
+            self._audit_log(
+                AuditAction.READ, AuditResource.MOTHERSHIP,
+                result=AuditResult.DENIED, status_code=401,
+                message=f"Invalid API key: {api_key[:12]}...",
+            )
             _json_response(self, {"error": "Invalid API key or user disabled"}, 401)
             return False
 
         if not rbac.check_permission(user, resource, action):
+            self._audit_log(
+                action=AuditAction(action.value) if action.value in [a.value for a in AuditAction] else AuditAction.READ,
+                resource=AuditResource(resource.value) if resource.value in [r.value for r in AuditResource] else AuditResource.MOTHERSHIP,
+                resource_id=action.value,
+                actor=user.username,
+                result=AuditResult.DENIED, status_code=403,
+                message=f"Lacks '{resource.value}:{action.value}'",
+            )
             _json_response(self, {
                 "error": f"Forbidden: user '{user.username}' (role={user.role}) "
                          f"lacks '{resource.value}:{action.value}'"
@@ -91,6 +109,35 @@ class MothershipHandler(BaseHTTPRequestHandler):
             return False
 
         return True
+
+    def _audit_log(
+        self,
+        action: AuditAction,
+        resource: AuditResource,
+        resource_id: str = "",
+        result: AuditResult = AuditResult.SUCCESS,
+        status_code: int = 200,
+        message: str = "",
+        details: Optional[Dict[str, Any]] = None,
+    ):
+        """Log an audit entry from an HTTP request context."""
+        audit: AuditTrail = self.mothership.audit_trail
+        if not audit:
+            return
+        api_key = _auth_header(self)
+        actor = "anonymous"
+        if self.mothership.rbac:
+            user = self.mothership.rbac.authenticate(api_key)
+            if user:
+                actor = user.username
+        elif api_key:
+            actor = api_key[:16]
+        audit.log_simple(
+            action=action, resource=resource, actor=actor,
+            resource_id=resource_id, result=result,
+            status_code=status_code, message=message,
+            details=details or {},
+        )
 
     def log_message(self, format, *args):
         """Suppress default HTTP logging."""
@@ -398,15 +445,20 @@ class MothershipHandler(BaseHTTPRequestHandler):
                     caps[c["name"]] = CapabilityDeclaration(**c)
 
             agent = self.mothership.registry.register(
-                name=name,
-                url=url,
+                name=name, url=url,
                 api_key=body.get("api_key", ""),
                 description=body.get("description", ""),
                 capabilities=caps,
                 max_concurrent=body.get("max_concurrent", 5),
             )
+            self._audit_log(AuditAction.REGISTER, AuditResource.AGENT,
+                            resource_id=name, status_code=201,
+                            message=f"Agent '{name}' registered at {url}")
             _json_response(self, {"name": agent.name, "status": "registered"}, 201)
         except Exception as e:
+            self._audit_log(AuditAction.REGISTER, AuditResource.AGENT,
+                            result=AuditResult.ERROR, status_code=500,
+                            message=f"Agent registration failed: {e}")
             _json_response(self, {"error": str(e)}, 500)
 
     def _handle_agent_unregister(self):
@@ -419,6 +471,10 @@ class MothershipHandler(BaseHTTPRequestHandler):
                 _json_response(self, {"error": "Missing 'name'"}, 400)
                 return
             success = self.mothership.registry.unregister(name)
+            if success:
+                self._audit_log(AuditAction.DELETE, AuditResource.AGENT,
+                                resource_id=name,
+                                message=f"Agent '{name}' unregistered")
             _json_response(self, {"removed": success})
         except Exception as e:
             _json_response(self, {"error": str(e)}, 500)
@@ -565,6 +621,11 @@ class MothershipHandler(BaseHTTPRequestHandler):
                 self.mothership._tasks[assignment.task_id] = task_record
                 self.mothership.metrics["tasks_assigned"] = self.mothership.metrics.get("tasks_assigned", 0) + 1
 
+                self._audit_log(AuditAction.EXECUTE, AuditResource.TASK,
+                                resource_id=assignment.task_id, status_code=201,
+                                message=f"Task assigned to '{assignment.node_name}' ({assignment.capability})",
+                                details={"node": assignment.node_name, "strategy": assignment.strategy.value})
+
                 _json_response(self, {
                     "task_id": assignment.task_id,
                     "node": assignment.node_name,
@@ -573,6 +634,10 @@ class MothershipHandler(BaseHTTPRequestHandler):
                     "strategy": assignment.strategy.value,
                 }, 201)
             else:
+                self._audit_log(AuditAction.EXECUTE, AuditResource.TASK,
+                                result=AuditResult.FAILURE, status_code=503,
+                                message=f"No available node for capability '{capability}'",
+                                details={"capability": capability})
                 _json_response(self, {"error": f"No available node for capability '{capability}'"}, 503)
         except Exception as e:
             _json_response(self, {"error": str(e)}, 500)
@@ -584,6 +649,9 @@ class MothershipHandler(BaseHTTPRequestHandler):
             body = _json_body(self)
             task = self.mothership._tasks.get(task_id)
             if not task:
+                self._audit_log(AuditAction.UPDATE, AuditResource.TASK,
+                                result=AuditResult.FAILURE, status_code=404,
+                                message=f"Task '{task_id}' not found for completion")
                 _json_response(self, {"error": f"Task '{task_id}' not found"}, 404)
                 return
 
@@ -597,6 +665,9 @@ class MothershipHandler(BaseHTTPRequestHandler):
             if self.mothership.resilience:
                 self.mothership.resilience_engine.record_task_completion(task_id, True, task.output_data)
 
+            self._audit_log(AuditAction.UPDATE, AuditResource.TASK,
+                            resource_id=task_id, status_code=200,
+                            message=f"Task '{task_id}' completed on '{task.node_name}'")
             _json_response(self, {"acknowledged": True, "task_id": task_id})
         except Exception as e:
             _json_response(self, {"error": str(e)}, 500)
@@ -608,6 +679,9 @@ class MothershipHandler(BaseHTTPRequestHandler):
             body = _json_body(self)
             task = self.mothership._tasks.get(task_id)
             if not task:
+                self._audit_log(AuditAction.UPDATE, AuditResource.TASK,
+                                result=AuditResult.FAILURE, status_code=404,
+                                message=f"Task '{task_id}' not found for failure report")
                 _json_response(self, {"error": f"Task '{task_id}' not found"}, 404)
                 return
 
@@ -623,6 +697,10 @@ class MothershipHandler(BaseHTTPRequestHandler):
                     task_id, False, error=task.error
                 )
 
+            self._audit_log(AuditAction.UPDATE, AuditResource.TASK,
+                            resource_id=task_id, status_code=200,
+                            result=AuditResult.FAILURE,
+                            message=f"Task '{task_id}' failed on '{task.node_name}': {task.error}")
             _json_response(self, {"acknowledged": True, "task_id": task_id})
         except Exception as e:
             _json_response(self, {"error": str(e)}, 500)
@@ -717,8 +795,14 @@ class MothershipHandler(BaseHTTPRequestHandler):
             return
         try:
             body = _json_body(self)
+            changes = []
             if "heartbeat_timeout" in body:
                 self.mothership.registry.heartbeat_timeout = body["heartbeat_timeout"]
+                changes.append(f"heartbeat_timeout={body['heartbeat_timeout']}")
+            if changes:
+                self._audit_log(AuditAction.CONFIG, AuditResource.MOTHERSHIP,
+                                message=f"Config updated: {', '.join(changes)}",
+                                details={"changes": changes})
             _json_response(self, {"updated": True})
         except Exception as e:
             _json_response(self, {"error": str(e)}, 500)
@@ -747,6 +831,7 @@ class MothershipServer:
     - Trigger sync operations
     - Publish messages to the bus
     - Manage RBAC users and roles
+    - Audit trail for all operations
     """
 
     def __init__(
@@ -762,6 +847,7 @@ class MothershipServer:
         flow_dir: Optional[Path] = None,
         node_registry: Any = None,
         rbac: Optional[RBACManager] = None,
+        audit_trail: Optional[AuditTrail] = None,
     ):
         self.registry = registry
         self.task_router = task_router
@@ -774,7 +860,8 @@ class MothershipServer:
         self.knowledge_dir = knowledge_dir or Path("docs")
         self.flow_dir = flow_dir or Path("prototype")
         self.node_registry = node_registry
-        self.rbac = rbac  # Optional RBACManager
+        self.rbac = rbac
+        self.audit_trail = audit_trail
 
         self._httpd: Optional[HTTPServer] = None
         self._thread: Optional[threading.Thread] = None
@@ -802,6 +889,8 @@ class MothershipServer:
             console.print(f"[green]🌍 Mothership server started on http://{self.host}:{self.port}[/green]")
             if self.rbac:
                 console.print(f"[dim]🔐 RBAC enabled ({len(self.rbac.list_users())} users)[/dim]")
+            if self.audit_trail:
+                console.print(f"[dim]📜 Audit trail active ({self.audit_trail.count()} entries)[/dim]")
         else:
             self._serve()
 

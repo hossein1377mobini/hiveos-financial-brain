@@ -13,7 +13,7 @@ Phase 0 (Foundation) ✅ | Phase 1 (Playground) ✅ | Phase 2 (Integration) ✅ 
 
 ## 🎯 Current Work: Phase 5 — Enterprise
 
-File: `src/hiveos/rbac/`
+File: `src/hiveos/rbac/`, `src/hiveos/audit/`
 
 - 🔐 **RBAC** — Role-based access control (✅ Complete)
   - 4 built-in roles: admin, operator, viewer, deployer
@@ -21,7 +21,11 @@ File: `src/hiveos/rbac/`
   - User management with API key auth
   - `hive rbac` CLI with user/role subcommands
   - HTTP server auth middleware on all endpoints
-- 📜 **Audit Trail** — ⏳ Next
+- 📜 **Audit Trail** — JSONL + gbrain PGLite (✅ Complete)
+  - JSONL daily files for fast append
+  - `hive audit list/search/stats/rotate` CLI
+  - `hive audit sync-gbrain` → push to gbrain PGLite for semantic search
+  - Server middleware logging on agent/task/config/auth operations
 - 📊 **Dashboard** — ⏳ Planned
 - 🏢 **Multi-tenant** — ⏳ Planned
 - 💰 **Pricing model** — ⏳ Planned
@@ -40,6 +44,17 @@ File: `src/hiveos/rbac/`
 | RBAC CLI | `src/hiveos/cli/main.py` | `hive rbac user` (add/list/remove/set-role/set-api-key/enable/disable) + `hive rbac role` (add/list/show/remove) |
 | RBAC tests | `tests/test_rbac.py` | 36 tests covering models, manager, permissions, persistence, auth |
 | Test results | 160/160 | `python -m pytest tests/ -v` → 160 passed in 9.3s |
+
+### v0.5.1 (2026-07-14) — Phase 5: Audit Trail ✅
+
+| Component | File | Description |
+|-----------|------|-------------|
+| Audit Models | `src/hiveos/audit/models.py` | AuditEntry dataclass, AuditAction/Resource/Result enums, JSONL + gbrain markdown formats |
+| Audit Trail | `src/hiveos/audit/trail.py` | JSONL daily files, local search, stats, rotate, gbrain sync (`gbrain put`), 20 tests |
+| Server Audit | `src/hiveos/mothership/server.py` | `_audit_log()` middleware, logged on agent register/unregister, task assign/complete/fail, config updates, auth denials |
+| Audit CLI | `src/hiveos/cli/main.py` | `hive audit list/search/stats/search-gbrain/sync-gbrain/rotate` |
+| Audit tests | `tests/test_audit.py` | 20 tests covering models, JSONL persist, search, stats, rotate |
+| Test results | 180/180 | `python -m pytest tests/ -v` → 180 passed in 9.6s |
 
 ### v0.4.0 (2026-07-14) — Phase 4: Mothership ✅
 

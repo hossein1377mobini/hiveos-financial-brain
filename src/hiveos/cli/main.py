@@ -731,6 +731,7 @@ def _get_server():
     bus = _get_comm_bus()
     resilience = _get_resilience()
     rbac = _get_rbac()
+    audit = _get_audit()
     return MothershipServer(
         registry=registry,
         task_router=router,
@@ -739,6 +740,7 @@ def _get_server():
         health_checker=resilience.health_checker,
         node_registry=LegacyNodeRegistry(),
         rbac=rbac,
+        audit_trail=audit,
     )
 
 
@@ -747,6 +749,12 @@ def _get_rbac():
     config = _load_config()
     data_dir = Path(config.get("rbac.data_dir", str(Path.home() / ".hiveos")))
     return RBACManager(data_dir=data_dir)
+
+
+def _get_audit():
+    """Get AuditTrail instance."""
+    from ..audit import AuditTrail
+    return AuditTrail()
 
 
 @mothership.group()
@@ -1469,3 +1477,161 @@ def rbac_role_remove(name):
     else:
         console.print(f"[red]❌ Could not remove role '{name}' (built-in or in-use)[/red]")
         raise SystemExit(1)
+
+
+# ── Audit Commands ─────────────────────────────────────────────────────
+
+@hive.group()
+def audit():
+    """📜 Audit trail — log, search, and manage audit entries."""
+    pass
+
+
+@audit.command(name="list")
+@click.option("--days", default=1, help="Number of days back to show")
+@click.option("--limit", default=20, help="Max entries to show")
+@click.option("--action", help="Filter by action (create, read, update, delete, etc.)")
+@click.option("--resource", help="Filter by resource (agent, flow, task, etc.)")
+@click.option("--actor", help="Filter by actor username")
+def audit_list(days, limit, action, resource, actor):
+    """List recent audit entries."""
+    from ..audit import AuditTrail, AuditEntry
+    trail = _get_audit()
+    from datetime import timedelta, date as date_type
+    today = date_type.today()
+    start = today - timedelta(days=days - 1)
+    entries = trail.read_range(start, today)
+
+    # Apply filters
+    if action:
+        entries = [e for e in entries if e.action.value == action]
+    if resource:
+        entries = [e for e in entries if e.resource.value == resource]
+    if actor:
+        entries = [e for e in entries if e.actor == actor]
+
+    entries = sorted(entries, key=lambda e: e.timestamp, reverse=True)[:limit]
+
+    if not entries:
+        console.print("[yellow]No audit entries found[/yellow]")
+        return
+
+    from rich.table import Table
+    table = Table(title=f"📜 Audit Trail (last {days}d, showing {len(entries)})")
+    table.add_column("Time", style="dim", width=20)
+    table.add_column("Actor", style="cyan")
+    table.add_column("Action", style="green")
+    table.add_column("Resource", style="white")
+    table.add_column("Resource ID", style="dim")
+    table.add_column("Result", style="yellow")
+    table.add_column("Message", style="white")
+
+    for e in entries:
+        ts = e.timestamp[11:23] if len(e.timestamp) > 23 else e.timestamp
+        result_style = {"success": "green", "failure": "red", "denied": "yellow", "error": "red"}
+        rst = result_style.get(e.result.value, "white")
+        msg = e.message[:60] + "..." if len(e.message) > 60 else e.message
+        table.add_row(ts, e.actor, e.action.value, e.resource.value,
+                      e.resource_id or "-", f"[{rst}]{e.result.value}[/]", msg)
+    console.print(table)
+
+
+@audit.command(name="stats")
+def audit_stats():
+    """Show audit statistics."""
+    trail = _get_audit()
+    stats = trail.stats()
+    from rich.table import Table
+
+    console.print(f"[bold]📜 Audit Statistics[/bold]")
+    console.print(f"   Total entries: {stats['total_entries']}")
+    console.print(f"   Unique days: {stats['unique_days']}")
+    console.print(f"   Files on disk: {stats['files']}")
+    console.print(f"   Errors/Failures: {stats['errors']}")
+
+    if stats["actions"]:
+        table = Table(title="Actions Breakdown")
+        table.add_column("Action", style="cyan")
+        table.add_column("Count", style="white")
+        for k, v in stats["actions"].items():
+            table.add_row(k, str(v))
+        console.print(table)
+
+    if stats["resources"]:
+        table = Table(title="Resources Breakdown")
+        table.add_column("Resource", style="cyan")
+        table.add_column("Count", style="white")
+        for k, v in stats["resources"].items():
+            table.add_row(k, str(v))
+        console.print(table)
+
+
+@audit.command(name="search")
+@click.argument("query")
+def audit_search(query):
+    """Search audit entries locally by keyword."""
+    trail = _get_audit()
+    entries = trail.search_local(query)
+
+    if not entries:
+        console.print(f"[yellow]No entries matching '{query}'[/yellow]")
+        return
+
+    from rich.table import Table
+    table = Table(title=f"📜 Audit Search: '{query}' ({len(entries)} results)")
+    table.add_column("Time", style="dim")
+    table.add_column("Actor", style="cyan")
+    table.add_column("Action", style="green")
+    table.add_column("Resource", style="white")
+    table.add_column("Result", style="yellow")
+    table.add_column("Message", style="white")
+
+    for e in entries[:20]:
+        ts = e.timestamp[11:23] if len(e.timestamp) > 23 else e.timestamp
+        msg = e.message[:60]
+        table.add_row(ts, e.actor, e.action.value, e.resource.value,
+                      e.result.value, msg)
+    console.print(table)
+    if len(entries) > 20:
+        console.print(f"[dim]... and {len(entries) - 20} more[/dim]")
+
+
+@audit.command(name="search-gbrain")
+@click.argument("query")
+def audit_search_gbrain(query):
+    """Semantic search via gbrain."""
+    trail = _get_audit()
+    results = trail.search_gbrain(query)
+    if not results:
+        console.print("[yellow]No gbrain results (try 'hive audit sync-gbrain' first)[/yellow]")
+        return
+    from rich.table import Table
+    table = Table(title=f"🔍 gbrain Semantic Search: '{query}'")
+    table.add_column("Slug", style="cyan")
+    table.add_column("Score", style="green")
+    table.add_column("Snippet", style="white")
+    for r in results[:10]:
+        table.add_row(r.get("slug", ""), str(r.get("score", "")),
+                      r.get("snippet", "")[:80])
+    console.print(table)
+
+
+@audit.command(name="sync-gbrain")
+@click.option("--date", help="Sync specific date (YYYY-MM-DD), default: last 30 days")
+@click.option("--max", default=500, help="Max pages to sync")
+def audit_sync_gbrain(date, max):
+    """Sync audit entries to gbrain PGLite for semantic search."""
+    trail = _get_audit()
+    synced = trail.sync_to_gbrain(date=date, max_pages=max)
+    if synced:
+        console.print(f"[green]✅ Synced {synced} entries to gbrain[/green]")
+        console.print("[dim]   Now search with: hive audit search-gbrain <query>[/dim]")
+
+
+@audit.command(name="rotate")
+@click.option("--keep-days", default=90, help="Days of audit to keep (default: 90)")
+def audit_rotate(keep_days):
+    """Rotate old audit files."""
+    trail = _get_audit()
+    removed = trail.rotate(keep_days=keep_days)
+    console.print(f"[green]✅ Rotated {removed} old files (keeping {keep_days}d)[/green]")

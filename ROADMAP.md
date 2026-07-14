@@ -59,7 +59,7 @@ Live product roadmap. Updated after every session.
 ## Phase 5: Enterprise 🏗️
 
 - [x] **RBAC** — Role-based access control (models, manager, server auth, CLI, 36 tests)
-- [ ] **Audit Trail** — Every action logged, traceable (uses gbrain PGLite)
+- [x] **Audit Trail** — JSONL daily files + gbrain PGLite sync (CLI, server middleware, 20 tests)
 - [ ] **Dashboard** — Web UI to monitor agents, flows, and nodes
 - [ ] **Multi-tenant** — Isolated workspaces per team/org
 - [ ] **Pricing model** — License tiers
