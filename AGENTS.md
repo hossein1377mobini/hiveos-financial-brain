@@ -23,6 +23,7 @@
 | **CL (Standardisation)** | **✅ CHANGELOG + CI + Auto-update** | **v0.9.2** |
 | **D (Domain)** | **✅ Domain CLI + Hermes Skills** | **v0.9.1** |
 | **🪟 Desktop** | **✅ pywebview Shell + PyInstaller + MSI** | **v0.10.0** |
+| **🪟 D2 Domain Registry** | **✅ StorageEngine-backed + API + UI + CLI** | **v0.11.0** |
 
 ---
 
@@ -44,7 +45,7 @@ HiveOS is a **Multi-Agent Operating System** with 5 pillars:
 
 ---
 
-## ✅ What's Built (v0.10.0 — 436 tests)
+## ✅ What's Built (v0.11.0 — 436+ tests)
 
 ### Core Infrastructure
 | Component | Test Count | Status |
@@ -124,6 +125,20 @@ HiveOS is a **Multi-Agent Operating System** with 5 pillars:
 | `hive desktop start` | ✅ | Launch HiveOS in a native desktop window |
 | `hive desktop connect` | ✅ | Open browser to running dashboard |
 
+### ✅ D2: Domain Registry (v0.11.0)
+| Component | Status | Description |
+|-----------|--------|-------------|
+| DomainRegistry class | ✅ | StorageEngine-backed catalog with scan/search/install/remove |
+| Dependency resolution | ✅ | Transitive dep resolution + circular detection |
+| Integrity verification | ✅ | Check agent blueprints, flows, deps |
+| Learning & Suggestions | ✅ | Analyse domains, track usage, suggest relevant domains |
+| REST API (11 endpoints) | ✅ | Full CRUD + search + learn + suggestions + dependencies |
+| Desktop UI | ✅ | Cards grid, search, detail panel, install/learn buttons, suggestions |
+| CLI `hive domain search` | ✅ | 🔍 Search by name/label/tags |
+| CLI `hive domain learn` | ✅ | 🧠 Analyse and store insights |
+| CLI `hive domain suggestions` | ✅ | 💡 Get usage-based recommendations |
+| CLI `hive domain verify` | ✅ | ✅ Integrity check all installed domains |
+
 ### CLI Commands
 ```
 hive
@@ -137,20 +152,21 @@ hive
  ├── workspace create/list/info/update/remove/activate member
  ├── license info/activate/deactivate/upgrade/tiers/check
  ├── util init/info
- ├── domain list/info/install/remove/init
+ ├── domain list/info/install/remove/init/search/learn/suggestions/verify
  ├── update check/info
  └── desktop start/connect
 ```
 
 ---
 
-## 🎯 Next: v0.11.0 — Deepening Domains & Production Polish
+## 🎯 Next: v0.11.0 — Domain Registry Done
 
-### What to Build Next
+✅ D2 Domain Registry — shipped this session.
+
+### What's Left
 
 | Priority | Task | Layer | Status |
 |----------|------|-------|--------|
-| 🟢 | D2 Domain Registry (discover/shared) | 🧩 Domains | ⏳ |
 | 🟢 | L-03 Pattern Recognition → template suggestions | 📈 Learning | ⏳ |
 | 🟡 | Windows signing (Authenticode) + CI/CD release | 🪟 All | ⏳ |
 
