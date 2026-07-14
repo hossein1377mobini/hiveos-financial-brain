@@ -222,7 +222,21 @@ git add -A && git commit -m "feat: ..." && git push origin master
 | Dashboard tests | `tests/test_dashboard.py` | 23 tests covering API endpoints, server lifecycle, mock integration |
 | Test results | 203/203 | `python -m pytest tests/ -v` → 203 passed in 11.7s |
 
-### v0.5.3 (2026-07-14) — Phase 5: Multi-tenant ✅
+### v0.6.0 (2026-07-14) — Phase 5: Enterprise ✅ + Domain D1: Blueprints & Flows 🏗️
+
+| Component | File | Description |
+|-----------|------|-------------|
+| License Models | `src/hiveos/license/models.py` | LicenseTier (4 tiers), FeatureFlag (24 flags), License dataclass, TIER_FEATURES, TIER_LIMITS |
+| License Manager | `src/hiveos/license/manager.py` | YAML-backed persistence, demo key activation, feature gating, resource limit enforcement |
+| License CLI | `src/hiveos/cli/main.py` | `hive license info/activate/deactivate/upgrade/tiers/check` |
+| License API | `src/hiveos/dashboard/server.py` | `GET /api/license` endpoint with tier, features, limits |
+| License Gating | `src/hiveos/workspace/manager.py` | Workspace creation license-check integration |
+| License tests | `tests/test_license.py` | 32 tests for models, features, limits, activation |
+| Agent Blueprints | `domains/accounting/agents/blueprints/*.yaml` | 29 YAML agent blueprint files (6 orchestrators + 23 specialists) |
+| Flow Templates | `domains/accounting/flows/*.yaml` | 6 YAML flow templates with bilingual labels, dependency chains |
+| Updated docs | `README.md`, `README.fa.md`, `ROADMAP.md`, `AGENTS.md` | Full bilingual documentation |
+| Test results | 273/273 | `python -m pytest tests/ -v` → 273 passed in 12.2s |
+| Version | v0.6.0 | Bumped from v0.5.0
 
 | Component | File | Description |
 |-----------|------|-------------|

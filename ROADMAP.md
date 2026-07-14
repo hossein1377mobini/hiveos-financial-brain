@@ -72,8 +72,8 @@ Live product roadmap. Updated after every session.
 - [x] Knowledge tree from official curricula (Bachelor's 1404 + Master's 1402)
 - [x] Domain manifest (domain.yaml) with 24 agent blueprints
 - [x] Domain plugin architecture docs (vision + arch)
-- [ ] Agent blueprints (YAML definitions in `agents/blueprints/`)
-- [ ] Flow templates (YAML flows for common accounting workflows)
+- [x] Agent blueprints (29 YAML definitions in `agents/blueprints/`)
+- [x] Flow templates (6 YAML flows for common accounting workflows)
 - [ ] Hermes skills for each agent (domain-specific knowledge prompts)
 
 ### Phase D2: Domain Plugin System (⏳ Planned)
