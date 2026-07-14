@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Optional
 import uvicorn
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
+from pydantic import BaseModel
 from rich.console import Console
 
 from ..mothership.agent_registry import AgentRegistry, AgentStatus
@@ -33,6 +34,9 @@ from ..mothership.resilience import (
 from ..rbac import RBACManager, Resource, Action
 from ..audit import AuditTrail, AuditAction, AuditResource
 from ..license import FeatureFlag
+from ..playground import PlaygroundEngine
+from ..brain import EventStream, DecisionTracer, ApprovalGateEngine
+from ..learning import ExecutionLogger
 
 console = Console()
 
@@ -136,7 +140,7 @@ class DashboardApp:
         rbac: Optional[RBACManager] = None,
         audit: Optional[AuditTrail] = None,
         data_dir: Optional[Path] = None,
-    ):
+        ):
         self.agent_registry = agent_registry
         self.task_router = task_router
         self.comm_bus = comm_bus
@@ -144,6 +148,11 @@ class DashboardApp:
         self.rbac = rbac
         self.audit = audit
         self.data_dir = data_dir or Path.cwd()
+        self.playground = PlaygroundEngine()
+        self.event_stream = EventStream()
+        self.decision_tracer = DecisionTracer()
+        self.approval_gates = ApprovalGateEngine()
+        self.execution_logger = ExecutionLogger()
 
         self.app = FastAPI(title="HiveOS Dashboard", version="0.5.0")
         self._register_routes()
@@ -508,3 +517,235 @@ class DashboardApp:
                     f.value for f in FeatureFlag if lic.has_feature(f)
                 ),
             }
+
+        # ── Playground API ──────────────────────────────────────────
+
+        @app.post("/api/playground/validate")
+        async def playground_validate(request: Request):
+            """Validate a flow YAML."""
+            body = await request.json()
+            yaml_content = body.get("yaml", "")
+            result = self.playground.validate_flow(yaml_content)
+            return result
+
+        @app.post("/api/playground/auto-agents")
+        async def playground_auto_agents(request: Request):
+            """Auto-generate agent team from task description."""
+            body = await request.json()
+            task = body.get("task", "")
+            domain = body.get("domain", "accounting")
+            result = self.playground.auto_agents(task, domain)
+            return result
+
+        @app.get("/api/playground/templates")
+        async def playground_templates(domain: str = "accounting"):
+            """List domain flow templates."""
+            result = self.playground.list_templates(domain)
+            return result
+
+        # ── Brain API — Event Stream ────────────────────────────────
+
+        @app.get("/api/brain/events")
+        async def brain_events(limit: int = 50, event_type: str = None):
+            """Get recent events from the event stream."""
+            events = self.event_stream.get_events(limit=limit, event_type=event_type)
+            return {"events": events}
+
+        @app.get("/api/brain/events/{event_id}")
+        async def brain_event(event_id: str):
+            """Get a specific event by ID."""
+            event = self.event_stream.get_event(event_id)
+            if event is None:
+                return {"error": "Event not found"}
+            return {"event": event}
+
+        @app.get("/api/brain/events/stats")
+        async def brain_event_stats():
+            """Event stream statistics."""
+            return self.event_stream.stats()
+
+        # ── Brain API — Decision Tracer ─────────────────────────────
+
+        @app.post("/api/brain/traces")
+        async def brain_start_trace(request: Request):
+            """Start a new decision trace."""
+            body = await request.json()
+            trace_id = self.decision_tracer.start_trace(
+                trace_id=body.get("trace_id"),
+                context=body.get("context"),
+            )
+            return {"trace_id": trace_id}
+
+        @app.post("/api/brain/traces/{trace_id}/steps")
+        async def brain_add_step(trace_id: str, request: Request):
+            """Add a decision step to a trace."""
+            body = await request.json()
+            step = self.decision_tracer.add_step(trace_id, body)
+            if step is None:
+                return {"error": "Trace not found"}
+            return {"step": step}
+
+        @app.get("/api/brain/traces/{trace_id}")
+        async def brain_get_trace(trace_id: str):
+            """Get a full trace with all steps."""
+            trace = self.decision_tracer.get_trace(trace_id)
+            if trace is None:
+                return {"error": "Trace not found"}
+            return {"trace": trace}
+
+        @app.get("/api/brain/traces")
+        async def brain_list_traces(limit: int = 20, status: str = None):
+            """List recent decision traces."""
+            traces = self.decision_tracer.list_traces(limit=limit, status=status)
+            return {"traces": traces}
+
+        @app.post("/api/brain/traces/{trace_id}/complete")
+        async def brain_complete_trace(trace_id: str, request: Request):
+            """Mark a trace as completed."""
+            body = await request.json()
+            ok = self.decision_tracer.complete_trace(
+                trace_id,
+                outcome=body.get("outcome", ""),
+                summary=body.get("summary", ""),
+            )
+            if not ok:
+                return {"error": "Trace not found"}
+            return {"status": "completed"}
+
+        @app.post("/api/brain/traces/{trace_id}/fail")
+        async def brain_fail_trace(trace_id: str, request: Request):
+            """Mark a trace as failed."""
+            body = await request.json()
+            ok = self.decision_tracer.fail_trace(
+                trace_id,
+                error=body.get("error", ""),
+            )
+            if not ok:
+                return {"error": "Trace not found"}
+            return {"status": "failed"}
+
+        @app.get("/api/brain/traces/stats")
+        async def brain_trace_stats():
+            """Decision tracer statistics."""
+            return self.decision_tracer.stats()
+
+        # ── Brain API — Approval Gates ──────────────────────────────
+
+        @app.get("/api/brain/gates")
+        async def brain_list_gates(status: str = None, limit: int = 50):
+            """List approval gates."""
+            gates = self.approval_gates.list_gates(status=status, limit=limit)
+            return {"gates": gates}
+
+        @app.get("/api/brain/gates/pending")
+        async def brain_pending_gates():
+            """Get all pending approval gates."""
+            gates = self.approval_gates.pending_for_user()
+            return {"gates": gates}
+
+        @app.post("/api/brain/gates")
+        async def brain_create_gate(request: Request):
+            """Create a new approval gate."""
+            body = await request.json()
+            gate = self.approval_gates.create_gate(
+                gate_id=body.get("gate_id"),
+                title=body.get("title", ""),
+                description=body.get("description", ""),
+                requestor=body.get("requestor", ""),
+                context=body.get("context"),
+                timeout_seconds=body.get("timeout_seconds", 86400),
+            )
+            return {"gate": gate}
+
+        @app.post("/api/brain/gates/{gate_id}/approve")
+        async def brain_approve_gate(gate_id: str, request: Request):
+            """Approve a gate."""
+            body = await request.json()
+            gate = self.approval_gates.approve(
+                gate_id,
+                approver=body.get("approver", ""),
+                notes=body.get("notes", ""),
+            )
+            if gate is None:
+                return {"error": "Gate not found"}
+            return {"gate": gate}
+
+        @app.post("/api/brain/gates/{gate_id}/reject")
+        async def brain_reject_gate(gate_id: str, request: Request):
+            """Reject a gate."""
+            body = await request.json()
+            gate = self.approval_gates.reject(
+                gate_id,
+                approver=body.get("approver", ""),
+                reason=body.get("reason", ""),
+            )
+            if gate is None:
+                return {"error": "Gate not found"}
+            return {"gate": gate}
+
+        @app.get("/api/brain/gates/stats")
+        async def brain_gate_stats():
+            """Approval gate statistics."""
+            return self.approval_gates.stats()
+
+        # ── Learning API ────────────────────────────────────────────
+
+        @app.post("/api/learning/log")
+        async def learning_log(request: Request):
+            """Log a single agent execution."""
+            body = await request.json()
+            log_id = self.execution_logger.log_execution(
+                flow_name=body.get("flow_name", ""),
+                execution_id=body.get("execution_id", ""),
+                agent_id=body.get("agent_id", ""),
+                status=body.get("status", "unknown"),
+                duration_ms=body.get("duration_ms", 0),
+                input_summary=body.get("input_summary", ""),
+                output_summary=body.get("output_summary", ""),
+                error=body.get("error", ""),
+            )
+            return {"log_id": log_id}
+
+        @app.post("/api/learning/log-flow")
+        async def learning_log_flow(request: Request):
+            """Log a full flow execution."""
+            body = await request.json()
+            log_ids = self.execution_logger.log_flow_execution(
+                flow_name=body.get("flow_name", ""),
+                flow_version=body.get("flow_version", ""),
+                execution_id=body.get("execution_id", ""),
+                trigger=body.get("trigger", ""),
+                agent_results=body.get("agent_results", []),
+                status=body.get("status", "unknown"),
+                total_duration_ms=body.get("total_duration_ms", 0),
+            )
+            return {"log_ids": log_ids}
+
+        @app.get("/api/learning/executions")
+        async def learning_executions(
+            limit: int = 50,
+            flow_name: str = None,
+            status: str = None,
+        ):
+            """Query execution logs."""
+            entries = self.execution_logger.get_executions(
+                limit=limit,
+                flow_name=flow_name,
+                status=status,
+            )
+            return {"executions": entries}
+
+        @app.get("/api/learning/stats/flow")
+        async def learning_flow_stats(flow_name: str = None):
+            """Get flow execution statistics."""
+            return self.execution_logger.get_flow_stats(flow_name=flow_name)
+
+        @app.get("/api/learning/stats/agent")
+        async def learning_agent_stats(agent_id: str = None):
+            """Get per-agent statistics."""
+            return self.execution_logger.get_agent_stats(agent_id=agent_id)
+
+        @app.get("/api/learning/trends")
+        async def learning_trends():
+            """Get overall execution trends."""
+            return self.execution_logger.get_trends()

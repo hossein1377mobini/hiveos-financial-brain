@@ -52,7 +52,28 @@
 - [x] Multi-tenant workspaces (38 tests)
 - [x] Pricing model — license tiers (32 tests)
 
-**Test total: 273** ✅
+**Test total: 329** ✅
+
+---
+
+## ✅ v0.7.0: Playground + Brain + Learning
+
+### Phase 6: Playground — Core APIs ✅
+- [x] P-01: `POST /api/playground/validate` — Flow YAML validator
+- [x] P-02: `POST /api/playground/auto-agents` — Task → domain agent matching
+- [x] P-03: `GET /api/playground/templates` — Template browser
+- [ ] P-04: Visual Canvas (React Flow) ⏳
+- [ ] P-05: Run/Debug + WebSocket streaming ⏳
+
+### Phase 7: Brain — Core Engine ✅
+- [x] B-01: Event Stream Pipeline (agent lifecycle)
+- [x] B-02: Decision Tracer (step-by-step path tracking)
+- [x] B-03: Approval Gate Engine (create/approve/reject/expire)
+- [ ] B-04: 3D Neural View (Three.js/WebGL) ⏳
+
+### Phase 8: Learning — Passive Logger ✅
+- [x] L-01: Execution Logger (in-memory collection + stats + trends)
+- [ ] L-02: Execution Analytics / Pattern Recognition ⏳
 
 ---
 
@@ -65,8 +86,8 @@
 - [x] 29 agent blueprints (YAML)
 - [x] 6 flow templates (YAML)
 - [ ] Hermes skills per agent
-- [ ] Agent auto-generation API
-- [ ] Template browser API
+- [x] Agent auto-generation API
+- [x] Template browser API
 
 ### Phase D2: Domain Plugin CLI ⏳
 - [ ] `hive domain` (list/info/install/remove/init)
@@ -96,19 +117,28 @@ Instead of sequential phases, **every build session advances all 5 layers togeth
 | Layer | What It Is | Next Session Focus |
 |-------|-----------|-------------------|
 | 🔧 **Engine** | Core ready ✅ | Maintenance (as needed) |
-| 🧩 **Domains** | D1 Accounting 70% 🏗️ | Hermes skills + auto-agent API |
-| 🎮 **Playground** | ⏳ Starting now | Validator API + Auto-Agent API + Template Browser |
-| 🧠 **Brain** | ⏳ Starting now | Event Stream + Decision Tracer + Approval Gate Engine |
-| 📈 **Learning** | ⏳ Starting now | Execution logging (passive) |
+|| 🧩 **Domains** | D1 Accounting 70% 🏗️ | Hermes skills for agents |
+| 🎮 **Playground** | Core APIs ✅ | Visual Canvas (React Flow) |
+| 🧠 **Brain** | Core Engine ✅ | 3D Neural View |
+| 📈 **Learning** | Passive Logger ✅ | Execution Analytics |
 
-### Session N — First Build Sprint
+### Session N — First Build Sprint ✅ (v0.7.0 — Done)
+
+| Layer | Scope | Status |
+|-------|-------|--------|
+| 🎮 Playground | **P-01** Flow Validator API · **P-02** Auto-Agent API · **P-03** Template Browser API | ✅ Done |
+| 🧠 Brain | **B-01** Event Stream · **B-02** Decision Tracer · **B-03** Approval Gate Engine | ✅ Done |
+| 🧩 Domains | **D-04** Hermes skills for accounting agents | ⏳ Next |
+| 📈 Learning | **L-01** Execution logging (passive collection) | ✅ Done |
+
+### Session N+1 — Canvas + Viz Sprint
 
 | Layer | Scope |
 |-------|-------|
-| 🎮 Playground | **P-01** Flow Validator API · **P-02** Auto-Agent API · **P-03** Template Browser API |
-| 🧠 Brain | **B-01** Event Stream Pipeline · **B-02** Decision Tracer · **B-03** Approval Gate Engine |
+| 🎮 Playground | **P-04** Visual Canvas (React Flow) · **P-05** Run/Debug |
+| 🧠 Brain | **B-04** 3D Neural View (Three.js/WebGL) |
 | 🧩 Domains | **D-04** Hermes skills for accounting agents |
-| 📈 Learning | **L-01** Execution logging (passive collection) |
+| 📈 Learning | **L-02** Execution analytics |
 
 ### Flow Components (from automation standards)
 
@@ -131,9 +161,9 @@ Instead of sequential phases, **every build session advances all 5 layers togeth
 
 | Code | Feature | Priority |
 |------|---------|----------|
-| **B-01** | Event Stream — agent lifecycle events → streaming pipeline | 🔴 |
-| **B-02** | Decision Tracer — trace every decision path start→finish | 🔴 |
-| **B-03** | Approval Gate Engine — create→notify→approve/reject→log | 🔴 |
+| **B-01** | Event Stream — agent lifecycle events → streaming pipeline | ✅ |
+| **B-02** | Decision Tracer — trace every decision path start→finish | ✅ |
+| **B-03** | Approval Gate Engine — create→notify→approve/reject→log | ✅ |
 | **B-04** | Brain API — REST + WebSocket endpoints | 🟡 |
 | **B-05** | 3D Neural View — Three.js/WebGL | 🟡 |
 | **B-06** | Real-time WebSocket streaming | 🟡 |
@@ -144,7 +174,7 @@ Instead of sequential phases, **every build session advances all 5 layers togeth
 
 | Code | Feature | Priority |
 |------|---------|----------|
-| **L-01** | Execution logging (passive collection) | 🔴 |
+| **L-01** | Execution logging (passive collection) | ✅ |
 | **L-02** | Execution analytics — performance, bottlenecks | 🟡 |
 | **L-03** | Pattern recognition → template suggestions | 🟢 |
 | **L-04** | Knowledge accumulation — agents contribute to domain | 🟢 |
@@ -157,7 +187,7 @@ Instead of sequential phases, **every build session advances all 5 layers togeth
 ```
 Phase 0-5 (Infrastructure):  ████████████████████████ 100%  (273 tests)
 Layer 🧩 Domains (D1):      ████████████████░░░░░░░░  70%
-Layer 🎮 Playground:        ░░░░░░░░░░░░░░░░░░░░░░░░   0%
-Layer 🧠 Brain:             ░░░░░░░░░░░░░░░░░░░░░░░░   0%
-Layer 📈 Learning:          ░░░░░░░░░░░░░░░░░░░░░░░░   0%
+Layer 🎮 Playground:        ██████████░░░░░░░░░░░░░░░  25%  (P-01/P-02/P-03 done)
+Layer 🧠 Brain:             ██████████░░░░░░░░░░░░░░░  25%  (B-01/B-02/B-03 done)
+Layer 📈 Learning:          █████████░░░░░░░░░░░░░░░░  12%  (L-01 done)
 ```
