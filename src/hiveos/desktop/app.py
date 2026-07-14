@@ -272,20 +272,22 @@ class DesktopApp:
     def _start_server(self) -> threading.Thread:
         """Start the FastAPI dashboard on a background thread."""
         from hiveos.dashboard import DashboardServer
-        from hiveos.dashboard.server import DashboardApp
+        from hiveos.storage import StorageEngine
 
         data_path = Path(self.data_dir)
         data_path.mkdir(parents=True, exist_ok=True)
+        db_storage = StorageEngine(data_path / "hiveos.db")
 
         server = DashboardServer(
             host=self.host,
             port=self.port,
-            app=DashboardApp(data_dir=data_path),
+            data_dir=data_path,
+            storage=db_storage,
         )
 
         def _run():
             logger.info("Dashboard server starting on %s:%s", self.host, self.port)
-            server.start(background=False)
+            server.start()
 
         thread = threading.Thread(target=_run, daemon=True, name="hiveos-dashboard")
         thread.start()
