@@ -116,65 +116,61 @@ domains/accounting/
 
 ---
 
-## 🏗️ Next: Phase 6 — Playground
+## 🎯 Development Model: Parallel Layers
 
-### What to Build First
+Instead of sequential phases, **every build session advances all 5 layers together**:
 
-**Step 1: Core APIs** (session 1)
-- `POST /api/playground/validate` — Validate flow YAML
-- `POST /api/playground/auto-agents` — Task → auto agent team (domain.yaml + blueprints)
-- `GET /api/templates/` — List domain flow templates
+```
+🧠     BRAIN       │ Event Stream · Decision Tracer · 3D Viz
+🎮  PLAYGROUND     │ Validator · Auto-Agent · Canvas · Run/Debug
+🔧    ENGINE       │ Core OS (CLI, Flow Engine, Mothership, Enterprise) ✅
+🧩    DOMAINS      │ Accounting D1 · Domain CLI · Next domains
+📈   LEARNING      │ Logging · Analytics · Pattern Recognition
+```
 
-**Step 2: Visual Canvas** (session 2)
-- Integrate React Flow library into dashboard
-- Drag & drop agent nodes, gates, conditions
-- Edge drawing for dependencies
-- Node configuration panels
+### Session 1 — First Build Sprint (Next Session)
 
-**Step 3: Run & Debug** (session 3)
-- `POST /api/playground/run` — Execute flow
-- `WS /api/playground/run/{id}/stream` — Live logs + status
-- Run progress visualization
-- Approval gate interaction
+| Layer | Tasks |
+|-------|-------|
+| 🎮 **Playground** | **P-01** Flow Validator API · **P-02** Auto-Agent API · **P-03** Template Browser API |
+| 🧠 **Brain** | **B-01** Event Stream Pipeline · **B-02** Decision Tracer · **B-03** Approval Gate Engine |
+| 🧩 **Domains** | **D-04** Hermes skills for accounting agents |
+| 📈 **Learning** | **L-01** Execution logging (passive collection) |
+| 🔧 **Engine** | Maintenance as needed |
 
-**Step 4: Polish** (session 4)
-- Template customizer
-- User flow library
-- Visual conditions builder
-- Subflow support
+### Detailed Task Breakdown
 
-### Flow Components to Implement
-- [ ] Trigger (manual, cron, webhook)
-- [ ] Task (agent node)
-- [ ] Condition (if/else)
-- [ ] Switch (multi-branch)
-- [ ] Loop (repeat)
-- [ ] Parallel (concurrent)
-- [ ] Join (sync)
-- [ ] Approval Gate (human-in-loop)
-- [ ] Timer (delay)
-- [ ] Error Handler (retry/skip/abort)
-- [ ] Transform (data mapping)
+#### 🎮 Playground — P Items
+- **P-01** `POST /api/playground/validate` — Validate flow YAML with rich error messages
+- **P-02** `POST /api/playground/auto-agents` — Task description → auto-select agents from domain (use domain.yaml + tree.yaml)
+- **P-03** `GET /api/templates/` — List domain flow templates with preview
+- **P-04** Visual Canvas — React Flow integration in dashboard (drag & drop)
+- **P-05** Run/Debug — `POST /api/playground/run` + WS streaming logs
+- **P-06** Approval Gates UI in dashboard
+- **P-07** Template Customizer
+- **P-08** Flow Library (save/share user flows)
 
----
+#### 🧠 Brain — B Items
+- **B-01** Event Stream Pipeline — agent lifecycle events (start→complete→fail→approve→reject)
+- **B-02** Decision Tracer — trace every decision path with full context
+- **B-03** Approval Gate Engine — gate lifecycle (create→notify→approve/reject→log)
+- **B-04** Brain API — `WS /api/brain/stream`, `GET /api/brain/state`, `GET /api/brain/decision/{id}`
+- **B-05** 3D Neural View — Three.js/WebGL
+- **B-06** Real-time WebSocket streaming to neural view
+- **B-07** Interactive exploration (click→inspect)
+- **B-08** Historical replay
 
-## 🧠 Next: Phase 7 — Brain
+#### 🧩 Domains — D Items
+- **D-04** Hermes skills for 6 orchestrator agents
+- **D-05** `hive domain` CLI
+- **D-06** Domain registry
 
-### What to Build
-
-**Core Engine (server-side):**
-- Event Stream pipeline (agent lifecycle → events)
-- Decision Tracer (trace every decision path)
-- Approval Gate Engine (create → notify → approve/reject → log)
-- Brain API: `WS /api/brain/stream`, `GET /api/brain/state`, `GET /api/brain/decision/{id}`
-
-**3D Visualization (client-side):**
-- Three.js/WebGL neural network renderer
-- Agents as glowing spheres with status colors
-- Data flow particles between agents
-- Click → inspect agent details
-- Decision path overlay on neural view
-- Approval gate UI (pending gates list, approve/reject actions)
+#### 📈 Learning — L Items
+- **L-01** Execution logging (passive — every run writes to audit + metrics)
+- **L-02** Execution analytics dashboard
+- **L-03** Pattern recognition → template suggestions
+- **L-04** Knowledge accumulation (agents contribute back)
+- **L-05** Adaptive routing
 
 ---
 

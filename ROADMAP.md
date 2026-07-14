@@ -81,89 +81,83 @@
 
 ---
 
-## 🎯 Phase 6: Playground (Interactive Flow Builder) ⏳
+## 🎯 Development Model: Parallel Layers
 
-**Goal:** Replace YAML-only flow creation with a visual, interactive flow builder in the Dashboard.
+Instead of sequential phases, **every build session advances all 5 layers together**:
 
-| Priority | Task | Description |
-|----------|------|-------------|
-| 🔴 P6.1 | **Flow Validator API** | REST endpoint to validate flow YAML with rich error messages |
-| 🔴 P6.2 | **Auto-Agent API** | Task description → auto-select agents from domain |
-| 🔴 P6.3 | **Template Browser** | Browse/preview domain flow templates |
-| 🔴 P6.4 | **Visual Flow Canvas** | Drag & drop flow builder (React Flow) |
-| 🔴 P6.5 | **Run/Debug with streaming** | Execute + streaming logs via WebSocket |
-| 🟡 P6.6 | **Approval Gates UI** | Human-in-loop gates in dashboard |
-| 🟡 P6.7 | **Template Customizer** | Clone + customize existing templates |
-| 🟡 P6.8 | **Flow Library** | Save, version, share user-created flows |
-| 🟢 P6.9 | **Visual Conditions** | Expression builder for branching |
-| 🟢 P6.10 | **Subflows** | Nest flows within flows |
+```
+🧠     BRAIN       │ Event Stream · Decision Tracer · 3D Viz
+🎮  PLAYGROUND     │ Validator · Auto-Agent · Canvas · Run/Debug
+🔧    ENGINE       │ Core OS (CLI, Flow Engine, Mothership, Enterprise)
+🧩    DOMAINS      │ Accounting D1 · Domain CLI · Next domains
+📈   LEARNING      │ Logging · Analytics · Pattern Recognition
+```
+
+| Layer | What It Is | Next Session Focus |
+|-------|-----------|-------------------|
+| 🔧 **Engine** | Core ready ✅ | Maintenance (as needed) |
+| 🧩 **Domains** | D1 Accounting 70% 🏗️ | Hermes skills + auto-agent API |
+| 🎮 **Playground** | ⏳ Starting now | Validator API + Auto-Agent API + Template Browser |
+| 🧠 **Brain** | ⏳ Starting now | Event Stream + Decision Tracer + Approval Gate Engine |
+| 📈 **Learning** | ⏳ Starting now | Execution logging (passive) |
+
+### Session N — First Build Sprint
+
+| Layer | Scope |
+|-------|-------|
+| 🎮 Playground | **P-01** Flow Validator API · **P-02** Auto-Agent API · **P-03** Template Browser API |
+| 🧠 Brain | **B-01** Event Stream Pipeline · **B-02** Decision Tracer · **B-03** Approval Gate Engine |
+| 🧩 Domains | **D-04** Hermes skills for accounting agents |
+| 📈 Learning | **L-01** Execution logging (passive collection) |
 
 ### Flow Components (from automation standards)
 
-| Component | Description |
-|-----------|-------------|
-| **Trigger** | Manual, cron, webhook, event |
-| **Task** | Agent action |
-| **Condition** | If/else branch |
-| **Switch** | Multi-branch routing |
-| **Loop** | Repeat until condition |
-| **Parallel** | Concurrent agent execution |
-| **Join** | Sync parallel branches |
-| **Approval Gate** | Human must approve/reject |
-| **Timer** | Wait/delay |
-| **Error Handler** | Retry, skip, abort, notify |
-| **Subflow** | Nested flow |
-| **Transform** | Map data between agents |
+| Component | Description | Status |
+|-----------|-------------|--------|
+| **Trigger** | Manual, cron, webhook, event | Planned |
+| **Task** | Agent action | Planned |
+| **Condition** | If/else branch | Planned |
+| **Switch** | Multi-branch routing | Planned |
+| **Loop** | Repeat until condition | Planned |
+| **Parallel** | Concurrent agent execution | Planned |
+| **Join** | Sync parallel branches | Planned |
+| **Approval Gate** | Human must approve/reject | Planned |
+| **Timer** | Wait/delay | Planned |
+| **Error Handler** | Retry, skip, abort, notify | Planned |
+| **Subflow** | Nested flow | Planned |
+| **Transform** | Map data between agents | Planned |
+
+### Brain Features (Phased)
+
+| Code | Feature | Priority |
+|------|---------|----------|
+| **B-01** | Event Stream — agent lifecycle events → streaming pipeline | 🔴 |
+| **B-02** | Decision Tracer — trace every decision path start→finish | 🔴 |
+| **B-03** | Approval Gate Engine — create→notify→approve/reject→log | 🔴 |
+| **B-04** | Brain API — REST + WebSocket endpoints | 🟡 |
+| **B-05** | 3D Neural View — Three.js/WebGL | 🟡 |
+| **B-06** | Real-time WebSocket streaming | 🟡 |
+| **B-07** | Interactive exploration — click agents, inspect | 🟢 |
+| **B-08** | Historical replay | 🟢 |
+
+### Learning Features (Phased)
+
+| Code | Feature | Priority |
+|------|---------|----------|
+| **L-01** | Execution logging (passive collection) | 🔴 |
+| **L-02** | Execution analytics — performance, bottlenecks | 🟡 |
+| **L-03** | Pattern recognition → template suggestions | 🟢 |
+| **L-04** | Knowledge accumulation — agents contribute to domain | 🟢 |
+| **L-05** | Adaptive routing — smarter agent selection | 🟢 |
 
 ---
 
-## 🎯 Phase 7: Brain (3D Neural Visualization) ⏳
-
-**Goal:** Complete transparency with a real-time 3D neural visualization.
-
-| Priority | Task | Description |
-|----------|------|-------------|
-| 🔴 P7.1 | **Event Stream** | Agent lifecycle events → streaming pipeline |
-| 🔴 P7.2 | **Decision Tracer** | Trace every decision path start→finish |
-| 🔴 P7.3 | **Approval Gate Engine** | Gate lifecycle: create→notify→approve/reject→log |
-| 🟡 P7.4 | **Brain API** | REST + WebSocket endpoints for neural data |
-| 🟡 P7.5 | **3D Neural View** | Three.js/WebGL brain visualization |
-| 🟡 P7.6 | **Real-time Updates** | WebSocket streaming to neural view |
-| 🟢 P7.7 | **Interactive Exploration** | Click agents, inspect details |
-| 🟢 P7.8 | **Historical Replay** | Replay past executions in neural view |
-
----
-
-## 🎯 Phase 8: Learning (Self-Improving System) ⏳
-
-**Goal:** Every execution makes the system smarter.
-
-| Priority | Task | Description |
-|----------|------|-------------|
-| 🟡 P8.1 | **Execution Analytics** | Track flow performance, bottlenecks, failures |
-| 🟡 P8.2 | **Pattern Recognition** | Identify common patterns → suggest templates |
-| 🟢 P8.3 | **Knowledge Accumulation** | Agents contribute back to domain knowledge |
-| 🟢 P8.4 | **Adaptive Routing** | Smarter agent selection based on history |
-
----
-
-## 📊 Legend
-
-| Priority | Meaning |
-|----------|---------|
-| 🔴 High | Core functionality — must have for next release |
-| 🟡 Medium | Important but can wait |
-| 🟢 Low | Nice to have — when core is solid |
-
----
-
-## 📈 Progress Summary
+## 📊 Progress Summary
 
 ```
 Phase 0-5 (Infrastructure):  ████████████████████████ 100%  (273 tests)
-Phase D1 (Accounting):       ████████████████░░░░░░░░  70%
-Phase D2 (Domain CLI):       ░░░░░░░░░░░░░░░░░░░░░░░░   0%
-Phase 6 (Playground):        ░░░░░░░░░░░░░░░░░░░░░░░░   0%
-Phase 7 (Brain):             ░░░░░░░░░░░░░░░░░░░░░░░░   0%
-Phase 8 (Learning):          ░░░░░░░░░░░░░░░░░░░░░░░░   0%
+Layer 🧩 Domains (D1):      ████████████████░░░░░░░░  70%
+Layer 🎮 Playground:        ░░░░░░░░░░░░░░░░░░░░░░░░   0%
+Layer 🧠 Brain:             ░░░░░░░░░░░░░░░░░░░░░░░░   0%
+Layer 📈 Learning:          ░░░░░░░░░░░░░░░░░░░░░░░░   0%
 ```
