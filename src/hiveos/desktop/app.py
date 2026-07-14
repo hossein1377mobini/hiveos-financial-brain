@@ -229,8 +229,6 @@ class DesktopApp:
             height=self.height,
             fullscreen=self.fullscreen,
             resizable=True,
-            minimizable=True,
-            maximizable=True,
             confirm_close=True,
         )
 
