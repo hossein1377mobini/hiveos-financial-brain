@@ -25,7 +25,7 @@ console = Console()
 
 BANNER = """
 ╔══════════════════════════════════════╗
-║           HiveOS v0.1.0              ║
+║           HiveOS v0.5.0              ║
 ║    Multi-Agent Operating System      ║
 ╚══════════════════════════════════════╝
 """
@@ -54,7 +54,7 @@ def hive(version):
     Orchestrate teams of AI agents with declarative YAML workflows.
     """
     if version:
-        rprint(Panel("[bold cyan]HiveOS v0.1.0[/bold cyan]\n"
+        rprint(Panel("[bold cyan]HiveOS v0.5.0[/bold cyan]\n"
                      "Multi-Agent Operating System", width=50))
         raise SystemExit(0)
 
@@ -327,7 +327,7 @@ def list_packages():
 @package.command()
 @click.argument('source-dir', type=click.Path(exists=True))
 @click.option('--name', prompt=True, help='Package name')
-@click.option('--version', default='0.1.0', help='Package version')
+@click.option('--version', default='0.5.0', help='Package version')
 @click.option('--author', prompt=True, help='Package author')
 @click.option('--description', prompt=True, help='Package description')
 @click.option('--tags', help='Comma-separated tags')
@@ -490,7 +490,7 @@ def init():
         example.write_text("""# Hello Flow
 name: "Hello World"
 description: "A simple hello flow"
-version: "0.1.0"
+version: "0.5.0"
 
 trigger:
   type: manual
@@ -527,7 +527,7 @@ def info():
     info_table.add_column("Value", style="white")
     
     import sys
-    info_table.add_row("Version", "0.1.0")
+    info_table.add_row("Version", "0.5.0")
     info_table.add_row("Python", sys.version.split()[0])
     info_table.add_row("Config Path", str(config.config_path))
     info_table.add_row("Working Dir", str(Path.cwd()))
