@@ -1,0 +1,29 @@
+# Blueprint: Tax Orchestrator — هماهنگ‌کننده مالیاتی
+# ============================================================
+agent_id: "tax-orchestrator"
+name:
+  fa: "هماهنگ‌کننده مالیاتی"
+  en: "Tax Orchestrator"
+type: orchestrator
+description:
+  fa: "هماهنگی متخصص و استراتژیست مالیاتی برای محاسبه، اظهارنامه و برنامه‌ریزی مالیاتی"
+  en: "Coordinates tax compliance, planning, and strategy between specialist agents"
+covers: ["D"]
+sub_agents:
+  - tax-specialist
+  - tax-strategist
+skills:
+  - name: workflow-orchestration
+    description: "Orchestrates tax compliance and planning workflows across filing periods"
+  - name: task-decomposition
+    description: "Decomposes tax engagements into compliance and strategic planning tracks"
+  - name: quality-check
+    description: "Validates tax calculations, returns, and plans against relevant tax codes"
+knowledge_paths:
+  - D
+triggers:
+  - event: request
+    from: [master-financial-assistant]
+    priority: high
+output:
+  - tax-report

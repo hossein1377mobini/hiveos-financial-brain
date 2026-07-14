@@ -1,0 +1,31 @@
+# Blueprint: Audit Orchestrator — هماهنگ‌کننده حسابرسی
+# ============================================================
+agent_id: "audit-orchestrator"
+name:
+  fa: "هماهنگ‌کننده حسابرسی"
+  en: "Audit Orchestrator"
+type: orchestrator
+description:
+  fa: "هماهنگی حسابرس، کنترل‌گر داخلی، حسابرس IT و حسابرس دادگاهی برای مأموریت‌های حسابرسی"
+  en: "Coordinates external audit, internal control, IT audit, and forensic investigation engagements"
+covers: ["C"]
+sub_agents:
+  - auditor
+  - internal-controller
+  - it-auditor
+  - forensic-accountant
+skills:
+  - name: workflow-orchestration
+    description: "Orchestrates audit engagement workflows from planning through reporting"
+  - name: task-decomposition
+    description: "Decomposes audit scope into sub-tasks for financial, IT, internal control, and forensic domains"
+  - name: quality-check
+    description: "Reviews audit evidence and reports for completeness and professional standards compliance"
+knowledge_paths:
+  - C
+triggers:
+  - event: request
+    from: [master-financial-assistant]
+    priority: high
+output:
+  - audit-report

@@ -1,0 +1,28 @@
+# Blueprint: RPA Developer — توسعه‌دهنده RPA
+# ============================================================
+agent_id: "rpa-developer"
+name:
+  fa: "توسعه‌دهنده RPA"
+  en: "RPA Developer"
+type: specialist
+description:
+  fa: "طراحی و پیاده‌سازی ربات‌های فرآیندهای مالی خودکار"
+  en: "Designs and implements robotic process automation for financial workflows"
+covers: ["G6"]
+skills:
+  - name: invoice-processing
+    description: "Automates invoice data capture, validation, and posting in accounting systems"
+  - name: auto-reconciliation
+    description: "Builds automated reconciliation bots for bank, ledger, and inter-company account matching"
+  - name: report-automation
+    description: "Develops automated report generation workflows for periodic financial reporting"
+knowledge_paths:
+  - G6
+triggers:
+  - event: request
+    from: [financial-orchestrator]
+    priority: normal
+output:
+  - rpa-bot
+  - automation-workflow
+  - reconciliation-report

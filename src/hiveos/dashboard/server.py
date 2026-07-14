@@ -32,6 +32,7 @@ from ..mothership.resilience import (
 )
 from ..rbac import RBACManager, Resource, Action
 from ..audit import AuditTrail, AuditAction, AuditResource
+from ..license import FeatureFlag
 
 console = Console()
 
@@ -479,4 +480,31 @@ class DashboardApp:
                     }
                     for ws in workspaces
                 ]
+            }
+
+        @app.get("/api/license")
+        async def license_status():
+            """Current license information."""
+            from ..license import LicenseManager
+            mgr = LicenseManager()
+            lic = mgr.current
+            return {
+                "tier": lic.tier.value,
+                "label": lic.tier_label,
+                "active": lic.is_active,
+                "expires_at": lic.expires_at or "",
+                "days_remaining": lic.days_remaining,
+                "organization": lic.organization,
+                "seats": lic.seats,
+                "limits": {
+                    "max_workspaces": lic.get_limit("max_workspaces"),
+                    "max_agents": lic.get_limit("max_agents"),
+                    "max_flows": lic.get_limit("max_flows"),
+                    "max_nodes": lic.get_limit("max_nodes"),
+                    "max_concurrent_flows": lic.get_limit("max_concurrent_flows"),
+                    "audit_retention_days": lic.get_limit("audit_retention_days"),
+                },
+                "enabled_features": sorted(
+                    f.value for f in FeatureFlag if lic.has_feature(f)
+                ),
             }

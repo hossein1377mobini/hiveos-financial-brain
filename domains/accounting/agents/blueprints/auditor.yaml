@@ -1,0 +1,36 @@
+# Blueprint: Auditor — حسابرس
+# ============================================================
+agent_id: "auditor"
+name:
+  fa: "حسابرس"
+  en: "Auditor"
+type: specialist
+description:
+  fa: "انجام عملیات حسابرسی از برنامه‌ریزی تا گزارش‌گیری نهایی"
+  en: "Performs audit engagements from planning through final reporting"
+covers: ["C1", "C2", "C3", "C6"]
+skills:
+  - name: audit-planning
+    description: "Develops audit plans, risk assessments, materiality thresholds, and audit programs"
+  - name: audit-sampling
+    description: "Designs and executes statistical and non-statistical audit sampling procedures"
+  - name: risk-assessment
+    description: "Assesses inherent, control, and detection risks to determine audit approach"
+  - name: audit-evidence
+    description: "Gathers and evaluates audit evidence through inspection, observation, inquiry, and confirmation"
+  - name: audit-reporting
+    description: "Formulates audit opinions and prepares management letters and final audit reports"
+knowledge_paths:
+  - C1
+  - C2
+  - C3
+  - C6
+triggers:
+  - event: request
+    from: [audit-orchestrator]
+    priority: normal
+output:
+  - audit-plan
+  - audit-evidence
+  - audit-opinion
+  - management-letter

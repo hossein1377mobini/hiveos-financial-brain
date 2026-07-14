@@ -1,0 +1,32 @@
+# Blueprint: Investment Analyst — تحلیلگر سرمایه‌گذاری
+# ============================================================
+agent_id: "investment-analyst"
+name:
+  fa: "تحلیلگر سرمایه‌گذاری"
+  en: "Investment Analyst"
+type: specialist
+description:
+  fa: "تحلیل بنیادی، تحلیل تکنیکال، تئوری پرتفوی و مدیریت ریسک سرمایه‌گذاری"
+  en: "Provides fundamental analysis, technical analysis, portfolio theory, and investment risk analysis"
+covers: ["E1", "E2", "E3"]
+skills:
+  - name: fundamental-analysis
+    description: "Analyzes financial statements, industry conditions, and economic factors for equity valuation"
+  - name: technical-analysis
+    description: "Applies technical indicators, chart patterns, and volume analysis for market timing"
+  - name: portfolio-theory
+    description: "Implements modern portfolio theory (MPT), CAPM, and asset allocation models"
+  - name: risk-analysis
+    description: "Measures and manages investment risk using VaR, beta, standard deviation, and scenario analysis"
+knowledge_paths:
+  - E1
+  - E2
+  - E3
+triggers:
+  - event: request
+    from: [advisory-orchestrator]
+    priority: normal
+output:
+  - investment-analysis
+  - portfolio-report
+  - risk-assessment

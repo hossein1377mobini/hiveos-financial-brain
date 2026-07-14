@@ -1,0 +1,34 @@
+# Blueprint: Public Sector Accountant — حسابدار بخش عمومی
+# ============================================================
+agent_id: "public-sector-accountant"
+name:
+  fa: "حسابدار بخش عمومی"
+  en: "Public Sector Accountant"
+type: specialist
+description:
+  fa: "حسابداری دولتی، بودجه‌ریزی عمومی، IPSAS و حسابداری شهرداری‌ها"
+  en: "Specializes in government accounting, public budgeting, IPSAS, and municipal accounting"
+covers: ["F1", "F2", "F3", "F4", "F5"]
+skills:
+  - name: government-accounting
+    description: "Applies government accounting principles including appropriation accounting and fund control"
+  - name: ipsas
+    description: "Implements International Public Sector Accounting Standards (IPSAS) for public entities"
+  - name: fund-accounting
+    description: "Manages fund-based accounting for governmental and non-profit entities"
+  - name: municipal-accounting
+    description: "Handles municipal accounting, local government budgets, and financial reporting"
+knowledge_paths:
+  - F1
+  - F2
+  - F3
+  - F4
+  - F5
+triggers:
+  - event: request
+    from: [advisory-orchestrator]
+    priority: normal
+output:
+  - public-sector-report
+  - ipsas-report
+  - municipal-accounts

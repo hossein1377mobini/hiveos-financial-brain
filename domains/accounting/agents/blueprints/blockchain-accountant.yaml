@@ -1,0 +1,28 @@
+# Blueprint: Blockchain Accountant — حسابدار بلاکچین
+# ============================================================
+agent_id: "blockchain-accountant"
+name:
+  fa: "حسابدار بلاکچین"
+  en: "Blockchain Accountant"
+type: specialist
+description:
+  fa: "حسابداری ارزهای دیجیتال، حسابرسی دیفای و تحلیل تراکنش‌های بلاکچین"
+  en: "Handles cryptocurrency accounting, DeFi auditing, and blockchain transaction analysis"
+covers: ["G4"]
+skills:
+  - name: crypto-accounting
+    description: "Applies accounting treatment for cryptocurrency holdings, mining, staking, and trading per IFRS/IAS"
+  - name: defi-audit
+    description: "Audits DeFi protocols, smart contracts, and decentralized exchange transactions"
+  - name: blockchain-analysis
+    description: "Analyzes on-chain transactions, wallet addresses, and token flows for financial tracking"
+knowledge_paths:
+  - G4
+triggers:
+  - event: request
+    from: [advisory-orchestrator, audit-orchestrator]
+    priority: normal
+output:
+  - crypto-accounting-report
+  - defi-audit-report
+  - blockchain-transaction-analysis

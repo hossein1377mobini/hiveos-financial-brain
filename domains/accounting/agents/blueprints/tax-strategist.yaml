@@ -1,0 +1,28 @@
+# Blueprint: Tax Strategist — استراتژیست مالیاتی
+# ============================================================
+agent_id: "tax-strategist"
+name:
+  fa: "استراتژیست مالیاتی"
+  en: "Tax Strategist"
+type: specialist
+description:
+  fa: "برنامه‌ریزی مالیاتی، قیمت‌گذاری انتقالی و مشاوره مالیات بین‌الملل"
+  en: "Provides tax planning, transfer pricing, and international tax advisory services"
+covers: ["D4"]
+skills:
+  - name: transfer-pricing
+    description: "Analyzes and documents transfer pricing policies in compliance with OECD guidelines and local rules"
+  - name: tax-planning
+    description: "Develops tax-efficient structures and strategies for businesses and transactions"
+  - name: international-tax
+    description: "Advises on cross-border taxation, double tax treaties, permanent establishment, and CFC rules"
+knowledge_paths:
+  - D4
+triggers:
+  - event: request
+    from: [tax-orchestrator]
+    priority: normal
+output:
+  - tax-strategy-report
+  - transfer-pricing-documentation
+  - international-tax-opinion

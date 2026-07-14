@@ -1,0 +1,100 @@
+# ============================================================
+# Financial Close — Period-End Closing Flow
+# بستن حساب پایان دوره
+# ============================================================
+# Orchestrates the complete period-end closing cycle:
+#   financial-recorder → journal entries, adjustments, closing entries
+#   financial-reporter  → trial balance → financial statements
+#   financial-orchestrator → review, quality check, finalize
+# ============================================================
+
+name: "Period-End Closing"
+name_fa: "بستن حساب پایان دوره"
+description: >
+  Complete period-end financial close workflow. The Financial Recorder
+  posts journal entries, adjustments, and closing entries. The Financial
+  Reporter prepares the trial balance and generates financial statements.
+  The Financial Orchestrator reviews the output, performs quality checks,
+  and finalizes the close with a management report.
+version: "1.0.0"
+domain: "accounting"
+
+trigger:
+  type: manual
+
+agents:
+  # ── Agent 1: Financial Recorder ──
+  # Posts journal entries, adjustments, and closing entries for the period.
+  - id: financial-recorder
+    name: "Financial Recorder"
+    name_fa: "ثبت‌کننده مالی"
+    role: domain agent
+    skills:
+      - journal-entry
+      - reconciliation
+      - trial-balance
+      - closing-entries
+    depends_on: []
+    input_from:
+      files:
+        - "accounts/period_unclosed_ledger.json"
+        - "accounts/adjustments_schedule.json"
+    output: "closing_entries_summary.md"
+    deliver:
+      format: markdown
+
+  # ── Agent 2: Financial Reporter ──
+  # Prepares trial balance, financial statements, and disclosures.
+  - id: financial-reporter
+    name: "Financial Reporter"
+    name_fa: "گزارش‌گر مالی"
+    role: domain agent
+    skills:
+      - financial-statements
+      - consolidation
+      - disclosures
+      - cash-flow
+    depends_on:
+      - financial-recorder
+    input_from:
+      agent: financial-recorder
+      files:
+        - "closing_entries_summary.md"
+    output: "financial_statements_report.md"
+    deliver:
+      format: markdown
+
+  # ── Agent 3: Financial Orchestrator ──
+  # Reviews, quality-checks, and finalizes the close report.
+  - id: financial-orchestrator
+    name: "Financial Orchestrator"
+    name_fa: "هماهنگ‌کننده مالی"
+    role: domain agent
+    skills:
+      - financial-statements
+      - ifrs
+      - ir-gaap
+      - compliance
+    depends_on:
+      - financial-reporter
+    input_from:
+      agent: financial-reporter
+      files:
+        - "financial_statements_report.md"
+    output: "final_close_report.md"
+    action:
+      quality_check: true
+      finalize: true
+    deliver:
+      format: markdown
+
+memory:
+  share_context: true
+  consolidate: "flow_execution"
+  trace: true
+
+deliver:
+  to: origin
+  format: markdown
+  include_agents: true
+  include_trace: true

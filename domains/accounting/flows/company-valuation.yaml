@@ -1,0 +1,99 @@
+# ============================================================
+# Company Valuation — Company Valuation Flow
+# ارزش‌گذاری شرکت
+# ============================================================
+# End-to-end company valuation:
+#   financial-reporter → historical financial data
+#   investment-analyst → industry analysis, comparable companies
+#   valuation-expert  → DCF, multiples, final valuation
+# ============================================================
+
+name: "Company Valuation"
+name_fa: "ارزش‌گذاری شرکت"
+description: >
+  End-to-end company valuation workflow. The Financial Reporter
+  compiles historical financial data and key metrics. The Investment
+  Analyst performs industry analysis, peer comparison, and market
+  research. The Valuation Expert applies DCF, multiples, and
+  residual-income methods to produce a comprehensive valuation report.
+version: "1.0.0"
+domain: "accounting"
+
+trigger:
+  type: manual
+
+agents:
+  # ── Agent 1: Financial Reporter ──
+  # Provides historical financial statements and key metrics.
+  - id: financial-reporter
+    name: "Financial Reporter"
+    name_fa: "گزارش‌گر مالی"
+    role: domain agent
+    skills:
+      - financial-statements
+      - disclosures
+      - cash-flow
+    depends_on: []
+    input_from:
+      files:
+        - "company/historical_financials.json"
+        - "company/audited_statements.json"
+    output: "historical_financial_data.md"
+    deliver:
+      format: markdown
+
+  # ── Agent 2: Investment Analyst ──
+  # Industry analysis, market research, comparable company identification.
+  - id: investment-analyst
+    name: "Investment Analyst"
+    name_fa: "تحلیلگر سرمایه‌گذاری"
+    role: domain agent
+    skills:
+      - fundamental-analysis
+      - technical-analysis
+      - portfolio-theory
+      - risk-analysis
+    depends_on:
+      - financial-reporter
+    input_from:
+      agent: financial-reporter
+      files:
+        - "historical_financial_data.md"
+    output: "industry_and_comps_analysis.md"
+    deliver:
+      format: markdown
+
+  # ── Agent 3: Valuation Expert ──
+  # Applies DCF, multiples, and residual-income valuation methods.
+  - id: valuation-expert
+    name: "Valuation Expert"
+    name_fa: "کارشناس ارزش‌گذاری"
+    role: domain agent
+    skills:
+      - dcf-valuation
+      - multiples
+      - residual-income
+    depends_on:
+      - investment-analyst
+    input_from:
+      agent: investment-analyst
+      files:
+        - "industry_and_comps_analysis.md"
+    output: "valuation_report.md"
+    action:
+      include_dcf: true
+      include_multiples: true
+      include_sensitivity: true
+    deliver:
+      format: markdown
+
+memory:
+  share_context: true
+  consolidate: "flow_execution"
+  trace: true
+
+deliver:
+  to: origin
+  format: markdown
+  include_agents: true
+  include_trace: true

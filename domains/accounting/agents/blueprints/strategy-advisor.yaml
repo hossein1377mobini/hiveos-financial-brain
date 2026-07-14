@@ -1,0 +1,30 @@
+# Blueprint: Strategy Advisor — مشاور استراتژیک
+# ============================================================
+agent_id: "strategy-advisor"
+name:
+  fa: "مشاور استراتژیک"
+  en: "Strategy Advisor"
+type: specialist
+description:
+  fa: "تحلیل رقابتی و صنعتی برای برنامه‌ریزی استراتژیک و تصمیم‌گیری بلندمدت"
+  en: "Provides competitive and industry analysis for strategic planning and long-term decision-making"
+covers: ["I3", "I4", "B5"]
+skills:
+  - name: competitive-analysis
+    description: "Analyzes competitive forces (Porter's Five Forces), market positioning, and strategic groups"
+  - name: industry-analysis
+    description: "Evaluates industry structure, life cycle, and macroeconomic factors affecting business strategy"
+  - name: strategic-planning
+    description: "Facilitates strategic planning processes including SWOT, scenario planning, and strategy formulation"
+knowledge_paths:
+  - I3
+  - I4
+  - B5
+triggers:
+  - event: request
+    from: [management-orchestrator]
+    priority: normal
+output:
+  - strategic-analysis
+  - industry-report
+  - competitive-landscape

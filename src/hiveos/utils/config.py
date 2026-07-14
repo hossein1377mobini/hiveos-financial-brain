@@ -10,7 +10,7 @@ from rich.console import Console
 console = Console()
 
 DEFAULT_CONFIG = {
-    "version": "0.5.0",
+    "version": "0.6.0",
     "knowledge_dir": "docs",
     "package_dir": "~/.hiveos/packages",
     "flow_dir": "prototype",

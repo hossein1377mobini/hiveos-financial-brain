@@ -25,7 +25,7 @@ console = Console()
 
 BANNER = """
 ╔══════════════════════════════════════╗
-║           HiveOS v0.5.0              ║
+║           HiveOS v0.6.0              ║
 ║    Multi-Agent Operating System      ║
 ╚══════════════════════════════════════╝
 """
@@ -54,7 +54,7 @@ def hive(version):
     Orchestrate teams of AI agents with declarative YAML workflows.
     """
     if version:
-        rprint(Panel("[bold cyan]HiveOS v0.5.0[/bold cyan]\n"
+        rprint(Panel("[bold cyan]HiveOS v0.6.0[/bold cyan]\n"
                      "Multi-Agent Operating System", width=50))
         raise SystemExit(0)
 
@@ -527,7 +527,7 @@ def info():
     info_table.add_column("Value", style="white")
     
     import sys
-    info_table.add_row("Version", "0.5.0")
+    info_table.add_row("Version", "0.6.0")
     info_table.add_row("Python", sys.version.split()[0])
     info_table.add_row("Config Path", str(config.config_path))
     info_table.add_row("Working Dir", str(Path.cwd()))
@@ -1816,3 +1816,83 @@ def workspace_member_set_role(workspace_id, username, role):
         console.print(f"[red]❌ Invalid role '{role}'. Valid: owner, admin, operator, contributor, viewer[/red]")
         raise SystemExit(1)
     mgr.set_member_role(workspace_id, username, ws_role)
+
+
+# ── License Commands ────────────────────────────────────────────────────
+
+@hive.group()
+def license():
+    """💰 License management — tiers, activation, feature gating."""
+    pass
+
+
+def _get_license():
+    from ..license import LicenseManager
+    return LicenseManager()
+
+
+@license.command(name="info")
+def license_info():
+    """Show current license information."""
+    mgr = _get_license()
+    mgr.display_license()
+
+
+@license.command(name="activate")
+@click.argument("license_key")
+@click.option("--org", default="", help="Organization name")
+@click.option("--email", default="", help="Contact email")
+def license_activate(license_key, org, email):
+    """Activate a license key (or use demo keys: hive-pro-demo, hive-ent-demo, hive-ult-demo)."""
+    mgr = _get_license()
+    if mgr.activate(license_key, organization=org, email=email):
+        mgr.display_license()
+
+
+@license.command(name="deactivate")
+def license_deactivate():
+    """Deactivate current license and revert to Free tier."""
+    mgr = _get_license()
+    mgr.deactivate()
+
+
+@license.command(name="upgrade")
+@click.argument("tier", type=click.Choice(["pro", "enterprise", "ultimate"]))
+@click.option("--key", default="", help="License key (optional)")
+def license_upgrade(tier, key):
+    """Upgrade/downgrade to a specific tier."""
+    mgr = _get_license()
+    from ..license import LicenseTier
+    new_tier = LicenseTier(tier)
+    mgr.upgrade_tier(new_tier, license_key=key)
+    mgr.display_license()
+
+
+@license.command(name="tiers")
+def license_tiers():
+    """Show all available license tiers and features."""
+    mgr = _get_license()
+    mgr.display_tier_table()
+
+
+@license.command(name="check")
+@click.argument("feature_name")
+def license_check(feature_name):
+    """Check if a specific feature is available on current license."""
+    mgr = _get_license()
+    from ..license import FeatureFlag
+
+    try:
+        feature = FeatureFlag(feature_name)
+    except ValueError:
+        console.print(f"[red]❌ Unknown feature '{feature_name}'[/red]")
+        available = sorted(f.value for f in FeatureFlag)
+        console.print(f"[dim]Available features: {', '.join(available)}[/dim]")
+        raise SystemExit(1)
+
+    if mgr.has_feature(feature):
+        console.print(f"[green]✅ Feature '[bold]{feature_name}[/bold]' is available on your [bold]{mgr.tier.value.upper()}[/bold] license[/green]")
+    else:
+        tier_needed = mgr._tier_for_feature(feature)
+        tier_label = tier_needed.value.upper() if tier_needed else "a higher"
+        console.print(f"[yellow]⚠️  Feature '[bold]{feature_name}[/bold]' requires {tier_label} tier (current: {mgr.tier.value.upper()})[/yellow]")

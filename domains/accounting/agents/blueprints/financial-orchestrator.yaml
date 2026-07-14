@@ -1,0 +1,30 @@
+# Blueprint: Financial Orchestrator — هماهنگ‌کننده مالی
+# ============================================================
+agent_id: "financial-orchestrator"
+name:
+  fa: "هماهنگ‌کننده مالی"
+  en: "Financial Orchestrator"
+type: orchestrator
+description:
+  fa: "هماهنگی بین ثبت‌کننده و گزارش‌گر مالی — چرخه کامل بستن حساب"
+  en: "Coordinates financial recording, reporting, and standards advisory — full close cycle management"
+covers: ["A"]
+sub_agents:
+  - financial-recorder
+  - financial-reporter
+  - standards-advisor
+skills:
+  - name: workflow-orchestration
+    description: "Orchestrates multi-step financial workflows (close, consolidation, reporting)"
+  - name: task-decomposition
+    description: "Decomposes financial close tasks into parallelizable sub-tasks"
+  - name: quality-check
+    description: "Validates outputs from specialist agents for accuracy and standards compliance"
+knowledge_paths:
+  - A
+triggers:
+  - event: request
+    from: [master-financial-assistant]
+    priority: high
+output:
+  - validated-financial-report

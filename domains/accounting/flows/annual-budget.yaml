@@ -1,0 +1,99 @@
+# ============================================================
+# Annual Budget — Annual Budget Preparation Flow
+# تهیه بودجه سالانه
+# ============================================================
+# End-to-end annual budget preparation:
+#   cost-analyst        → historical cost data, trends, variance analysis
+#   performance-advisor → KPIs, targets, balanced scorecard
+#   budget-planner      → budget formulation, review, finalization
+# ============================================================
+
+name: "Annual Budget Preparation"
+name_fa: "تهیه بودجه سالانه"
+description: >
+  End-to-end annual budget preparation workflow. The Cost Analyst
+  analyzes historical cost data, trends, and variances. The Performance
+  Advisor defines KPIs, targets, and balanced scorecard metrics. The
+  Budget Planner formulates the comprehensive annual budget, reviews
+  against targets, and produces the final budget document.
+version: "1.0.0"
+domain: "accounting"
+
+trigger:
+  type: manual
+
+agents:
+  # ── Agent 1: Cost Analyst ──
+  # Analyzes historical cost behavior, trends, and variances.
+  - id: cost-analyst
+    name: "Cost Analyst"
+    name_fa: "تحلیلگر بهای تمام شده"
+    role: domain agent
+    skills:
+      - costing
+      - variance-analysis
+      - cvp-analysis
+      - abc-costing
+    depends_on: []
+    input_from:
+      files:
+        - "budget/prior_year_actuals.json"
+        - "budget/cost_center_data.json"
+    output: "cost_analysis_and_trends.md"
+    deliver:
+      format: markdown
+
+  # ── Agent 2: Performance Advisor ──
+  # Defines strategic KPIs, targets, and balanced scorecard.
+  - id: performance-advisor
+    name: "Performance Advisor"
+    name_fa: "مشاور عملکرد"
+    role: domain agent
+    skills:
+      - balanced-scorecard
+      - performance-metrics
+      - value-chain
+    depends_on:
+      - cost-analyst
+    input_from:
+      agent: cost-analyst
+      files:
+        - "cost_analysis_and_trends.md"
+    output: "kpi_targets_and_scorecard.md"
+    deliver:
+      format: markdown
+
+  # ── Agent 3: Budget Planner ──
+  # Formulates the comprehensive annual budget and reviews against targets.
+  - id: budget-planner
+    name: "Budget Planner"
+    name_fa: "برنامه‌ریز بودجه"
+    role: domain agent
+    skills:
+      - budgeting
+      - forecasting
+      - capital-budgeting
+      - kpi-dashboard
+    depends_on:
+      - performance-advisor
+    input_from:
+      agent: performance-advisor
+      files:
+        - "kpi_targets_and_scorecard.md"
+    output: "annual_budget_report.md"
+    action:
+      validate_against_targets: true
+      include_scenarios: true
+    deliver:
+      format: markdown
+
+memory:
+  share_context: true
+  consolidate: "flow_execution"
+  trace: true
+
+deliver:
+  to: origin
+  format: markdown
+  include_agents: true
+  include_trace: true

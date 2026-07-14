@@ -56,13 +56,13 @@ Live product roadmap. Updated after every session.
 - [x] **Mothership Server** — FastAPI HTTP REST API for satellite communication
 - [x] **Mothership CLI** — `hive mothership` with agent/route/bus/health/server subcommands
 
-## Phase 5: Enterprise 🏗️
+## Phase 5: Enterprise ✅
 
 - [x] **RBAC** — Role-based access control (models, manager, server auth, CLI, 36 tests)
 - [x] **Audit Trail** — JSONL daily files + gbrain PGLite sync (CLI, server middleware, 20 tests)
 - [x] **Dashboard** — Web UI to monitor agents, flows, and nodes
 - [x] **Multi-tenant** — Isolated workspaces per team/org
-- [ ] **Pricing model** — License tiers
+- [x] **Pricing model** — License tiers (Free, Pro, Enterprise, Ultimate) with feature gating
 
 ---
 

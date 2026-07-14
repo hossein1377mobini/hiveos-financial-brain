@@ -5,21 +5,27 @@
 
 ---
 
-## 📌 Current Phase: Phase 5 — Enterprise (In Progress 🏗️)
+## 📌 Current Phase: Phase 5 — Enterprise ✅
 
-Phase 0 (Foundation) ✅ | Phase 1 (Playground) ✅ | Phase 2 (Integration) ✅ | Phase 3 (Packaging) ✅ | Phase 4 (Mothership) ✅ | **Phase 5 (Enterprise) 🏗️**
+Phase 0 (Foundation) ✅ | Phase 1 (Playground) ✅ | Phase 2 (Integration) ✅ | Phase 3 (Packaging) ✅ | Phase 4 (Mothership) ✅ | **Phase 5 (Enterprise) ✅** | **Phase D1 (Accounting) 🏗️**
 
 ---
 
-## 🎯 Current Work: Phase 5 — Enterprise
+## 🎯 Current Work: Phase D1 — Accounting Domain
 
-File: `src/hiveos/rbac/`, `src/hiveos/audit/`, `src/hiveos/dashboard/`, `src/hiveos/workspace/`
+- 💰 **Pricing model** — License tiers (✅ Complete — v0.6.0)
+  - 4 tiers: Free, Pro, Enterprise, Ultimate
+  - Feature flags with gating
+  - Resource limits enforcement
+  - Demo key activation
+  - `hive license` CLI (info/activate/deactivate/upgrade/tiers/check)
+  - Dashboard `/api/license` endpoint
+  - 32 tests
 
-- 🔐 **RBAC** — Role-based access control (✅ Complete)
-- 📜 **Audit Trail** — JSONL + gbrain PGLite (✅ Complete)
-- 📊 **Dashboard** — Web UI for agents/flows/nodes monitoring (✅ Complete)
-- 🏢 **Multi-tenant** — Workspace isolation per team/org (✅ Complete)
-- 💰 **Pricing model** — ⏳ Planned
+### Phase D1: Next Steps
+- 🏢 **Agent Blueprints** — YAML definitions in `domains/accounting/agents/blueprints/`
+- 🔄 **Flow Templates** — YAML flows for common accounting workflows
+- 🧠 **Hermes Skills** — Domain-specific knowledge prompts
 
 ---
 

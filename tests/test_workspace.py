@@ -37,7 +37,12 @@ def temp_dir():
 def ws_manager(temp_dir):
     """WorkspaceManager with temp base directory."""
     from hiveos.workspace import WorkspaceManager
-    mgr = WorkspaceManager(base_dir=temp_dir)
+    from hiveos.license import LicenseManager, LicenseTier
+    # Create a separate license manager with Pro tier for multi-workspace tests
+    lic_path = temp_dir / ".hiveos" / "license.yaml"
+    lic_mgr = LicenseManager(license_path=lic_path)
+    lic_mgr.upgrade_tier(LicenseTier.PRO)
+    mgr = WorkspaceManager(base_dir=temp_dir, license_manager=lic_mgr)
     return mgr
 
 
@@ -372,8 +377,13 @@ class TestWorkspaceMembers:
     def test_load_persisted_workspaces(self, temp_dir):
         """WorkspaceManager loads previously persisted workspaces."""
         from hiveos.workspace import WorkspaceManager
+        from hiveos.license import LicenseManager, LicenseTier
+        # Use Pro tier to allow multiple workspaces
+        lic_path = temp_dir / ".hiveos-lic" / "license.yaml"
+        lic_mgr = LicenseManager(license_path=lic_path)
+        lic_mgr.upgrade_tier(LicenseTier.PRO)
         # Create workspaces with one manager
-        mgr1 = WorkspaceManager(base_dir=temp_dir)
+        mgr1 = WorkspaceManager(base_dir=temp_dir, license_manager=lic_mgr)
         mgr1.create_workspace(name="Persisted WS", owner="admin")
         mgr1.create_workspace(name="Another WS", owner="user")
 

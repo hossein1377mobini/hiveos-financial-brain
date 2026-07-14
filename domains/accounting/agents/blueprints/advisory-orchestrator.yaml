@@ -1,0 +1,32 @@
+# Blueprint: Advisory Orchestrator — هماهنگ‌کننده مشاوره
+# ============================================================
+agent_id: "advisory-orchestrator"
+name:
+  fa: "هماهنگ‌کننده مشاوره"
+  en: "Advisory Orchestrator"
+type: orchestrator
+description:
+  fa: "هماهنگی خدمات مشاوره مالی — سرمایه‌گذاری، ارزش‌گذاری، نهادهای مالی و بخش عمومی"
+  en: "Coordinates financial advisory services — investment, valuation, financial institutions, and public sector"
+covers: ["E", "F"]
+sub_agents:
+  - investment-analyst
+  - valuation-expert
+  - financial-institutions-specialist
+  - public-sector-accountant
+skills:
+  - name: workflow-orchestration
+    description: "Orchestrates advisory engagement workflows (valuation, investment analysis, public sector accounting)"
+  - name: task-decomposition
+    description: "Decomposes advisory requests into specialist tasks across capital markets and public sector"
+  - name: quality-check
+    description: "Reviews advisory outputs for analytical rigor and regulatory compliance"
+knowledge_paths:
+  - E
+  - F
+triggers:
+  - event: request
+    from: [master-financial-assistant]
+    priority: high
+output:
+  - advisory-report

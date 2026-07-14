@@ -42,9 +42,10 @@ class WorkspaceManager:
           config/             # isolated configuration
     """
 
-    def __init__(self, base_dir: Optional[Path] = None):
+    def __init__(self, base_dir: Optional[Path] = None, license_manager=None):
         self.base_dir = base_dir or WORKSPACES_DIR
         self.base_dir.mkdir(parents=True, exist_ok=True)
+        self._license_manager = license_manager
         self._workspaces: Dict[str, Workspace] = {}
         self._load_all()
 
@@ -102,7 +103,23 @@ class WorkspaceManager:
             
         Returns:
             The created Workspace
+            
+        Raises:
+            SystemExit: If the license limit for workspaces has been reached
         """
+        # Check license limit
+        lic_mgr = self._license_manager
+        if lic_mgr is None:
+            from ..license import LicenseManager
+            lic_mgr = LicenseManager()
+        current_count = len(self.list_workspaces(include_inactive=False))
+        if not lic_mgr.is_within_limit("max_workspaces", current_count + 1):
+            limit = lic_mgr.get_limit("max_workspaces")
+            console.print(
+                f"[red]❌ Workspace limit reached: {current_count}/{limit}. "
+                f"Upgrade your license to create more workspaces.[/red]"
+            )
+            raise SystemExit(1)
         if not workspace_id:
             workspace_id = generate_workspace_id(name)
             # Ensure uniqueness

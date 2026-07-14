@@ -1,0 +1,31 @@
+# Blueprint: IT Auditor — حسابرس سیستم‌های اطلاعاتی
+# ============================================================
+agent_id: "it-auditor"
+name:
+  fa: "حسابرس سیستم‌های اطلاعاتی"
+  en: "IT Auditor"
+type: specialist
+description:
+  fa: "ارزیابی سیستم‌های اطلاعاتی، کنترل‌های IT، امنیت سایبری و کنترل‌های ERP"
+  en: "Assesses information systems, IT controls, cybersecurity, and ERP control frameworks"
+covers: ["C5", "G3"]
+skills:
+  - name: it-audit
+    description: "Performs IT general controls (ITGC) and application controls audits"
+  - name: caats
+    description: "Uses Computer-Assisted Audit Techniques (CAATs) for data extraction, analysis, and testing"
+  - name: cybersecurity-audit
+    description: "Evaluates cybersecurity controls, incident response, and data protection measures"
+  - name: erp-controls
+    description: "Assesses control configurations and segregation of duties within ERP systems (SAP, Oracle)"
+knowledge_paths:
+  - C5
+  - G3
+triggers:
+  - event: request
+    from: [audit-orchestrator]
+    priority: normal
+output:
+  - it-audit-report
+  - cybersecurity-assessment
+  - caats-findings
