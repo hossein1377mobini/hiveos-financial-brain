@@ -20,24 +20,23 @@ jobs:
           python-version: '3.11'
 
       - name: Install HiveOS + build deps
-        run: |
-          pip install -e .
-          pip install pyinstaller pywebview
+        run: pip install -e . pyinstaller pywebview
+        shell: pwsh
 
       - name: Build .exe (PyInstaller)
-        shell: bash
-        env:
-          PYTHONOPTIMIZE: 2
+        shell: pwsh
         run: |
-          pyinstaller --noconfirm --clean --onedir --name=HiveOS \
-            --distpath=dist --workpath=build/pyinstaller --specpath=build \
-            --exclude-module=pythoncom --exclude-module=pywin32 \
-            --collect-all=hiveos \
-            --add-data="domains;domains" \
-            --windowed \
-            src/hiveos/desktop/app.py
+          pyinstaller --noconfirm --clean --onedir --name=HiveOS `
+            --distpath=dist --workpath=build\pyinstaller --specpath=build `
+            --exclude-module=pythoncom --exclude-module=pywin32 `
+            --collect-all=hiveos `
+            --add-data="domains;domains" `
+            src\hiveos\desktop\app.py
+          Write-Host "PyInstaller exit code: $LASTEXITCODE"
+          if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed" }
 
       - name: Verify build
+        shell: pwsh
         run: |
           if (Test-Path "dist\HiveOS\HiveOS.exe") {
             $size = [math]::Round((Get-Item "dist\HiveOS\HiveOS.exe").Length / 1MB, 1)
@@ -47,31 +46,21 @@ jobs:
             Write-Error "❌ HiveOS.exe not found!"
             exit 1
           }
-        shell: pwsh
 
       - name: Install Inno Setup
         run: choco install innosetup -y --no-progress
         shell: pwsh
 
       - name: Build MSI Installer
+        shell: pwsh
         run: |
-          $iscc = Get-Command iscc.exe -ErrorAction SilentlyContinue
-          if (-not $iscc) {
-            "${env:ProgramFiles(x86)}\Inno Setup 6",
-            "${env:ProgramFiles}\Inno Setup 6",
-            "${env:LOCALAPPDATA}\Programs\Inno Setup 6" | ForEach-Object {
-              if (Test-Path "$_\iscc.exe") {
-                Write-Host "Found iscc at $_"
-                return
-              }
-            }
-          }
           iscc.exe build\installer.iss
-          if ($LASTEXITCODE -ne 0) { Write-Warning "MSI build had warnings, checking output..." }
+          if ($LASTEXITCODE -ne 0) {
+            Write-Warning "iscc exit code: $LASTEXITCODE — checking output anyway"
+          }
           Get-ChildItem dist\ -Filter "HiveOS-Setup-*" | ForEach-Object {
             Write-Host "✅ MSI: $($_.Name) ($([math]::Round($_.Length/1MB,1)) MB)"
           }
-        shell: pwsh
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
