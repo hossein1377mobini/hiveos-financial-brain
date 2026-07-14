@@ -93,12 +93,12 @@ HiveOS is a **Multi-Agent Operating System** with 5 pillars:
 | **S-04** Playground persistence | ✅ | FlowRunner state saved/restored |
 | **S-05** Data directory init | ✅ | `~/.hiveos/data/` auto-created on first run and via `hive util init` |
 
-### ✅ CL: Standardisation (v0.9.0)
+### ✅ CL: Standardisation (v0.9.2)
 | Task | Status | Description |
 |------|--------|-------------|
 | **CL-01** CHANGELOG.md | ✅ | Keep a Changelog format |
 | **CL-02** CI (GA pytest on push) | ✅ | `.github/workflows/test.yml` |
-| **CL-03** Auto-update skeleton | ⏳ | Next sprint |
+| **CL-03** Auto-update skeleton | ✅ | `hive update check/info`, GitHub Releases checker |
 
 ### CLI Commands
 ```
@@ -128,7 +128,7 @@ hive
 | 🟢 | **D-04** Hermes skills for accounting agents | 🧩 Domains | ⏳ |
 | 🟢 | **D-05** Domain Plugin CLI (`hive domain list/info/install`) | 🧩 Domains | ⏳ |
 | 🟢 | **S-06** Migration system for StorageEngine | 🗄️ Storage | ⏳ |
-| 🟢 | **CL-03** Auto-update skeleton | 🔧 Standardisation | ⏳ |
+| 🟢 | **CL-03** Auto-update skeleton | 🔧 Standardisation | ✅ |
 | ⬜ | **v0.10.0** Windows Native Sprint (Tauri shell) | 🪟 All | ⏳ |
 
 ---
@@ -184,8 +184,9 @@ git add -A && git commit -m "..." && git push origin main
 | **2026-07-14** | **v0.7.0** | **Playground Core APIs + Brain Engine + Learning Logger (329 tests)** |
 | **Next** | **v0.8.0** | **Playground Canvas + Runner + Gates UI + Brain 3D + Learning Analytics** |
 | **2026-07-14** | **v0.8.0** | **Canvas+Viz Sprint: P-04 Flow Canvas, P-05 Runner+WS, P-06 Gates UI, B-05 3D Neural View, L-02 Analytics (366 tests)** |
-| **2026-07-14** | **v0.9.0** | **Persistence Sprint: S-01..S-05 StorageEngine + SQLite for all modules + CHANGELOG + CI (379 tests)** |
-| **Next** | **v0.10.0** | **Domain Sprint: D-04 Skills + D-05 Plugin CLI + S-06 Migrations + CL-03 Auto-update** |
+| **2026-07-14** | **v0.9.1** | **S-05 data dir init + CL-02 CI + version fixes + S-06 migrations + D-05 domain CLI + D-04 Hermes skills (413 tests)** |
+| **Next** | **v0.9.2** | **CL-03 Auto-update skeleton** |
+| **Next** | **v0.10.0** | **Windows Native Sprint (Tauri shell)** |
 
 ---
 

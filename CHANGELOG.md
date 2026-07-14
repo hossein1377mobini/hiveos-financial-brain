@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.9.2] — 2026-07-14
+
+### Added
+- **CL-03: Auto-Update Skeleton** (`src/hiveos/update/checker.py`) — Lightweight update checker that queries GitHub Releases API. `UpdateChecker.check()` returns structured `UpdateInfo` with version comparison, download URL, release notes. Supports semver with pre-release tags (alpha/beta/rc). (23 new tests)
+
+### Added (CLI)
+- `hive update check` — Check the latest HiveOS release on GitHub
+- `hive update info` — Display current vs latest version info in a table
+
+### Tests
+- **436 total** — 23 new tests (8 version parsing + 4 UpdateInfo + 11 UpdateChecker), all existing tests preserved
+
+---
+
 ## [0.9.1] — 2026-07-14
 
 ### Added

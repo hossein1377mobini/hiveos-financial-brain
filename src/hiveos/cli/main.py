@@ -25,10 +25,9 @@ console = Console()
 
 BANNER = """\
 ╔══════════════════════════════════════╗
-║           HiveOS v0.9.0              ║
+║           HiveOS v0.9.2              ║
 ║    Multi-Agent Operating System      ║
-╚══════════════════════════════════════╝
-"""
+╚══════════════════════════════════════╝"""
 
 def _load_config():
     config = ConfigManager()
@@ -533,7 +532,7 @@ def info():
     info_table.add_column("Value", style="white")
     
     import sys
-    info_table.add_row("Version", "0.9.0")
+    info_table.add_row("Version", "0.9.2")
     info_table.add_row("Python", sys.version.split()[0])
     info_table.add_row("Config Path", str(config.config_path))
     info_table.add_row("Working Dir", str(Path.cwd()))
@@ -2128,3 +2127,48 @@ agents:
     console.print(f"   Flows:  {root / 'flows'}")
     console.print(f"   Knowledge: {root / 'knowledge'}")
     console.print(f"\nNext: edit [cyan]{root / 'domain.yaml'}[/cyan] and add agents")
+
+
+# ── Update Commands ────────────────────────────────────────────────────
+
+@hive.group()
+def update():
+    """🔄 Check for HiveOS updates — auto-update skeleton."""
+    pass
+
+
+@update.command()
+def check():
+    """Check the latest HiveOS release on GitHub."""
+    from ..update import UpdateChecker
+    UpdateChecker().check_and_notify()
+
+
+@update.command()
+def info():
+    """Show update-related information (current version, latest available)."""
+    from ..update import UpdateChecker
+    from rich.table import Table
+    from hiveos import __version__
+
+    checker = UpdateChecker()
+    result = checker.check()
+
+    table = Table(title="🔄 Update Info", width=60)
+    table.add_column("Property", style="bold yellow")
+    table.add_column("Value", style="white")
+
+    table.add_row("Current Version", __version__)
+    table.add_row("Latest Version", result.latest_version or "—")
+    table.add_row("Update Available",
+                  "[green]✔ Yes[/green]" if result.update_available else "[dim]No[/dim]")
+    table.add_row("Download URL", result.download_url or "—")
+
+    if result.error:
+        table.add_row("Error", f"[red]{result.error}[/red]")
+
+    console.print(table)
+
+    if result.update_available:
+        console.print(f"\n[bold cyan]🚀 Upgrade:[/bold cyan] {__version__} → [bold]{result.latest_version}[/bold]")
+        console.print(f"   [dim]{result.download_url}[/dim]")
