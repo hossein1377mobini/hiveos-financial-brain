@@ -33,9 +33,34 @@ from hiveos.mothership.communication_bus import CommunicationBus, MessageType
 from hiveos.mothership.resilience import ResilienceEngine, HealthStatus, FailureType
 from hiveos.rbac import RBACManager, Resource, Action, Permission
 from hiveos.audit import AuditTrail, AuditAction, AuditResource, AuditResult
+from hiveos.storage import StorageEngine # NEW
 
 
 # ── Helper: create mock objects ──────────────────────────────────────
+
+
+@pytest.fixture
+def storage(db_path):
+    s = StorageEngine(db_path)
+    yield s
+    s.close()
+    if db_path.exists():
+        db_path.unlink()
+
+
+@pytest.fixture
+def db_path():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        yield Path(tmpdir) / "test.db"
+
+
+@pytest.fixture
+def storage(db_path):
+    s = StorageEngine(db_path)
+    yield s
+    s.close()
+    if db_path.exists():
+        db_path.unlink()
 
 
 def make_mock_obj(**attrs):
@@ -243,7 +268,7 @@ def mock_audit():
 
 @pytest.fixture
 def dashboard_app(mock_agent_registry, mock_task_router, mock_comm_bus,
-                   mock_resilience, mock_rbac, mock_audit, temp_dir):
+                   mock_resilience, mock_rbac, mock_audit, temp_dir, storage):
     """DashboardApp with mocked subsystems."""
     app = DashboardApp(
         agent_registry=mock_agent_registry,
@@ -253,8 +278,9 @@ def dashboard_app(mock_agent_registry, mock_task_router, mock_comm_bus,
         rbac=mock_rbac,
         audit=mock_audit,
         data_dir=temp_dir,
+        storage=storage,
     )
-    return app
+    yield app
 
 
 @pytest.fixture
@@ -465,7 +491,7 @@ class TestDashboardWithMocks:
 
     def test_dashboard_server_with_subsystems(self, mock_agent_registry,
                                                mock_task_router, mock_comm_bus,
-                                               mock_resilience, temp_dir):
+                                               mock_resilience, temp_dir, storage):
         """Server can be created with subsystem references."""
         server = DashboardServer(
             agent_registry=mock_agent_registry,
@@ -473,15 +499,18 @@ class TestDashboardWithMocks:
             comm_bus=mock_comm_bus,
             resilience=mock_resilience,
             data_dir=temp_dir,
+            storage=storage,
         )
         assert server._agent_registry is not None
         assert server._task_router is not None
+        server.stop()
 
-    def test_data_dir_creates_domains(self, temp_dir):
+    def test_data_dir_creates_domains(self, temp_dir, storage):
         """Dashboard uses data_dir for domain discovery."""
-        app = DashboardApp(data_dir=temp_dir)
+        app = DashboardApp(data_dir=temp_dir, storage=storage)
         domains_path = temp_dir / "domains"
         assert not domains_path.exists() or list(domains_path.iterdir()) == []
+        app.storage.close()
 
     @patch("hiveos.dashboard.server.uvicorn")
     def test_server_start_thread(self, mock_uvicorn, dashboard_app):

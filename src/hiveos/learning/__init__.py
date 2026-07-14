@@ -4,6 +4,7 @@ Provides passive execution logging and analytics.
 Every execution makes the system smarter.
 """
 
-from .logger import ExecutionLogger
+from hiveos.learning.logger import ExecutionLogger
+from hiveos.learning.analytics import AnalyticsEngine
 
-__all__ = ["ExecutionLogger"]
+__all__ = ["ExecutionLogger", "AnalyticsEngine"]

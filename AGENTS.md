@@ -103,16 +103,16 @@ hive
 
 ### What to Build Next
 
-| Priority | Task | Layer |
-|----------|------|-------|
-| 🔴 | **P-04** Visual Canvas — React Flow integration in dashboard (drag & drop) | 🎮 Playground |
-| 🔴 | **P-05** `POST /api/playground/run` + `WS /api/playground/run/{id}/stream` | 🎮 Playground |
-| 🔴 | **P-06** Approval Gates UI in dashboard | 🎮 Playground |
-| 🔴 | **B-05** 3D Neural View — Three.js/WebGL | 🧠 Brain |
-| 🟡 | **P-07** Template Customizer | 🎮 Playground |
-| 🟡 | **P-08** Flow Library (save/share user flows) | 🎮 Playground |
-| 🟡 | **L-02** Execution Analytics + Pattern Recognition | 📈 Learning |
-| 🟢 | **D-04** Hermes skills for accounting agents | 🧩 Domains |
+| Priority | Task | Layer | Status |
+|----------|------|-------|--------|
+| 🔴 | **P-04** Visual Canvas — HTML5 Canvas flow builder in dashboard | 🎮 Playground | ✅ Done |
+| 🔴 | **P-05** `POST /api/playground/run` + `WS /api/playground/run/{id}/stream` | 🎮 Playground | ✅ Done |
+| 🔴 | **P-06** Approval Gates UI in dashboard | 🎮 Playground | ✅ Done |
+| 🔴 | **B-05** 3D Neural View — Three.js/WebGL in dashboard | 🧠 Brain | ✅ Done |
+| 🟡 | **P-07** Template Customizer | 🎮 Playground | ⏳ |
+| 🟡 | **P-08** Flow Library (save/share user flows) | 🎮 Playground | ⏳ |
+| 🟡 | **L-02** Execution Analytics + Pattern Recognition | 📈 Learning | ✅ Done |
+| 🟢 | **D-04** Hermes skills for accounting agents | 🧩 Domains | ⏳ |
 
 ---
 
@@ -165,4 +165,56 @@ git add -A && git commit -m "..." && git push origin main
 | 2026-07-14 | v0.5.3 | Multi-tenant Workspaces — 38 tests |
 | 2026-07-14 | v0.6.0 | License pricing + 29 agent blueprints + 6 flow templates + bilingual README |
 | **2026-07-14** | **v0.7.0** | **Playground Core APIs + Brain Engine + Learning Logger (329 tests)** |
-| **Next** | **v0.8.0** | **React Flow Canvas UI + Approval Gate UI + 3D Neural View** |
+| **Next** | **v0.8.0** | **Playground Canvas + Runner + Gates UI + Brain 3D + Learning Analytics** |
+| **2026-07-14** | **v0.8.0** | **Canvas+Viz Sprint: P-04 Flow Canvas, P-05 Runner+WS, P-06 Gates UI, B-05 3D Neural View, L-02 Analytics (366 tests)** |
+
+---
+
+## 🏁 Endgame Vision: HiveOS as a Windows Native Application
+
+### The Product
+
+HiveOS will ship as a **standard Windows desktop application** — installable via a proper MSI installer, with auto-update, beautiful UI, and a CI/CD pipeline.
+
+### Architecture (Target)
+
+```
+┌─────────────────────────────────────────┐
+│     Electron / Tauri Desktop Shell      │  ← Native window, system tray
+│  ┌───────────────────────────────────┐  │
+│  │  React / Svelte + Tailwind UI     │  │  ← Beautiful desktop UI
+│  └──────────────┬────────────────────┘  │
+│                 │ HTTP/WS               │
+│  ┌──────────────▼────────────────────┐  │
+│  │  Python (PyInstaller → .exe)      │  │  ← Embedded backend
+│  │  FastAPI + Uvicorn                │  │
+│  │  SQLite (hiveos.db)               │  │  ← All data persisted
+│  └───────────────────────────────────┘  │
+└─────────────────────────────────────────┘
+```
+
+### Roadmap to Windows Native
+
+| Phase | What | Why |
+|-------|------|-----|
+| **Current** | FastAPI + Jinja2 SPA | Rapid prototyping, all features in browser |
+| **Phase A** | Tauri shell wrapping the web UI | Native window, system tray, no browser tabs |
+| **Phase B** | Replace Jinja2 with React/Svelte frontend | Desktop-grade UI with real components |
+| **Phase C** | PyInstaller → single backend.exe | No Python dependency for users |
+| **Phase D** | MSI installer (Inno Setup / WiX) | One-click install for Windows users |
+| **Phase E** | Auto-updater (gh-release check on boot) | Users always on latest version |
+| **Phase F** | CI/CD: GA test → build → sign → release | Automated delivery pipeline |
+
+### Standards Checklist
+
+- [x] **Semantic Versioning** (vX.Y.Z in pyproject.toml)
+- [x] **Automated Tests** (366 pytest tests)
+- [ ] **CHANGELOG.md** per release
+- [x] **GitHub** (repo pushed)
+- [ ] **GitHub Actions CI** (pytest on push)
+- [ ] **Auto-updater** (checks GitHub Releases on startup)
+- [ ] **Windows MSI installer**
+- [ ] **Code signing** (Authenticode)
+- [ ] **Beautiful desktop UI** (Tauri + React/Tailwind)
+- [ ] **Persistent data** across restarts (SQLite — ✅ v0.9.0)
+

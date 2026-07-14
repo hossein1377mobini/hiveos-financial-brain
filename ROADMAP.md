@@ -62,18 +62,19 @@
 - [x] P-01: `POST /api/playground/validate` — Flow YAML validator
 - [x] P-02: `POST /api/playground/auto-agents` — Task → domain agent matching
 - [x] P-03: `GET /api/playground/templates` — Template browser
-- [ ] P-04: Visual Canvas (React Flow) ⏳
-- [ ] P-05: Run/Debug + WebSocket streaming ⏳
+- [x] P-04: Visual Canvas (HTML5 Canvas + drag & drop in dashboard) ✅
+- [x] P-05: Run/Debug + WebSocket streaming ✅
 
 ### Phase 7: Brain — Core Engine ✅
 - [x] B-01: Event Stream Pipeline (agent lifecycle)
 - [x] B-02: Decision Tracer (step-by-step path tracking)
 - [x] B-03: Approval Gate Engine (create/approve/reject/expire)
-- [ ] B-04: 3D Neural View (Three.js/WebGL) ⏳
+- [x] B-04: Brain API (REST)
+- [x] B-05: 3D Neural View (Three.js/WebGL in dashboard) ✅
 
 ### Phase 8: Learning — Passive Logger ✅
 - [x] L-01: Execution Logger (in-memory collection + stats + trends)
-- [ ] L-02: Execution Analytics / Pattern Recognition ⏳
+- [x] L-02: Execution Analytics / Pattern Recognition ✅
 
 ---
 
@@ -131,14 +132,55 @@ Instead of sequential phases, **every build session advances all 5 layers togeth
 | 🧩 Domains | **D-04** Hermes skills for accounting agents | ⏳ Next |
 | 📈 Learning | **L-01** Execution logging (passive collection) | ✅ Done |
 
-### Session N+1 — Canvas + Viz Sprint
+### Session N+1 — Canvas + Viz Sprint ✅ (v0.8.0 — Done)
+
+| Layer | Scope | Status |
+|-------|-------|--------|
+| 🎮 Playground | **P-04** Visual Canvas (HTML5 Canvas) · **P-05** Run/Debug + WebSocket | ✅ Done |
+| 🧠 Brain | **B-05** 3D Neural View (Three.js/WebGL) | ✅ Done |
+| 🧩 Domains | **D-04** Hermes skills for accounting agents | ⏳ Next |
+| 📈 Learning | **L-02** Execution analytics + pattern recognition | ✅ Done |
+
+### Session N+2 — Data Persistence Sprint 🗄️ (v0.9.0)
+
+| Layer | Scope | Status |
+|-------|-------|--------|
+| 🗄️ **Storage** | **S-01** SQLite StorageEngine ✅ · **S-02** Persist Brain (EventStream, Traces, Gates) ✅ | ✅ Done |
+| 🗄️ **Storage** | **S-03** Persist Learning (ExecutionLogs) ✅ · **S-04** Persist Playground (FlowRuns) ✅ | ✅ Done |
+| 🗄️ **Storage** | **S-05** Data directory init on first run · **S-06** Migration system | ⏳ |
+| 🔧 **Standardisation** | **CL-01** CHANGELOG.md · **CL-02** CI (GA pytest on push) · **CL-03** Auto-update skeleton | ⏳ |
+
+### Session N+3 — Windows Native Sprint 🪟 (v0.10.0)
 
 | Layer | Scope |
 |-------|-------|
-| 🎮 Playground | **P-04** Visual Canvas (React Flow) · **P-05** Run/Debug |
-| 🧠 Brain | **B-04** 3D Neural View (Three.js/WebGL) |
-| 🧩 Domains | **D-04** Hermes skills for accounting agents |
-| 📈 Learning | **L-02** Execution analytics |
+| 🪟 **Shell** | Wrap web UI in Tauri desktop shell |
+| 🎨 **UI** | Begin replacing Jinja2 with React/Tailwind components |
+| 🔧 **Packaging** | PyInstaller → backend.exe + MSI installer (Inno Setup) |
+| 🔄 **CI/CD** | GA workflow: test → build → sign → release to GitHub |
+
+### Session N+4 — Polish & Ship 🚀 (v1.0.0)
+
+| Scope |
+|-------|
+| Auto-updater (check GitHub Releases on startup, download + install) |
+| Desktop-grade UI (all pages ported to React) |
+| Code signing (Authenticode) |
+| First public release on GitHub |
+
+## 🏁 Endgame: Windows Native Application
+
+```mermaid
+flowchart LR
+    A[FastAPI + Jinja2] -->|Phase A| B[Tauri Shell + Web UI]
+    B -->|Phase B| C[Tauri + React/Tailwind]
+    C -->|Phase C| D[PyInstaller .exe]
+    D -->|Phase D| E[MSI Installer]
+    E -->|Phase E| F[Auto-Update]
+    F -->|Phase F| G[CI/CD Pipeline]
+    style A fill:#f9f,stroke:#333
+    style G fill:#9f9,stroke:#333
+```
 
 ### Flow Components (from automation standards)
 
@@ -185,9 +227,10 @@ Instead of sequential phases, **every build session advances all 5 layers togeth
 ## 📊 Progress Summary
 
 ```
-Phase 0-5 (Infrastructure):  ████████████████████████ 100%  (273 tests)
-Layer 🧩 Domains (D1):      ████████████████░░░░░░░░  70%
-Layer 🎮 Playground:        ██████████░░░░░░░░░░░░░░░  25%  (P-01/P-02/P-03 done)
-Layer 🧠 Brain:             ██████████░░░░░░░░░░░░░░░  25%  (B-01/B-02/B-03 done)
-Layer 📈 Learning:          █████████░░░░░░░░░░░░░░░░  12%  (L-01 done)
+|Phase 0-5 (Infrastructure):  ████████████████████████ 100%  (273 tests)
+|Layer 🗄️ Storage:            ████████████████████████  80%  (S-01..S-04 done)
+|Layer 🧩 Domains (D1):      ████████████████░░░░░░░░  70%
+|Layer 🎮 Playground:        ████████████████░░░░░░░░░  50%  (P-01..P-05 done)
+|Layer 🧠 Brain:             ██████████████████░░░░░░░░  40%  (B-01..B-05 done)
+|Layer 📈 Learning:          ██████████████████░░░░░░░░  40%  (L-01/L-02 done)
 ```

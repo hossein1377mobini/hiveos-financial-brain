@@ -13,10 +13,26 @@ from typing import Any, Dict, List, Optional
 
 
 class ApprovalGateEngine:
-    """Manages approval gates — human checkpoints in automated workflows."""
+    """Manages approval gates — human checkpoints in automated workflows, restored from storage."""
 
-    def __init__(self):
+    def __init__(self, storage: Optional["StorageEngine"] = None):
+        self._storage = storage
         self._gates: Dict[str, dict] = {}
+        self._namespace = "brain:gates"
+
+        if self._storage:
+            self._restore()
+
+    def _restore(self):
+        """Rehydrate gates from persistent storage."""
+        for gate in self._storage.load_all(self._namespace):
+            gid = gate.get("gate_id", "")
+            if gid:
+                self._gates[gid] = gate
+
+    def _persist(self, gate_id: str):
+        if self._storage and gate_id in self._gates:
+            self._storage.upsert(self._namespace, gate_id, self._gates[gate_id])
 
     def create_gate(
         self,
@@ -48,6 +64,7 @@ class ApprovalGateEngine:
             ).isoformat(),
         }
         self._gates[gid] = gate
+        self._persist(gid)
         return dict(gate)
 
     def _check_expired(self, gate: dict) -> bool:
@@ -61,6 +78,7 @@ class ApprovalGateEngine:
                 gate["status"] = "expired"
                 gate["resolved_at"] = now.isoformat()
                 gate["resolution_reason"] = "Auto-expired (timeout)"
+                self._persist(gate.get("gate_id", ""))
                 return True
         except (ValueError, TypeError):
             pass
@@ -83,6 +101,7 @@ class ApprovalGateEngine:
         gate["notes"] = notes
         gate["resolution_reason"] = "Approved"
         gate["resolved_at"] = datetime.now(timezone.utc).isoformat()
+        self._persist(gate_id)
         return gate
 
     def reject(
@@ -101,6 +120,7 @@ class ApprovalGateEngine:
         gate["approver"] = approver
         gate["resolution_reason"] = reason or "Rejected"
         gate["resolved_at"] = datetime.now(timezone.utc).isoformat()
+        self._persist(gate_id)
         return gate
 
     def get_gate(self, gate_id: str) -> Optional[Dict[str, Any]]:

@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import uvicorn
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 from rich.console import Console
@@ -34,9 +34,11 @@ from ..mothership.resilience import (
 from ..rbac import RBACManager, Resource, Action
 from ..audit import AuditTrail, AuditAction, AuditResource
 from ..license import FeatureFlag
-from ..playground import PlaygroundEngine
+from ..playground import PlaygroundEngine, PlaygroundRunner
 from ..brain import EventStream, DecisionTracer, ApprovalGateEngine
 from ..learning import ExecutionLogger
+from ..learning.analytics import AnalyticsEngine
+from ..storage import StorageEngine
 
 console = Console()
 
@@ -58,6 +60,7 @@ class DashboardServer:
         host: str = "127.0.0.1",
         port: int = 8080,
         data_dir: Optional[Path] = None,
+        storage: Optional["StorageEngine"] = None,
     ):
         self.host = host
         self.port = port
@@ -73,7 +76,7 @@ class DashboardServer:
         self._rbac = rbac
         self._audit = audit
 
-        self.app = DashboardApp(
+        self._dashboard_app = DashboardApp(
             agent_registry=agent_registry,
             task_router=task_router,
             comm_bus=comm_bus,
@@ -81,7 +84,12 @@ class DashboardServer:
             rbac=rbac,
             audit=audit,
             data_dir=self.data_dir,
-        ).app
+            storage=storage, # Pass the injected storage
+        )
+
+    @property
+    def app(self):
+        return self._dashboard_app.app
 
     # ── Lifecycle ────────────────────────────────────────────────────
 
@@ -115,6 +123,8 @@ class DashboardServer:
             self._server.should_exit = True
             self._server = None
             self._thread = None
+            if hasattr(self, '_dashboard_app') and self._dashboard_app:
+                self._dashboard_app.storage.close()
             return "Dashboard stopped."
         return "Dashboard is not running."
 
@@ -140,7 +150,8 @@ class DashboardApp:
         rbac: Optional[RBACManager] = None,
         audit: Optional[AuditTrail] = None,
         data_dir: Optional[Path] = None,
-        ):
+        storage: Optional["StorageEngine"] = None,
+    ):
         self.agent_registry = agent_registry
         self.task_router = task_router
         self.comm_bus = comm_bus
@@ -148,11 +159,27 @@ class DashboardApp:
         self.rbac = rbac
         self.audit = audit
         self.data_dir = data_dir or Path.cwd()
+
+        # ── Shared persistence layer ───────────────────────────────────
+        db_path = self.data_dir / "hiveos.db" if self.data_dir else None
+        self.storage = storage or StorageEngine(db_path)
+
+        # ── Brain modules ──────────────────────────────────────────────
+        self.event_stream = EventStream(storage=self.storage)
+        self.decision_tracer = DecisionTracer(storage=self.storage)
+        self.approval_gates = ApprovalGateEngine(storage=self.storage)
+
+        # ── Learning modules ───────────────────────────────────────────
+        self.execution_logger = ExecutionLogger(storage=self.storage)
+        self.analytics = AnalyticsEngine(self.execution_logger)
+
+        # ── Playground ─────────────────────────────────────────────────
         self.playground = PlaygroundEngine()
-        self.event_stream = EventStream()
-        self.decision_tracer = DecisionTracer()
-        self.approval_gates = ApprovalGateEngine()
-        self.execution_logger = ExecutionLogger()
+        self.playground_runner = PlaygroundRunner(
+            event_stream=self.event_stream,
+            approval_gates=self.approval_gates,
+            storage=self.storage,
+        )
 
         self.app = FastAPI(title="HiveOS Dashboard", version="0.5.0")
         self._register_routes()
@@ -749,3 +776,186 @@ class DashboardApp:
         async def learning_trends():
             """Get overall execution trends."""
             return self.execution_logger.get_trends()
+
+        # ── Learning API — Analytics (L-02) ──────────────────────────
+
+        @app.get("/api/learning/analytics/summary")
+        async def analytics_summary():
+            """Executive analytics summary."""
+            return self.analytics.summary()
+
+        @app.get("/api/learning/analytics/timeseries")
+        async def analytics_timeseries(
+            metric: str = "executions",
+            interval: str = "hour",
+            hours: int = 24,
+        ):
+            """Execution time series data."""
+            return self.analytics.time_series(metric=metric, interval=interval, hours=hours)
+
+        @app.get("/api/learning/analytics/flows")
+        async def analytics_flows(min_runs: int = 1):
+            """Flow performance ranking."""
+            return {"flows": self.analytics.flow_performance(min_runs=min_runs)}
+
+        @app.get("/api/learning/analytics/agents")
+        async def analytics_agents(min_calls: int = 1):
+            """Agent performance ranking."""
+            return {"agents": self.analytics.agent_performance(min_calls=min_calls)}
+
+        @app.get("/api/learning/analytics/bottlenecks")
+        async def analytics_bottlenecks():
+            """System bottleneck detection."""
+            return self.analytics.bottlenecks()
+
+        @app.get("/api/learning/analytics/anomalies")
+        async def analytics_anomalies():
+            """Anomaly detection results."""
+            return self.analytics.anomalies()
+
+        @app.get("/api/learning/analytics/patterns")
+        async def analytics_patterns(min_occurrences: int = 2):
+            """Frequent execution patterns."""
+            return {"patterns": self.analytics.frequent_sequences(min_occurrences=min_occurrences)}
+
+        @app.get("/api/learning/analytics/templates")
+        async def analytics_suggested_templates():
+            """Template suggestions from patterns."""
+            return {"suggestions": self.analytics.suggested_templates()}
+
+        # ── Playground API — Flow Runner (P-05) ───────────────────
+
+        @app.post("/api/playground/run")
+        async def playground_run(request: Request):
+            """Execute a flow definition and get run_id for streaming."""
+            body = await request.json()
+            flow_yaml = body.get("yaml", "")
+            if not flow_yaml:
+                return {"error": "No flow YAML provided"}
+            try:
+                run = self.playground_runner.create_run(flow_yaml)
+                # Fire-and-forget execution
+                asyncio.create_task(self.playground_runner.execute_run_async(run.run_id))
+                return {
+                    "run_id": run.run_id,
+                    "flow_name": run.flow_name,
+                    "status": run.status,
+                    "created_at": run.created_at,
+                }
+            except ValueError as e:
+                return {"error": str(e)}
+
+        @app.get("/api/playground/runs")
+        async def playground_list_runs(limit: int = 20, status: str = None):
+            """List recent flow runs."""
+            runs = self.playground_runner.list_runs(limit=limit, status=status)
+            return {"runs": runs}
+
+        @app.get("/api/playground/runs/{run_id}")
+        async def playground_get_run(run_id: str):
+            """Get a specific run's status and details."""
+            run = self.playground_runner.get_run(run_id)
+            if run is None:
+                return {"error": "Run not found"}
+            return {"run": run.to_dict()}
+
+        @app.post("/api/playground/runs/{run_id}/cancel")
+        async def playground_cancel_run(run_id: str):
+            """Cancel a queued or running flow."""
+            ok = self.playground_runner.cancel_run(run_id)
+            return {"cancelled": ok}
+
+        @app.websocket("/api/playground/runs/{run_id}/stream")
+        async def playground_run_stream(websocket: WebSocket, run_id: str):
+            """WebSocket endpoint for live run streaming events."""
+            await websocket.accept()
+            queue = self.playground_runner.get_ws_queue(run_id)
+            if queue is None:
+                await websocket.send_json({"type": "error", "message": "Run not found"})
+                await websocket.close()
+                return
+
+            try:
+                while True:
+                    try:
+                        event = await asyncio.wait_for(queue.get(), timeout=5)
+                        await websocket.send_json(event)
+                    except asyncio.TimeoutError:
+                        # Heartbeat ping
+                        try:
+                            await websocket.send_json({"type": "ping"})
+                        except Exception:
+                            break
+
+                    # Stop streaming on terminal events
+                    if event.get("type") in ("run.completed", "run.failed", "run.cancelled"):
+                        break
+            except WebSocketDisconnect:
+                pass
+
+        # ── Brain API — 3D Viz Data (B-05) ──────────────────────────
+
+        @app.get("/api/brain/graph")
+        async def brain_graph_data():
+            """Get graph data for 3D neural visualization.
+
+            Returns nodes (agents) and edges (connections) with
+            status/health data for the 3D brain view.
+            """
+            nodes = []
+            edges = []
+
+            # Collect agent nodes
+            if self.agent_registry:
+                agents = list(getattr(self.agent_registry, '_agents', {}).values())
+                for a in agents:
+                    status = getattr(a, 'status', 'idle')
+                    if hasattr(status, 'value'):
+                        status = status.value
+                    nodes.append({
+                        "id": getattr(a, 'node_name', getattr(a, 'name', 'unknown')),
+                        "label": getattr(a, 'node_name', getattr(a, 'name', 'unknown')),
+                        "type": "agent",
+                        "status": str(status).lower(),
+                        "load": getattr(a, 'current_load', 0),
+                        "tasks": getattr(a, 'total_tasks_completed', 0),
+                        "errors": getattr(a, 'total_errors', 0),
+                        "group": "agents",
+                    })
+
+            # Also add brain engine nodes
+            nodes.append({"id": "brain-event-stream", "label": "Event Stream", "type": "engine", "status": "active", "group": "brain"})
+            nodes.append({"id": "brain-decision-tracer", "label": "Decision Tracer", "type": "engine", "status": "active", "group": "brain"})
+            nodes.append({"id": "brain-approval-gates", "label": "Approval Gates", "type": "engine", "status": "active", "group": "brain"})
+
+            # Collect hub nodes from brain stats
+            es_stats = self.event_stream.stats() if hasattr(self.event_stream, 'stats') else {}
+            dt_stats = self.decision_tracer.stats() if hasattr(self.decision_tracer, 'stats') else {}
+            ag_stats = self.approval_gates.stats() if hasattr(self.approval_gates, 'stats') else {}
+
+            # Add edges between brain components
+            edges.append({"source": "brain-event-stream", "target": "brain-decision-tracer", "label": "triggers", "weight": 1})
+            edges.append({"source": "brain-decision-tracer", "target": "brain-approval-gates", "label": "requires", "weight": 1})
+
+            # If we have agents, connect them to brain
+            for n in nodes:
+                if n["group"] == "agents":
+                    edges.append({"source": n["id"], "target": "brain-event-stream", "label": "emits", "weight": 0.5})
+
+            # Stats for the header
+            brain_stats = {
+                "total_nodes": len(nodes),
+                "total_edges": len(edges),
+                "events": es_stats.get("total_events", 0),
+                "traces": dt_stats.get("total_traces", 0),
+                "pending_gates": ag_stats.get("by_status", {}).get("pending", 0),
+                "activity_level": "high" if es_stats.get("total_events", 0) > 10 else "low",
+            }
+
+            return {"nodes": nodes, "edges": edges, "stats": brain_stats}
+
+        @app.get("/api/brain/gates/pending-html")
+        async def brain_pending_gates_html():
+            """Get pending gates in a format suitable for the Gates UI."""
+            gates = self.approval_gates.list_gates(status="pending")
+            return {"gates": gates}

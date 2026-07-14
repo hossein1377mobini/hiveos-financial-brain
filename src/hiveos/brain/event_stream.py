@@ -17,12 +17,33 @@ class EventStream:
     """In-memory event stream for agent lifecycle and system events.
 
     Thread-safe for single-threaded use. Stores up to 10,000 events.
+    Optionally persists to SQLite via a StorageEngine.
     """
 
-    def __init__(self, maxlen: int = 10_000):
+    def __init__(self, maxlen: int = 10_000, storage: Optional["StorageEngine"] = None):
         self._maxlen = maxlen
+        self._storage = storage
         self._events: deque = deque(maxlen=maxlen)
         self._events_by_id: Dict[str, dict] = {}
+        self._namespace = "brain:events"
+
+        if self._storage:
+            self._restore()
+
+    def _restore(self):
+        """Rehydrate in-memory state from persistent storage."""
+        for data in self._storage.load_all(self._namespace):
+            eid = data.get("id") or data.get("event_id", "")
+            event = {
+                "id": eid,
+                "event_type": data["event_type"],
+                "source": data["source"],
+                "timestamp": data.get("timestamp", datetime.now(timezone.utc).isoformat()),
+                "payload": data.get("payload", {}),
+            }
+            self._events.append(event)
+            if eid:
+                self._events_by_id[eid] = event
 
     def emit(
         self,
@@ -41,6 +62,8 @@ class EventStream:
         }
         self._events.append(event)
         self._events_by_id[event_id] = event
+        if self._storage:
+            self._storage.upsert(self._namespace, event_id, event)
         return event_id
 
     def get_events(
@@ -63,6 +86,8 @@ class EventStream:
         """Clear all events."""
         self._events.clear()
         self._events_by_id.clear()
+        if self._storage:
+            self._storage.clear(self._namespace)
 
     def stats(self) -> Dict[str, Any]:
         """Count events by type."""

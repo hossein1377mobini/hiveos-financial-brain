@@ -14,10 +14,26 @@ from typing import Any, Dict, List, Optional
 
 
 class DecisionTracer:
-    """Tracks decision paths with step-by-step resolution."""
+    """Tracks decision paths with step-by-step resolution, restorable from storage."""
 
-    def __init__(self):
+    def __init__(self, storage: Optional["StorageEngine"] = None):
+        self._storage = storage
         self._traces: Dict[str, dict] = {}
+        self._namespace = "brain:traces"
+
+        if self._storage:
+            self._restore()
+
+    def _restore(self):
+        """Rehydrate traces from persistent storage."""
+        for trace in self._storage.load_all(self._namespace):
+            tid = trace.get("trace_id", "")
+            if tid:
+                self._traces[tid] = trace
+
+    def _persist(self, trace_id: str):
+        if self._storage and trace_id in self._traces:
+            self._storage.upsert(self._namespace, trace_id, self._traces[trace_id])
 
     def start_trace(
         self,
@@ -37,6 +53,7 @@ class DecisionTracer:
             "created_at": datetime.now(timezone.utc).isoformat(),
             "completed_at": "",
         }
+        self._persist(tid)
         return tid
 
     def add_step(
@@ -62,6 +79,7 @@ class DecisionTracer:
             "result": step.get("result", ""),
         }
         trace["steps"].append(enriched)
+        self._persist(trace_id)
         return enriched
 
     def complete_trace(
@@ -78,6 +96,7 @@ class DecisionTracer:
         trace["outcome"] = outcome
         trace["summary"] = summary
         trace["completed_at"] = datetime.now(timezone.utc).isoformat()
+        self._persist(trace_id)
         return True
 
     def fail_trace(self, trace_id: str, error: str) -> bool:
@@ -88,6 +107,7 @@ class DecisionTracer:
         trace["status"] = "failed"
         trace["error"] = error
         trace["completed_at"] = datetime.now(timezone.utc).isoformat()
+        self._persist(trace_id)
         return True
 
     def get_trace(self, trace_id: str) -> Optional[Dict[str, Any]]:

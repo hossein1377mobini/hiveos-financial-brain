@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>HiveOS Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <style>
   :root {
     --bg-primary: #0f1117;
@@ -45,13 +47,10 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-
-  /* ── Sidebar ── */
   .sidebar {
     width: 220px;
     background: var(--bg-secondary);
     border-right: 1px solid var(--border);
-    padding: 0;
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
@@ -74,10 +73,7 @@
     color: var(--text-muted);
     margin-top: 4px;
   }
-  .sidebar-nav {
-    flex: 1;
-    padding: 8px;
-  }
+  .sidebar-nav { flex: 1; padding: 8px; overflow-y: auto; }
   .nav-item {
     display: flex;
     align-items: center;
@@ -93,8 +89,7 @@
   .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
   .nav-item.active { background: rgba(245,166,35,.12); color: var(--accent); font-weight: 600; }
   .nav-icon { font-size: 16px; width: 20px; text-align: center; }
-
-  /* ── Main ── */
+  .nav-divider { height: 1px; background: var(--border); margin: 8px 12px; }
   .main {
     flex: 1;
     padding: 24px 28px;
@@ -109,8 +104,6 @@
   }
   .page-header h2 { font-size: 22px; font-weight: 700; }
   .last-updated { font-size: 12px; color: var(--text-muted); }
-
-  /* ── Cards ── */
   .grid { display: grid; gap: 16px; }
   .grid-2 { grid-template-columns: repeat(2,1fr); }
   .grid-3 { grid-template-columns: repeat(3,1fr); }
@@ -142,8 +135,6 @@
   }
   .card-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
   .card .icon-lg { font-size: 28px; }
-
-  /* ── Status Badges ── */
   .badge {
     display: inline-flex;
     align-items: center;
@@ -153,11 +144,7 @@
     font-size: 11px;
     font-weight: 600;
   }
-  .badge-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    display: inline-block;
-  }
+  .badge-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
   .badge-green { background: rgba(52,211,153,.15); color: var(--green); }
   .badge-green .badge-dot { background: var(--green); }
   .badge-yellow { background: rgba(251,191,36,.15); color: var(--yellow); }
@@ -170,8 +157,6 @@
   .badge-gray .badge-dot { background: var(--text-muted); }
   .badge-accent { background: rgba(245,166,35,.15); color: var(--accent); }
   .badge-accent .badge-dot { background: var(--accent); }
-
-  /* ── Tables ── */
   .table-wrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th {
@@ -184,35 +169,15 @@
     text-transform: uppercase;
     letter-spacing: .5px;
   }
-  td {
-    padding: 10px 12px;
-    border-bottom: 1px solid rgba(46,51,72,.5);
-  }
+  td { padding: 10px 12px; border-bottom: 1px solid rgba(46,51,72,.5); }
   tr:hover td { background: var(--bg-hover); }
-
-  /* ── Sections ── */
   .page { display: none; }
   .page.active { display: block; }
-
-  /* ── Progress / Bar ── */
   .bar-container { height: 6px; background: var(--bg-hover); border-radius: 3px; overflow: hidden; margin-top: 4px; }
   .bar-fill { height: 100%; border-radius: 3px; transition: width .3s; }
   .bar-green .bar-fill { background: var(--green); }
   .bar-yellow .bar-fill { background: var(--yellow); }
   .bar-red .bar-fill { background: var(--red); }
-
-  /* ── Responsive ── */
-  @media(max-width:960px){
-    .sidebar { display: none; }
-    .main { padding: 16px; }
-    .grid-4 { grid-template-columns: repeat(2,1fr); }
-    .grid-3 { grid-template-columns: repeat(2,1fr); }
-  }
-  @media(max-width:600px){
-    .grid-2,.grid-3,.grid-4 { grid-template-columns: 1fr; }
-  }
-
-  /* ── Metric rows ── */
   .metric-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; }
   .metric-row .label { color: var(--text-secondary); }
   .metric-row .value { font-weight: 600; }
@@ -226,25 +191,142 @@
   .text-accent { color: var(--accent); }
   .text-green { color: var(--green); }
   .text-red { color: var(--red); }
-
-  .empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--text-muted);
-  }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
   .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+    font-family: var(--font);
+  }
+  .btn-accent { background: var(--accent); color: #000; }
+  .btn-accent:hover { background: var(--accent-dim); }
+  .btn-green { background: var(--green-dim); color: var(--green); }
+  .btn-green:hover { background: #1a9a5a; }
+  .btn-red { background: var(--red-dim); color: var(--red); }
+  .btn-red:hover { background: #9f2d2d; }
+  .btn-blue { background: var(--blue-dim); color: var(--blue); }
+  .btn-blue:hover { background: #2e5f9f; }
+  .btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); }
+  textarea, input, select {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: var(--font-mono);
+    width: 100%;
+  }
+  textarea:focus, input:focus, select:focus { outline: none; border-color: var(--accent); }
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+    margin: 2px;
+  }
+  #brain-canvas-container {
+    width: 100%;
+    height: 500px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--bg-primary);
+    position: relative;
+  }
+  #brain-canvas-container canvas { display: block; }
+  .flow-canvas-wrap {
+    width: 100%;
+    height: 400px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    position: relative;
+  }
+  .flow-canvas-toolbox {
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 2;
+  }
+  .flow-canvas-toolbox .tool {
+    padding: 6px 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: grab;
+    font-size: 11px;
+    color: var(--text-primary);
+    text-align: center;
+    user-select: none;
+  }
+  .flow-canvas-toolbox .tool:hover { background: var(--bg-hover); border-color: var(--accent); }
+  .canvas-run-bar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .log-entry { padding: 4px 0; font-size: 12px; font-family: var(--font-mono); border-bottom: 1px solid rgba(46,51,72,.3); }
+  .log-time { color: var(--text-muted); margin-right: 8px; }
+  .chart-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0;
+  }
+  .chart-bar .bar {
+    height: 20px;
+    border-radius: 3px;
+    min-width: 4px;
+    transition: width .5s;
+  }
+  .chart-bar .label { min-width: 120px; font-size: 12px; color: var(--text-secondary); }
+  .chart-bar .val { font-size: 11px; color: var(--text-muted); min-width: 40px; text-align: right; }
+  @media(max-width:960px){
+    .sidebar { display: none; }
+    .main { padding: 16px; }
+    .grid-4 { grid-template-columns: repeat(2,1fr); }
+    .grid-3 { grid-template-columns: repeat(2,1fr); }
+  }
+  @media(max-width:600px){
+    .grid-2,.grid-3,.grid-4 { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
 
-<!-- ─── Sidebar ─── -->
 <aside class="sidebar">
   <div class="sidebar-header">
     <h1>🐝 <span>HiveOS</span></h1>
-    <div class="version">v0.5.0 · Enterprise</div>
+    <div class="version">v0.8.0 · Canvas+Viz</div>
   </div>
   <nav class="sidebar-nav">
     <div class="nav-item active" data-page="overview"><span class="nav-icon">📊</span> Overview</div>
+    <div class="nav-item" data-page="playground"><span class="nav-icon">🎮</span> Playground</div>
+    <div class="nav-item" data-page="gates"><span class="nav-icon">🔒</span> Approval Gates</div>
+    <div class="nav-item" data-page="brain"><span class="nav-icon">🧠</span> Brain 3D View</div>
+    <div class="nav-item" data-page="learning"><span class="nav-icon">📈</span> Learning</div>
+    <div class="nav-divider"></div>
     <div class="nav-item" data-page="agents"><span class="nav-icon">🤖</span> Agents</div>
     <div class="nav-item" data-page="tasks"><span class="nav-icon">📋</span> Tasks</div>
     <div class="nav-item" data-page="health"><span class="nav-icon">💚</span> Health</div>
@@ -256,10 +338,9 @@
   </nav>
 </aside>
 
-<!-- ─── Main Content ─── -->
 <main class="main">
 
-  <!-- OVERVIEW -->
+  <!-- OVERVIEW (existing) -->
   <section class="page active" id="page-overview">
     <div class="page-header">
       <h2>📊 Overview</h2>
@@ -272,74 +353,180 @@
     </div>
   </section>
 
-  <!-- AGENTS -->
-  <section class="page" id="page-agents">
+  <!-- PLAYGROUND (P-04 + P-05) -->
+  <section class="page" id="page-playground">
     <div class="page-header">
-      <h2>🤖 Agents</h2>
-      <div class="last-update" id="agents-count"></div>
+      <h2>🎮 Playground</h2>
+      <div class="last-updated">Flow Builder · Runner</div>
     </div>
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-header"><h3>📐 Flow Builder Canvas</h3></div>
+        <div class="flow-canvas-wrap" id="flow-canvas-wrap">
+          <div class="flow-canvas-toolbox">
+            <div class="tool" draggable="true" data-type="agent">🤖 Agent</div>
+            <div class="tool" draggable="true" data-type="gate">🔒 Gate</div>
+            <div class="tool" draggable="true" data-type="trigger">⚡ Trigger</div>
+            <div class="tool" draggable="true" data-type="condition">🔀 Condition</div>
+          </div>
+          <canvas id="flow-canvas" style="width:100%;height:100%;display:block;"></canvas>
+        </div>
+        <div class="flex gap-2 mt-2 flex-wrap">
+          <button class="btn btn-accent" onclick="runFlowFromCanvas()">▶ Run Flow</button>
+          <button class="btn btn-blue" onclick="clearCanvas()">🗑 Clear</button>
+          <button class="btn btn-ghost" onclick="loadTemplate()">📋 Load Template</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>📋 YAML Flow Editor</h3></div>
+        <textarea id="flow-yaml-editor" rows="12" style="font-size:12px;resize:vertical;" placeholder="Paste or edit flow YAML here...">name: "Quick Flow"
+version: "1.0.0"
+description: "A sample flow"
+trigger:
+  type: manual
+agents:
+  - id: agent-1
+    name: "Agent One"
+    skills: ["analyze"]
+    depends_on: []
+</textarea>
+        <div class="flex gap-2 mt-2 flex-wrap">
+          <button class="btn btn-accent" onclick="runYamlFlow()">▶ Run from YAML</button>
+          <button class="btn btn-green" onclick="validateYaml()">🔍 Validate</button>
+          <button class="btn btn-ghost" onclick="fetchTemplates()">📋 Browse Templates</button>
+        </div>
+        <div id="yaml-result" class="mt-2 text-muted" style="font-size:12px;"></div>
+      </div>
+    </div>
+    <div class="card mt-2">
+      <div class="card-header"><h3>▶ Run Status & Logs</h3></div>
+      <div class="canvas-run-bar" id="run-bar">
+        <span class="text-muted">No active runs. Click ▶ to start.</span>
+      </div>
+      <div id="run-log" style="max-height:200px;overflow-y:auto;font-family:var(--font-mono);font-size:12px;"></div>
+    </div>
+    <div class="card mt-2">
+      <div class="card-header"><h3>📋 Templates</h3><span class="text-muted" id="template-count"></span></div>
+      <div id="templates-list" class="empty-state"><div class="icon">📋</div><div>Loading templates...</div></div>
+    </div>
+  </section>
+
+  <!-- APPROVAL GATES (P-06) -->
+  <section class="page" id="page-gates">
+    <div class="page-header">
+      <h2>🔒 Approval Gates</h2>
+      <div class="last-updated" id="gates-header-stats"></div>
+    </div>
+    <div class="grid grid-3 mb-2" id="gates-stats-cards"></div>
+    <div class="card">
+      <div class="card-header"><h3>Pending Approvals</h3></div>
+      <div id="gates-pending-body" class="empty-state"><div class="icon">🔒</div><div>No pending approvals</div></div>
+    </div>
+    <div class="card mt-2">
+      <div class="card-header"><h3>All Gates</h3></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>ID</th><th>Title</th><th>Requestor</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody id="gates-all-body"></tbody></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- BRAIN 3D (B-05) -->
+  <section class="page" id="page-brain">
+    <div class="page-header">
+      <h2>🧠 Brain — 3D Neural View</h2>
+      <div class="last-updated" id="brain-stats-header"></div>
+    </div>
+    <div class="grid grid-4 mb-2" id="brain-stats-cards"></div>
+    <div class="card">
+      <div class="card-header"><h3>Neural Network</h3><span id="brain-legend" class="text-muted" style="font-size:11px;">🟢 Active 🔵 Processing 🟡 Waiting 🔴 Error</span></div>
+      <div id="brain-canvas-container"><p class="text-muted" style="padding:20px;">Loading 3D view...</p></div>
+    </div>
+  </section>
+
+  <!-- LEARNING (L-02) -->
+  <section class="page" id="page-learning">
+    <div class="page-header">
+      <h2>📈 Learning & Analytics</h2>
+      <div class="last-updated" id="learning-header"></div>
+    </div>
+    <div class="grid grid-4 mb-2" id="learning-summary-cards"></div>
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-header"><h3>🏆 Top Flows</h3></div>
+        <div id="analytics-flows-body" class="empty-state"><div class="icon">📊</div><div>No flow data yet</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>🐌 Bottlenecks</h3></div>
+        <div id="analytics-bottlenecks-body" class="empty-state"><div class="icon">🔍</div><div>No bottleneck data</div></div>
+      </div>
+    </div>
+    <div class="grid grid-2 mt-2">
+      <div class="card">
+        <div class="card-header"><h3>📈 Time Series (24h)</h3></div>
+        <div id="analytics-timeseries" class="empty-state"><div class="icon">📈</div><div>No data</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>⚠️ Anomalies</h3></div>
+        <div id="analytics-anomalies-body" class="empty-state"><div class="icon">✅</div><div>No anomalies detected</div></div>
+      </div>
+    </div>
+    <div class="card mt-2">
+      <div class="card-header"><h3>🧩 Suggested Templates</h3></div>
+      <div id="analytics-templates-body" class="empty-state"><div class="icon">🧩</div><div>Not enough data for suggestions</div></div>
+    </div>
+  </section>
+
+  <!-- AGENTS (existing) -->
+  <section class="page" id="page-agents">
+    <div class="page-header"><h2>🤖 Agents</h2><div class="last-update" id="agents-count"></div></div>
     <div class="card"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Status</th><th>Load</th><th>Capabilities</th><th>Tasks</th><th>Errors</th><th>Uptime</th></tr></thead><tbody id="agents-body"></tbody></table></div></div>
   </section>
 
-  <!-- TASKS -->
+  <!-- TASKS (existing) -->
   <section class="page" id="page-tasks">
-    <div class="page-header">
-      <h2>📋 Tasks</h2>
-    </div>
+    <div class="page-header"><h2>📋 Tasks</h2></div>
     <div class="grid grid-4 mb-2" id="tasks-stats"></div>
     <div class="card"><div class="table-wrap"><table><thead><tr><th>ID</th><th>Agent</th><th>Node</th><th>Status</th><th>Created</th><th>Result</th></tr></thead><tbody id="tasks-body"></tbody></table></div></div>
   </section>
 
-  <!-- HEALTH -->
+  <!-- HEALTH (existing) -->
   <section class="page" id="page-health">
-    <div class="page-header">
-      <h2>💚 System Health</h2>
-    </div>
+    <div class="page-header"><h2>💚 System Health</h2></div>
     <div class="grid grid-4 mb-2" id="health-stats"></div>
     <div class="card mt-2"><div class="card-header"><h3>Node Health</h3></div><div class="table-wrap"><table><thead><tr><th>Node</th><th>Status</th><th>Failures</th><th>Successes</th><th>Last Change</th></tr></thead><tbody id="health-body"></tbody></table></div></div>
   </section>
 
-  <!-- BUS -->
+  <!-- BUS (existing) -->
   <section class="page" id="page-bus">
-    <div class="page-header">
-      <h2>📨 Communication Bus</h2>
-    </div>
+    <div class="page-header"><h2>📨 Communication Bus</h2></div>
     <div class="grid grid-2 mb-2" id="bus-stats"></div>
     <div class="card mt-2"><div class="card-header"><h3>Recent Messages</h3></div><div class="table-wrap"><table><thead><tr><th>ID</th><th>Type</th><th>Sender</th><th>Target</th><th>Time</th></tr></thead><tbody id="bus-body"></tbody></table></div></div>
   </section>
 
-  <!-- AUDIT -->
+  <!-- AUDIT (existing) -->
   <section class="page" id="page-audit">
-    <div class="page-header">
-      <h2>📜 Audit Trail</h2>
-    </div>
+    <div class="page-header"><h2>📜 Audit Trail</h2></div>
     <div class="card"><div class="table-wrap"><table><thead><tr><th>ID</th><th>Action</th><th>Resource</th><th>Result</th><th>User</th><th>Detail</th><th>Time</th></tr></thead><tbody id="audit-body"></tbody></table></div></div>
   </section>
 
-  <!-- RBAC -->
+  <!-- RBAC (existing) -->
   <section class="page" id="page-rbac">
-    <div class="page-header">
-      <h2>🔐 RBAC</h2>
-    </div>
+    <div class="page-header"><h2>🔐 RBAC</h2></div>
     <div class="grid grid-2">
       <div class="card"><div class="card-header"><h3>👥 Users</h3></div><div class="table-wrap"><table><thead><tr><th>Username</th><th>Role</th><th>Workspace</th><th>Enabled</th></tr></thead><tbody id="rbac-users-body"></tbody></table></div></div>
       <div class="card"><div class="card-header"><h3>🛡️ Roles</h3></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>Permissions</th></tr></thead><tbody id="rbac-roles-body"></tbody></table></div></div>
     </div>
   </section>
 
-  <!-- WORKSPACES -->
+  <!-- WORKSPACES (existing) -->
   <section class="page" id="page-workspaces">
-    <div class="page-header">
-      <h2>🏢 Workspaces</h2>
-    </div>
+    <div class="page-header"><h2>🏢 Workspaces</h2></div>
     <div class="card"><div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Owner</th><th>Members</th><th>Active</th><th>Created</th></tr></thead><tbody id="workspaces-body"></tbody></table></div></div>
   </section>
 
-  <!-- DOMAINS -->
+  <!-- DOMAINS (existing) -->
   <section class="page" id="page-domains">
-    <div class="page-header">
-      <h2>🧩 Domain Plugins</h2>
-    </div>
+    <div class="page-header"><h2>🧩 Domain Plugins</h2></div>
     <div class="card"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Version</th><th>Agents</th><th>Flows</th></tr></thead><tbody id="domains-body"></tbody></table></div></div>
   </section>
 
@@ -352,35 +539,50 @@ document.querySelectorAll('.nav-item').forEach(item => {
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     item.classList.add('active');
-    document.getElementById('page-' + item.dataset.page).classList.add('active');
+    const page = document.getElementById('page-' + item.dataset.page);
+    if (page) page.classList.add('active');
+    // Trigger page-specific load
+    if (item.dataset.page === 'brain' && !window._brainLoaded) initBrain3D();
+    if (item.dataset.page === 'playground' && !window._flowCanvasLoaded) initFlowCanvas();
+    if (item.dataset.page === 'learning') loadAnalytics();
+    if (item.dataset.page === 'gates') loadGates();
+    if (item.dataset.page === 'overview') loadOverview();
+    if (item.dataset.page === 'agents') loadAgents();
+    if (item.dataset.page === 'tasks') loadTasks();
+    if (item.dataset.page === 'health') loadHealth();
+    if (item.dataset.page === 'bus') loadBus();
+    if (item.dataset.page === 'audit') loadAudit();
+    if (item.dataset.page === 'rbac') loadRBAC();
+    if (item.dataset.page === 'workspaces') loadWorkspaces();
+    if (item.dataset.page === 'domains') loadDomains();
   });
 });
 
 // ─── State ───
 const BASE = window.location.origin;
+let _currentFlowRunId = null;
+let _flowCanvasLoaded = false;
 
 function statusBadge(status) {
   const s = (status || '').toLowerCase();
-  if (s === 'online' || s === 'healthy' || s === 'completed') return '<span class="badge badge-green"><span class="badge-dot"></span>'+status+'</span>';
-  if (s === 'degraded' || s === 'pending' || s === 'busy') return '<span class="badge badge-yellow"><span class="badge-dot"></span>'+status+'</span>';
-  if (s === 'offline' || s === 'unhealthy' || s === 'failed') return '<span class="badge badge-red"><span class="badge-dot"></span>'+status+'</span>';
+  if (s === 'online' || s === 'healthy' || s === 'completed' || s === 'active') return '<span class="badge badge-green"><span class="badge-dot"></span>'+status+'</span>';
+  if (s === 'degraded' || s === 'pending' || s === 'busy' || s === 'queued') return '<span class="badge badge-yellow"><span class="badge-dot"></span>'+status+'</span>';
+  if (s === 'offline' || s === 'unhealthy' || s === 'failed' || s === 'error') return '<span class="badge badge-red"><span class="badge-dot"></span>'+status+'</span>';
   if (s === 'running' || s === 'in_progress') return '<span class="badge badge-blue"><span class="badge-dot"></span>'+status+'</span>';
+  if (s === 'approved') return '<span class="badge badge-green"><span class="badge-dot"></span>Approved</span>';
+  if (s === 'rejected') return '<span class="badge badge-red"><span class="badge-dot"></span>Rejected</span>';
+  if (s === 'expired') return '<span class="badge badge-gray"><span class="badge-dot"></span>Expired</span>';
   return '<span class="badge badge-gray">'+status+'</span>';
 }
-
 function loadBar(pct, cls='bar-green') {
   const c = pct > 80 ? 'bar-red' : pct > 50 ? 'bar-yellow' : cls;
   return '<div class="bar-container '+c+'"><div class="bar-fill" style="width:'+Math.min(pct,100)+'%"></div></div>';
 }
-
-// ─── Fetch helpers ───
-async function api(url) {
+async function api(url, opts) {
   try {
-    const r = await fetch(url);
+    const r = await fetch(url, opts || {});
     return await r.json();
-  } catch(e) {
-    return {error: e.message};
-  }
+  } catch(e) { return {error: e.message}; }
 }
 
 // ─── Overview ───
@@ -388,165 +590,495 @@ async function loadOverview() {
   const data = await api(BASE+'/api/overview');
   if (data.error) return;
   document.getElementById('overview-time').textContent = 'Updated: '+new Date().toLocaleTimeString();
-
   const cards = [
     {icon:'🤖', label:'Agents Total', value:data.agents?.total||0, sub:'🟢 '+ (data.agents?.online||0) +' online · 🔴 '+ (data.agents?.offline||0) +' offline'},
     {icon:'📋', label:'Tasks', value:data.tasks?.total||0, sub:'✅ '+ (data.tasks?.completed||0) +' done · ⏳ '+ (data.tasks?.running||0) +' running'},
     {icon:'💚', label:'Health', value:data.health?.healthy||0, sub:'⚠️ '+ (data.health?.degraded||0) +' degraded · ❌ '+ (data.health?.unhealthy||0) +' unhealthy'},
     {icon:'📨', label:'Bus Messages', value:data.bus?.messages_total||0, sub:'👥 '+ (data.bus?.subscribers||0) +' subscribers'},
   ];
-
   document.getElementById('overview-cards').innerHTML = cards.map(c =>
     '<div class="card"><div class="card-header"><h3>'+c.label+'</h3><span class="icon-lg">'+c.icon+'</span></div><div class="card-value">'+c.value+'</div><div class="card-label">'+c.sub+'</div></div>'
   ).join('');
-
-  // Audit mini
   const audit = await api(BASE+'/api/audit?limit=5');
-  if (audit.entries && audit.entries.length) {
-    document.getElementById('audit-mini').innerHTML = audit.entries.map(e =>
-      '<div class="metric-row"><span class="label">'+e.action+' '+e.resource+'</span><span class="value text-muted">'+ (e.timestamp||'').slice(11,19) +'</span></div>'
-    ).join('');
-  }
-
-  // Failures mini
+  if (audit.entries && audit.entries.length) document.getElementById('audit-mini').innerHTML = audit.entries.map(e =>
+    '<div class="metric-row"><span class="label">'+e.action+' '+e.resource+'</span><span class="value text-muted">'+ (e.timestamp||'').slice(11,19) +'</span></div>'
+  ).join('');
   const health = await api(BASE+'/api/health');
-  if (health.recent_failures && health.recent_failures.length) {
-    document.getElementById('failures-mini').innerHTML = health.recent_failures.slice(0,5).map(f =>
-      '<div class="metric-row"><span class="label text-red">⚠️ '+f.node+' · '+f.type+'</span><span class="value text-muted">'+ (f.timestamp||'').slice(11,19) +'</span></div>'
+  if (health.recent_failures && health.recent_failures.length) document.getElementById('failures-mini').innerHTML = health.recent_failures.slice(0,5).map(f =>
+    '<div class="metric-row"><span class="label text-red">⚠️ '+f.node+' · '+f.type+'</span><span class="value text-muted">'+ (f.timestamp||'').slice(11,19) +'</span></div>'
+  ).join('');
+}
+
+// ─── Playground ───
+function initFlowCanvas() {
+  if (window._flowCanvasLoaded) return;
+  window._flowCanvasLoaded = true;
+  const canvas = document.getElementById('flow-canvas');
+  const wrap = document.getElementById('flow-canvas-wrap');
+  canvas.width = wrap.clientWidth;
+  canvas.height = wrap.clientHeight;
+  const ctx = canvas.getContext('2d');
+  window._canvasNodes = [];
+  window._canvasEdges = [];
+
+  // Draw loop
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Draw edges
+    ctx.strokeStyle = '#2e3348';
+    ctx.lineWidth = 2;
+    for (const e of window._canvasEdges) {
+      ctx.beginPath();
+      ctx.moveTo(e.x1, e.y1);
+      ctx.lineTo(e.x2, e.y2);
+      ctx.stroke();
+    }
+    // Draw nodes
+    for (const n of window._canvasNodes) {
+      const colors = {agent: '#60a5fa', gate: '#fbbf24', trigger: '#34d399', condition: '#a78bfa'};
+      ctx.fillStyle = colors[n.type] || '#8b90a5';
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, 24, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = '11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(n.label, n.x, n.y + 40);
+      // icon
+      const icons = {agent: '🤖', gate: '🔒', trigger: '⚡', condition: '🔀'};
+      ctx.font = '16px sans-serif';
+      ctx.fillText(icons[n.type] || '●', n.x, n.y + 6);
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+
+  // Click to add node on canvas
+  canvas.addEventListener('click', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    // Check if clicking on existing node
+    for (const n of window._canvasNodes) {
+      const dist = Math.sqrt((x - n.x)**2 + (y - n.y)**2);
+      if (dist < 24) return; // click on existing node
+    }
+    // Ask what type
+    const types = ['agent', 'gate', 'trigger', 'condition'];
+    const type = types[Math.floor(Math.random() * types.length)];
+    const label = type.charAt(0).toUpperCase() + type.slice(1) + '-' + (window._canvasNodes.length + 1);
+    window._canvasNodes.push({x, y, type, label, id: 'node-' + Date.now()});
+  });
+
+  // Drag from toolbox
+  document.querySelectorAll('.tool').forEach(t => {
+    t.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', t.dataset.type);
+    });
+  });
+  canvas.addEventListener('dragover', (e) => e.preventDefault());
+  canvas.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const type = e.dataTransfer.getData('text/plain');
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const label = type.charAt(0).toUpperCase() + type.slice(1) + '-' + (window._canvasNodes.length + 1);
+    window._canvasNodes.push({x, y, type, label, id: 'node-' + Date.now()});
+  });
+}
+
+window.addEventListener('resize', () => {
+  const canvas = document.getElementById('flow-canvas');
+  const wrap = document.getElementById('flow-canvas-wrap');
+  if (canvas && wrap) {
+    canvas.width = wrap.clientWidth;
+    canvas.height = wrap.clientHeight;
+  }
+});
+
+function clearCanvas() {
+  window._canvasNodes = [];
+  window._canvasEdges = [];
+}
+
+function loadTemplate() {
+  document.getElementById('flow-yaml-editor').value = `name: "Financial Close"
+version: "1.0.0"
+description: "Complete period-end financial close workflow"
+domain: accounting
+trigger:
+  type: manual
+agents:
+  - id: financial-recorder
+    name: "Financial Recorder"
+    skills: ["journal-entry", "reconciliation"]
+    depends_on: []
+  - id: financial-reporter
+    name: "Financial Reporter"
+    skills: ["financial-statements"]
+    depends_on: ["financial-recorder"]
+  - id: financial-orchestrator
+    name: "Financial Orchestrator"
+    skills: ["review", "approve"]
+    depends_on: ["financial-reporter"]`;
+}
+function validateYaml() {
+  const yaml = document.getElementById('flow-yaml-editor').value;
+  api(BASE+'/api/playground/validate', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({yaml})}).then(r => {
+    document.getElementById('yaml-result').innerHTML = r.valid
+      ? '<span class="text-green">✅ Valid</span>' + (r.warnings?.length ? '<br><span class="text-yellow">⚠️ '+r.warnings.join('<br>') : '')
+      : '<span class="text-red">❌ Invalid</span><br>' + (r.errors||[]).join('<br>');
+  });
+}
+async function runYamlFlow() {
+  const yaml = document.getElementById('flow-yaml-editor').value;
+  if (!yaml.trim()) return;
+  const result = await api(BASE+'/api/playground/run', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({yaml})});
+  if (result.run_id) {
+    _currentFlowRunId = result.run_id;
+    document.getElementById('run-bar').innerHTML = '<span class="badge badge-blue"><span class="badge-dot"></span> Running: '+result.flow_name+'</span><span class="text-muted"> ID: '+result.run_id+'</span>';
+    document.getElementById('run-log').innerHTML = '<div class="log-entry"><span class="log-time">'+new Date().toLocaleTimeString()+'</span>🚀 Flow started</div>';
+    startWSStream(result.run_id);
+  } else {
+    document.getElementById('run-bar').innerHTML = '<span class="text-red">❌ '+ (result.error||'Failed to start') +'</span>';
+  }
+}
+async function runFlowFromCanvas() {
+  const nodes = window._canvasNodes || [];
+  if (nodes.length === 0) { document.getElementById('run-bar').innerHTML = '<span class="text-yellow">⚠️ Add nodes to the canvas first</span>'; return; }
+  const agents = nodes.filter(n => n.type === 'agent' || n.type === 'gate').map((n,i) => ({
+    id: n.id || 'agent-'+i,
+    name: n.label,
+    skills: n.type === 'gate' ? ['review','approve'] : ['process'],
+    depends_on: i > 0 ? [nodes.filter(nn => nn.type !== 'gate')[0]?.id || 'agent-0'] : [],
+  }));
+  const yamlContent = `name: "Canvas Flow"
+version: "1.0.0"
+description: "Flow built from visual canvas"
+trigger:
+  type: manual
+agents:
+${agents.map(a => `  - id: ${a.id}\n    name: "${a.name}"\n    skills: [${a.skills.map(s=>`"${s}"`).join(', ')}]\n    depends_on: ${JSON.stringify(a.depends_on)}`).join('\n')}`;
+  document.getElementById('flow-yaml-editor').value = yamlContent;
+  await runYamlFlow();
+}
+function startWSStream(runId) {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const ws = new WebSocket(proto + '//' + location.host + '/api/playground/runs/' + runId + '/stream');
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    const logDiv = document.getElementById('run-log');
+    if (msg.type === 'ping') return;
+    const icons = {'agent.started':'🔧','agent.completed':'✅','agent.skipped':'⏩','agent.waiting_approval':'🔒','run.completed':'🎉','run.failed':'❌','run.cancelled':'🚫'};
+    const icon = icons[msg.type] || '📌';
+    logDiv.innerHTML += '<div class="log-entry"><span class="log-time">'+new Date().toLocaleTimeString()+'</span>'+icon+' '+msg.type+' — '+(msg.data?.agent_name||msg.data?.status||JSON.stringify(msg.data||'')).slice(0,80)+'</div>';
+    logDiv.scrollTop = logDiv.scrollHeight;
+    if (msg.type === 'run.completed') {
+      document.getElementById('run-bar').innerHTML = '<span class="badge badge-green"><span class="badge-dot"></span> Completed</span><span class="text-muted"> '+runId+'</span>';
+    } else if (msg.type === 'run.failed') {
+      document.getElementById('run-bar').innerHTML = '<span class="badge badge-red"><span class="badge-dot"></span> Failed: '+(msg.data?.error||'')+'</span>';
+    }
+  };
+  ws.onclose = () => {};
+}
+async function fetchTemplates() {
+  const data = await api(BASE+'/api/playground/templates?domain=accounting');
+  const list = document.getElementById('templates-list');
+  if (data.templates && data.templates.length) {
+    document.getElementById('template-count').textContent = data.templates.length + ' templates';
+    list.innerHTML = data.templates.map(t =>
+      '<div class="card" style="padding:10px;margin-bottom:8px;cursor:pointer;" onclick="document.getElementById(\'flow-yaml-editor\').value=\'name: \\\"'+t.name+'\\\"\\ndomain: '+t.domain+'\\ndescription: '+t.description+'\\n\'">'+
+      '<strong>'+t.name+'</strong> <span class="badge badge-gray">v'+t.version+'</span> <span class="text-muted">'+t.description.slice(0,60)+'</span>'+
+      '<br><span class="text-muted" style="font-size:11px;">🤖 '+t.agent_count+' agents · ⚡ '+t.trigger_type+'</span></div>'
     ).join('');
+  } else {
+    list.innerHTML = '<div class="empty-state"><div class="icon">📋</div><div>No templates found</div></div>';
   }
 }
 
-// ─── Agents ───
+// ─── Approval Gates (P-06) ───
+async function loadGates() {
+  const [gatesData, statsData] = await Promise.all([
+    api(BASE+'/api/brain/gates?limit=50'),
+    api(BASE+'/api/brain/gates/stats'),
+  ]);
+  const gates = gatesData.gates || [];
+  const stats = statsData || {};
+  const byStatus = stats.by_status || {};
+  const pending = byStatus.pending || 0;
+  const approved = byStatus.approved || 0;
+  const rejected = byStatus.rejected || 0;
+  document.getElementById('gates-header-stats').textContent = gates.length + ' total';
+  document.getElementById('gates-stats-cards').innerHTML = [
+    {label:'Pending', value:pending, cls:'text-yellow'},
+    {label:'Approved', value:approved, cls:'text-green'},
+    {label:'Rejected', value:rejected, cls:'text-red'},
+    {label:'Total', value:gates.length, cls:''},
+  ].map(s => '<div class="card"><div class="card-value '+s.cls+'">'+s.value+'</div><div class="card-label">'+s.label+'</div></div>').join('');
+
+  const pendingGates = gates.filter(g => g.status === 'pending');
+  document.getElementById('gates-pending-body').innerHTML = pendingGates.length
+    ? pendingGates.map(g => '<div class="card" style="padding:12px;margin-bottom:8px;border-left:3px solid var(--yellow);">'+
+      '<div class="flex items-center gap-2" style="justify-content:space-between;">'+
+      '<div><strong>'+g.title+'</strong><br><span class="text-muted">'+g.description.slice(0,100)+'</span><br>'+
+      '<span class="text-muted" style="font-size:11px;">👤 '+g.requestor+' · 🕐 '+(g.created_at||'').slice(11,19)+'</span></div>'+
+      '<div class="flex gap-2"><button class="btn btn-green" onclick="approveGate(\''+g.gate_id+'\')">✅ Approve</button>'+
+      '<button class="btn btn-red" onclick="rejectGate(\''+g.gate_id+'\')">❌ Reject</button></div></div></div>'
+    ).join('')
+    : '<div class="empty-state"><div class="icon">✅</div><div>All caught up! No pending approvals.</div></div>';
+
+  document.getElementById('gates-all-body').innerHTML = gates.map(g =>
+    '<tr><td class="text-muted" style="font-family:var(--font-mono);font-size:11px;">'+(g.gate_id||'').slice(0,12)+'</td><td><strong>'+g.title+'</strong></td><td>'+g.requestor+'</td><td>'+statusBadge(g.status)+'</td><td class="text-muted">'+ (g.created_at||'').slice(11,19) +'</td>'+
+    '<td>'+(g.status === 'pending' ? '<button class="btn btn-green" onclick="approveGate(\''+g.gate_id+'\')" style="padding:4px 8px;font-size:11px;">✅</button> <button class="btn btn-red" onclick="rejectGate(\''+g.gate_id+'\')" style="padding:4px 8px;font-size:11px;">❌</button>' : '—')+'</td></tr>'
+  ).join('');
+}
+async function approveGate(gateId) {
+  await api(BASE+'/api/brain/gates/'+gateId+'/approve', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({approver:'dashboard'})});
+  loadGates();
+}
+async function rejectGate(gateId) {
+  await api(BASE+'/api/brain/gates/'+gateId+'/reject', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({approver:'dashboard',reason:'Rejected from dashboard'})});
+  loadGates();
+}
+
+// ─── Brain 3D (B-05) ───
+let _brainLoaded = false;
+function initBrain3D() {
+  if (_brainLoaded) return;
+  _brainLoaded = true;
+  const container = document.getElementById('brain-canvas-container');
+  container.innerHTML = '';
+  const w = container.clientWidth || 600;
+  const h = 500;
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0f1117);
+  const camera = new THREE.PerspectiveCamera(45, w/h, 0.1, 1000);
+  camera.position.set(8, 6, 12);
+  const renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setSize(w, h);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  container.appendChild(renderer.domElement);
+
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+
+  // Lights
+  const ambient = new THREE.AmbientLight(0x404060);
+  scene.add(ambient);
+  const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+  dir.position.set(5, 10, 7);
+  scene.add(dir);
+  const back = new THREE.DirectionalLight(0x6060ff, 0.3);
+  back.position.set(-5, 0, -5);
+  scene.add(back);
+
+  // Fetch graph data then render
+  api(BASE+'/api/brain/graph').then(data => {
+    const graph = data || {nodes:[], edges:[], stats:{}};
+    const stats = graph.stats || {};
+    document.getElementById('brain-stats-header').textContent = stats.events+' events · '+stats.traces+' traces · '+stats.pending_gates+' pending gates';
+    document.getElementById('brain-stats-cards').innerHTML = [
+      {label:'Nodes', value:graph.nodes?.length||0, cls:''},
+      {label:'Edges', value:graph.edges?.length||0, cls:''},
+      {label:'Activity', value:stats.activity_level||'low', cls:'text-'+(stats.activity_level==='high'?'green':'yellow')},
+      {label:'Pending Gates', value:stats.pending_gates||0, cls:'text-yellow'},
+    ].map(s => '<div class="card"><div class="card-value '+s.cls+'">'+s.value+'</div><div class="card-label">'+s.label+'</div></div>').join('');
+
+    // Create nodes as spheres
+    const nodeGroup = new THREE.Group();
+    const statusColors = {active: 0x34d399, idle: 0x60a5fa, busy: 0xfbbf24, error: 0xf87171, online: 0x34d399, offline: 0x5c6178, degraded: 0xfbbf24, unknown: 0x8b90a5};
+    const nodes = graph.nodes || [];
+    const nodePositions = {};
+    const radius = 3;
+    nodes.forEach((n, i) => {
+      const angle = (i / nodes.length) * Math.PI * 2;
+      const yOffset = (i % 3 - 1) * 1.5;
+      const x = Math.cos(angle) * radius + (Math.random() - 0.5) * 0.5;
+      const z = Math.sin(angle) * radius + (Math.random() - 0.5) * 0.5;
+      const y = yOffset + (Math.random() - 0.5) * 0.5;
+      nodePositions[n.id] = {x, y, z};
+
+      const color = statusColors[n.status] || 0x8b90a5;
+      const size = n.load > 0 ? 0.4 + (n.load / 10) * 0.4 : 0.5;
+      const geo = new THREE.SphereGeometry(size, 24, 24);
+      const mat = new THREE.MeshPhongMaterial({color, emissive: color, emissiveIntensity: 0.2});
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(x, y, z);
+      mesh.userData = n;
+      nodeGroup.add(mesh);
+    });
+    scene.add(nodeGroup);
+
+    // Create edges as lines
+    const edges = graph.edges || [];
+    const edgeMat = new THREE.LineBasicMaterial({color: 0x2e3348, transparent: true, opacity: 0.4});
+    edges.forEach(e => {
+      const from = nodePositions[e.source];
+      const to = nodePositions[e.target];
+      if (!from || !to) return;
+      const points = [
+        new THREE.Vector3(from.x, from.y, from.z),
+        new THREE.Vector3(to.x, to.y, to.z),
+      ];
+      const geo = new THREE.BufferGeometry().setFromPoints(points);
+      const line = new THREE.Line(geo, edgeMat);
+      scene.add(line);
+    });
+
+    // Add grid
+    const gridHelper = new THREE.GridHelper(12, 12, 0x2e3348, 0x1a1d28);
+    scene.add(gridHelper);
+
+    // Animation
+    let time = 0;
+    function animate() {
+      requestAnimationFrame(animate);
+      time += 0.005;
+      // Pulse nodes
+      nodeGroup.children.forEach((mesh, i) => {
+        if (mesh.isMesh) {
+          const pulse = 1 + Math.sin(time * 2 + i) * 0.08;
+          mesh.scale.set(pulse, pulse, pulse);
+        }
+      });
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  });
+
+  window.addEventListener('resize', () => {
+    const w2 = container.clientWidth || 600;
+    camera.aspect = w2 / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w2, h);
+  });
+}
+
+// ─── Learning / Analytics (L-02) ───
+async function loadAnalytics() {
+  const [summary, flows, bottlenecks, anomalies, templates, timeseries] = await Promise.all([
+    api(BASE+'/api/learning/analytics/summary'),
+    api(BASE+'/api/learning/analytics/flows?min_runs=1'),
+    api(BASE+'/api/learning/analytics/bottlenecks'),
+    api(BASE+'/api/learning/analytics/anomalies'),
+    api(BASE+'/api/learning/analytics/templates'),
+    api(BASE+'/api/learning/analytics/timeseries?hours=24&interval=hour'),
+  ]);
+  document.getElementById('learning-header').textContent = new Date().toLocaleString();
+
+  const s = summary?.summary || {};
+  document.getElementById('learning-summary-cards').innerHTML = [
+    {label:'Executions (24h)', value:s.total_executions_24h||0, cls:''},
+    {label:'Avg Success Rate', value:(s.avg_success_rate_24h||0)+'%', cls:'text-green'},
+    {label:'Bottlenecks', value:s.bottleneck_count||0, cls:'text-yellow'},
+    {label:'Template Ideas', value:s.suggested_templates||0, cls:'text-accent'},
+  ].map(s => '<div class="card"><div class="card-value '+s.cls+'">'+s.value+'</div><div class="card-label">'+s.label+'</div></div>').join('');
+
+  // Top flows
+  const flowList = flows?.flows || [];
+  document.getElementById('analytics-flows-body').innerHTML = flowList.length
+    ? flowList.slice(0,5).map(f => '<div class="chart-bar"><span class="label">'+f.flow_name+'</span>'+
+      loadBar(f.success_rate)+'<span class="val">'+f.success_rate+'% · '+f.total_runs+' runs</span></div>').join('')
+    : '<div class="empty-state"><div class="icon">📊</div><div>No flow data yet — run some flows first</div></div>';
+
+  // Bottlenecks
+  const b = bottlenecks || {};
+  const slowest = b.slowest_agents || [];
+  document.getElementById('analytics-bottlenecks-body').innerHTML = slowest.length
+    ? slowest.slice(0,5).map(a => '<div class="metric-row"><span class="label">🐌 '+a.agent_id+'</span><span class="value text-yellow">'+a.avg_duration_ms+'ms avg</span></div>').join('')
+    : '<div class="empty-state"><div class="icon">🔍</div><div>No bottlenecks detected</div></div>';
+
+  // Time series (simple chart)
+  const points = timeseries?.points || [];
+  if (points.length) {
+    const maxVal = Math.max(...points.map(p => p.total), 1);
+    document.getElementById('analytics-timeseries').innerHTML = points.slice(-12).map(p =>
+      '<div class="chart-bar"><span class="label" style="min-width:60px;font-size:10px;">'+(p.timestamp||'').slice(11,16)+'</span>'+
+      '<div class="bar" style="width:'+(p.total/maxVal*100)+'%;background:var(--blue);height:12px;"></div>'+
+      '<span class="val" style="min-width:30px;">'+p.total+'</span></div>'
+    ).join('');
+  } else {
+    document.getElementById('analytics-timeseries').innerHTML = '<div class="empty-state"><div class="icon">📈</div><div>No timeseries data yet</div></div>';
+  }
+
+  // Anomalies
+  const anomList = anomalies?.anomalies || [];
+  document.getElementById('analytics-anomalies-body').innerHTML = anomList.length
+    ? anomList.slice(0,5).map(a => '<div class="metric-row"><span class="label text-red">⚠️ '+a.agent_id+'</span><span class="value">'+a.duration_ms+'ms (z:'+a.z_score+')</span></div>').join('')
+    : '<div class="empty-state"><div class="icon">✅</div><div>No anomalies detected</div></div>';
+
+  // Templates
+  const tmpl = templates?.suggestions || [];
+  document.getElementById('analytics-templates-body').innerHTML = tmpl.length
+    ? tmpl.map(t => '<div class="card" style="padding:10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">'+
+      '<div><strong>'+t.suggested_name+'</strong><br><span class="text-muted">'+t.occurrences+' occurrences · '+t.confidence+' confidence</span></div>'+
+      '<span class="badge badge-accent">Suggest as template</span></div>').join('')
+    : '<div class="empty-state"><div class="icon">🧩</div><div>Not enough data for template suggestions — run more flows</div></div>';
+}
+
+// ─── Legacy pages ───
 async function loadAgents() {
   const data = await api(BASE+'/api/agents');
   if (!data.agents) return;
   document.getElementById('agents-count').textContent = data.agents.length + ' agents';
   document.getElementById('agents-body').innerHTML = data.agents.map(a => {
     const loadPct = a.max_concurrent > 0 ? Math.round((a.load / a.max_concurrent) * 100) : 0;
-    return '<tr>' +
-      '<td><strong>'+a.name+'</strong></td>' +
-      '<td>'+statusBadge(a.status)+'</td>' +
-      '<td>'+loadPct+'%'+loadBar(loadPct)+'</td>' +
-      '<td>'+ (a.capabilities.length ? a.capabilities.slice(0,3).join(', ') + (a.capabilities.length > 3 ? ' (+'+(a.capabilities.length-3)+')' : '') : '—') +'</td>' +
-      '<td>'+a.tasks_completed+'</td>' +
-      '<td>'+a.errors+'</td>' +
-      '<td>'+(a.uptime > 86400 ? Math.round(a.uptime/86400)+'d' : a.uptime > 3600 ? Math.round(a.uptime/3600)+'h' : a.uptime > 60 ? Math.round(a.uptime/60)+'m' : a.uptime+'s')+'</td>' +
-    '</tr>';
+    return '<tr><td><strong>'+a.name+'</strong></td><td>'+statusBadge(a.status)+'</td><td>'+loadPct+'%'+loadBar(loadPct)+'</td><td>'+(a.capabilities.length ? a.capabilities.slice(0,3).join(', ')+(a.capabilities.length>3?' (+'+(a.capabilities.length-3)+')':'') : '—')+'</td><td>'+a.tasks_completed+'</td><td>'+a.errors+'</td><td>'+(a.uptime>86400?Math.round(a.uptime/86400)+'d':a.uptime>3600?Math.round(a.uptime/3600)+'h':a.uptime>60?Math.round(a.uptime/60)+'m':a.uptime+'s')+'</td></tr>';
   }).join('');
 }
-
-// ─── Tasks ───
 async function loadTasks() {
   const data = await api(BASE+'/api/tasks');
   if (!data.tasks) return;
-  const stats = {total: data.tasks.length, pending:0, running:0, completed:0, failed:0};
-  data.tasks.forEach(t => {
-    const s = (t.status||'').toLowerCase();
-    if (s === 'pending' || s === 'queued') stats.pending++;
-    else if (s === 'running' || s === 'assigned' || s === 'in_progress') stats.running++;
-    else if (s === 'completed' || s === 'success') stats.completed++;
-    else if (s === 'failed' || s === 'error') stats.failed++;
-  });
-  document.getElementById('tasks-stats').innerHTML = [
-    {label:'Total', value:stats.total, cls:''},
-    {label:'Running', value:stats.running, cls:'text-blue'},
-    {label:'Completed', value:stats.completed, cls:'text-green'},
-    {label:'Failed', value:stats.failed, cls:'text-red'},
-  ].map(s => '<div class="card"><div class="card-value '+s.cls+'">'+s.value+'</div><div class="card-label">'+s.label+'</div></div>').join('');
-
-  document.getElementById('tasks-body').innerHTML = data.tasks.map(t =>
-    '<tr><td class="text-muted" style="font-family:var(--font-mono)">'+ (t.id||'').slice(0,12)+'…</td><td>'+t.agent+'</td><td>'+t.node+'</td><td>'+statusBadge(t.status)+'</td><td class="text-muted">'+ (t.created||'').slice(11,19) +'</td><td class="text-muted">'+ (t.result||'').slice(0,40) +'</td></tr>'
-  ).join('');
+  const stats = {total:data.tasks.length,pending:0,running:0,completed:0,failed:0};
+  data.tasks.forEach(t => {const s=(t.status||'').toLowerCase();if(s==='pending'||s==='queued')stats.pending++;else if(s==='running'||s==='assigned'||s==='in_progress')stats.running++;else if(s==='completed'||s==='success')stats.completed++;else if(s==='failed'||s==='error')stats.failed++;});
+  document.getElementById('tasks-stats').innerHTML = [{label:'Total',value:stats.total,cls:''},{label:'Running',value:stats.running,cls:'text-blue'},{label:'Completed',value:stats.completed,cls:'text-green'},{label:'Failed',value:stats.failed,cls:'text-red'}].map(s => '<div class="card"><div class="card-value '+s.cls+'">'+s.value+'</div><div class="card-label">'+s.label+'</div></div>').join('');
+  document.getElementById('tasks-body').innerHTML = data.tasks.map(t => '<tr><td class="text-muted" style="font-family:var(--font-mono)">'+(t.id||'').slice(0,12)+'…</td><td>'+t.agent+'</td><td>'+t.node+'</td><td>'+statusBadge(t.status)+'</td><td class="text-muted">'+(t.created||'').slice(11,19)+'</td><td class="text-muted">'+(t.result||'').slice(0,40)+'</td></tr>').join('');
 }
-
-// ─── Health ───
 async function loadHealth() {
   const data = await api(BASE+'/api/health');
   const nodes = data.nodes || [];
-  const healthy = nodes.filter(n => (n.status||'').toLowerCase() === 'healthy').length;
-  const degraded = nodes.filter(n => (n.status||'').toLowerCase() === 'degraded').length;
-  const unhealthy = nodes.filter(n => (n.status||'').toLowerCase() === 'unhealthy').length;
-  document.getElementById('health-stats').innerHTML = [
-    {label:'Healthy', value:healthy, cls:'text-green'},
-    {label:'Degraded', value:degraded, cls:'text-yellow'},
-    {label:'Unhealthy', value:unhealthy, cls:'text-red'},
-    {label:'Total', value:nodes.length, cls:''},
-  ].map(s => '<div class="card"><div class="card-value '+s.cls+'">'+s.value+'</div><div class="card-label">'+s.label+'</div></div>').join('');
-
-  document.getElementById('health-body').innerHTML = nodes.map(n =>
-    '<tr><td><strong>'+n.node+'</strong></td><td>'+statusBadge(n.status)+'</td><td class="text-red">'+n.failures+'</td><td class="text-green">'+n.successes+'</td><td class="text-muted">'+ (n.last_change||'').slice(11,19) +'</td></tr>'
-  ).join('');
+  const healthy=nodes.filter(n=>(n.status||'').toLowerCase()==='healthy').length;
+  const degraded=nodes.filter(n=>(n.status||'').toLowerCase()==='degraded').length;
+  const unhealthy=nodes.filter(n=>(n.status||'').toLowerCase()==='unhealthy').length;
+  document.getElementById('health-stats').innerHTML = [{label:'Healthy',value:healthy,cls:'text-green'},{label:'Degraded',value:degraded,cls:'text-yellow'},{label:'Unhealthy',value:unhealthy,cls:'text-red'},{label:'Total',value:nodes.length,cls:''}].map(s=>'<div class="card"><div class="card-value '+s.cls+'">'+s.value+'</div><div class="card-label">'+s.label+'</div></div>').join('');
+  document.getElementById('health-body').innerHTML = nodes.map(n => '<tr><td><strong>'+n.node+'</strong></td><td>'+statusBadge(n.status)+'</td><td class="text-red">'+n.failures+'</td><td class="text-green">'+n.successes+'</td><td class="text-muted">'+(n.last_change||'').slice(11,19)+'</td></tr>').join('');
 }
-
-// ─── Bus ───
 async function loadBus() {
   const data = await api(BASE+'/api/bus');
   if (!data.stats) return;
-  document.getElementById('bus-stats').innerHTML = [
-    {label:'Total Messages', value:data.stats.total||0},
-    {label:'Subscribers', value:data.stats.subscribers||0},
-  ].map(s => '<div class="card"><div class="card-value">'+s.value+'</div><div class="card-label">'+s.label+'</div></div>').join('');
-
-  document.getElementById('bus-body').innerHTML = (data.messages||[]).map(m =>
-    '<tr><td class="text-muted" style="font-family:var(--font-mono)">'+ (m.id||'').slice(0,10)+'</td><td>'+statusBadge(m.type)+'</td><td>'+m.sender+'</td><td>'+m.target+'</td><td class="text-muted">'+ (m.timestamp||'').slice(11,19) +'</td></tr>'
-  ).join('');
+  document.getElementById('bus-stats').innerHTML = [{label:'Total Messages',value:data.stats.total||0},{label:'Subscribers',value:data.stats.subscribers||0}].map(s=>'<div class="card"><div class="card-value">'+s.value+'</div><div class="card-label">'+s.label+'</div></div>').join('');
+  document.getElementById('bus-body').innerHTML = (data.messages||[]).map(m=>'<tr><td class="text-muted" style="font-family:var(--font-mono)">'+(m.id||'').slice(0,10)+'</td><td>'+statusBadge(m.type)+'</td><td>'+m.sender+'</td><td>'+m.target+'</td><td class="text-muted">'+(m.timestamp||'').slice(11,19)+'</td></tr>').join('');
 }
-
-// ─── Audit ───
 async function loadAudit() {
   const data = await api(BASE+'/api/audit?limit=100');
   if (!data.entries) return;
-  document.getElementById('audit-body').innerHTML = data.entries.map(e =>
-    '<tr><td class="text-muted" style="font-family:var(--font-mono)">'+ (e.id||'').slice(0,10)+'</td><td>'+statusBadge(e.action)+'</td><td>'+e.resource+'</td><td>'+statusBadge(e.result)+'</td><td>'+e.user+'</td><td class="text-muted">'+ (e.detail||'').slice(0,50) +'</td><td class="text-muted">'+ (e.timestamp||'').slice(11,19) +'</td></tr>'
-  ).join('');
+  document.getElementById('audit-body').innerHTML = data.entries.map(e=>'<tr><td class="text-muted" style="font-family:var(--font-mono)">'+(e.id||'').slice(0,10)+'</td><td>'+statusBadge(e.action)+'</td><td>'+e.resource+'</td><td>'+statusBadge(e.result)+'</td><td>'+e.user+'</td><td class="text-muted">'+(e.detail||'').slice(0,50)+'</td><td class="text-muted">'+(e.timestamp||'').slice(11,19)+'</td></tr>').join('');
 }
-
-// ─── RBAC ───
 async function loadRBAC() {
   const data = await api(BASE+'/api/rbac');
   if (!data.users) return;
-  document.getElementById('rbac-users-body').innerHTML = (data.users||[]).map(u =>
-    '<tr><td><strong>'+u.username+'</strong></td><td>'+statusBadge(u.role)+'</td><td class="text-muted">'+(u.workspace||'default')+'</td><td>'+(u.enabled ? '<span class="badge badge-green">✓ Enabled</span>' : '<span class="badge badge-red">✗ Disabled</span>')+'</td></tr>'
-  ).join('') || '<tr><td colspan="4"><div class="empty-state">No users</div></td></tr>';
-  document.getElementById('rbac-roles-body').innerHTML = (data.roles||[]).map(r =>
-    '<tr><td><strong>'+r.name+'</strong></td><td class="text-muted">'+(r.permissions||[]).join(', ') || '—'+'</td></tr>'
-  ).join('') || '<tr><td colspan="2"><div class="empty-state">No roles</div></td></tr>';
+  document.getElementById('rbac-users-body').innerHTML = (data.users||[]).map(u=>'<tr><td><strong>'+u.username+'</strong></td><td>'+statusBadge(u.role)+'</td><td class="text-muted">'+(u.workspace||'default')+'</td><td>'+(u.enabled?'<span class="badge badge-green">✓ Enabled</span>':'<span class="badge badge-red">✗ Disabled</span>')+'</td></tr>').join('')||'<tr><td colspan="4"><div class="empty-state">No users</div></td></tr>';
+  document.getElementById('rbac-roles-body').innerHTML = (data.roles||[]).map(r=>'<tr><td><strong>'+r.name+'</strong></td><td class="text-muted">'+(r.permissions||[]).join(', ')||'—'+'</td></tr>').join('')||'<tr><td colspan="2"><div class="empty-state">No roles</div></td></tr>';
 }
-
-// ─── Domains ───
 async function loadDomains() {
   const data = await api(BASE+'/api/domains');
   if (!data.domains) return;
-  document.getElementById('domains-body').innerHTML = (data.domains||[]).map(d =>
-    '<tr><td><strong>'+d.label+'</strong><br><span class="text-muted" style="font-size:11px">'+d.name+'</span></td><td>'+d.version+'</td><td>'+d.agents+'</td><td>'+d.flows+'</td></tr>'
-  ).join('') || '<tr><td colspan="4"><div class="empty-state">🧩 No domain plugins installed</div></td></tr>';
+  document.getElementById('domains-body').innerHTML = (data.domains||[]).map(d=>'<tr><td><strong>'+d.label+'</strong><br><span class="text-muted" style="font-size:11px">'+d.name+'</span></td><td>'+d.version+'</td><td>'+d.agents+'</td><td>'+d.flows+'</td></tr>').join('')||'<tr><td colspan="4"><div class="empty-state">🧩 No domain plugins installed</div></td></tr>';
 }
-
-// ─── Workspaces ───
 async function loadWorkspaces() {
   const data = await api(BASE+'/api/workspaces');
   if (!data.workspaces) return;
-  document.getElementById('workspaces-body').innerHTML = (data.workspaces||[]).map(w =>
-    '<tr><td class="text-muted" style="font-family:var(--font-mono)">'+w.id+'</td><td><strong>'+w.name+'</strong><br><span class="text-muted" style="font-size:11px">'+w.description.slice(0,40)+'</span></td><td>'+w.owner+'</td><td>'+w.members+'</td><td>'+(w.active ? '<span class="badge badge-green">✓ Active</span>' : '<span class="badge badge-red">✗ Inactive</span>')+'</td><td class="text-muted">'+w.created_at+'</td></tr>'
-  ).join('') || '<tr><td colspan="6"><div class="empty-state">🏢 No workspaces</div></td></tr>';
+  document.getElementById('workspaces-body').innerHTML = (data.workspaces||[]).map(w=>'<tr><td class="text-muted" style="font-family:var(--font-mono)">'+w.id+'</td><td><strong>'+w.name+'</strong><br><span class="text-muted" style="font-size:11px">'+(w.description||'').slice(0,40)+'</span></td><td>'+w.owner+'</td><td>'+w.members+'</td><td>'+(w.active?'<span class="badge badge-green">✓ Active</span>':'<span class="badge badge-red">✗ Inactive</span>')+'</td><td class="text-muted">'+w.created_at+'</td></tr>').join('')||'<tr><td colspan="6"><div class="empty-state">🏢 No workspaces</div></td></tr>';
 }
 
-// ─── Poll ───
-function loadAll() {
-  loadOverview();
-  loadAgents();
-  loadTasks();
-  loadHealth();
-  loadBus();
-  loadAudit();
-  loadRBAC();
-  loadDomains();
-  loadWorkspaces();
-}
-
-loadAll();
-setInterval(loadAll, 5000); // auto-refresh every 5s
+// ─── Poll (overview only auto-refresh; others on nav click) ───
+loadOverview();
+fetchTemplates();
+setInterval(loadOverview, 5000);
 </script>
 </body>
 </html>
