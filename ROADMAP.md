@@ -78,20 +78,20 @@
 
 ---
 
-## 🏗️ In Progress: Domain System
+## 🏗️ In Progress: v0.10.0 — Playground Enhancements + Windows Native Sprint
 
-### Phase D1: Accounting Domain 🏗️
+### Phase D1: Accounting Domain ✅
 - [x] Knowledge tree (200+ nodes, 10 branches A-J)
 - [x] Domain manifest (29 agents, 6 flows)
 - [x] Domain architecture docs
 - [x] 29 agent blueprints (YAML)
 - [x] 6 flow templates (YAML)
-- [ ] Hermes skills per agent
+- [x] Hermes skills per agent (6 orchestrator SKILL.md files)
 - [x] Agent auto-generation API
 - [x] Template browser API
 
-### Phase D2: Domain Plugin CLI ⏳
-- [ ] `hive domain` (list/info/install/remove/init)
+### Phase D2: Domain Plugin CLI ✅
+- [x] `hive domain` (list/info/install/remove/init)
 - [ ] Domain registry (discover/shared)
 - [ ] Mothership domain loading
 - [ ] Cross-domain dependency resolution
@@ -118,10 +118,10 @@ Instead of sequential phases, **every build session advances all 5 layers togeth
 | Layer | What It Is | Next Session Focus |
 |-------|-----------|-------------------|
 | 🔧 **Engine** | Core ready ✅ | Maintenance (as needed) |
-|| 🧩 **Domains** | D1 Accounting 70% 🏗️ | Hermes skills for agents |
-| 🎮 **Playground** | Core APIs ✅ | Visual Canvas (React Flow) |
+| 🧩 **Domains** | D1 Accounting + CLI ✅ | D2 Domain registry / Mothership loading |
+| 🎮 **Playground** | Core APIs ✅ | P-07 Template Customizer · P-08 Flow Library |
 | 🧠 **Brain** | Core Engine ✅ | 3D Neural View |
-| 📈 **Learning** | Passive Logger ✅ | Execution Analytics |
+| 📈 **Learning** | Passive Logger ✅ | L-03 Pattern Recognition |
 
 ### Session N — First Build Sprint ✅ (v0.7.0 — Done)
 
@@ -147,10 +147,19 @@ Instead of sequential phases, **every build session advances all 5 layers togeth
 |-------|-------|--------|
 | 🗄️ **Storage** | **S-01** SQLite StorageEngine ✅ · **S-02** Persist Brain (EventStream, Traces, Gates) ✅ | ✅ Done |
 | 🗄️ **Storage** | **S-03** Persist Learning (ExecutionLogs) ✅ · **S-04** Persist Playground (FlowRuns) ✅ | ✅ Done |
-| 🗄️ **Storage** | **S-05** Data directory init on first run · **S-06** Migration system | ✅ S-05 · ⏳ S-06 |
-| 🔧 **Standardisation** | **CL-01** CHANGELOG.md · **CL-02** CI (GA pytest on push) · **CL-03** Auto-update skeleton | ✅ CL-01 · ✅ CL-02 · ⏳ CL-03 |
+| 🗄️ **Storage** | **S-05** Data directory init ✅ · **S-06** Migration system ✅ | ✅ Done |
+| 🔧 **Standardisation** | **CL-01** CHANGELOG.md ✅ · **CL-02** CI (GA pytest on push) ✅ · **CL-03** Auto-update skeleton ✅ | ✅ Done |
+| 🧩 **Domains** | **D-04** Hermes skills for 6 accounting orchestrators ✅ · **D-05** Domain Plugin CLI ✅ | ✅ Done |
 
-### Session N+3 — Windows Native Sprint 🪟 (v0.10.0)
+### Session N+3 — Playground Features 🎮 (v0.10.0)
+
+| Layer | Scope |
+|-------|-------|
+| 🎮 **Playground** | **P-07** Template Customizer — override parameters before running · **P-08** Flow Library — save/load/list user flows via StorageEngine |
+| 🔧 **CLI** | `hive flow save/list/load/delete` commands for user flow library |
+| 🗄️ **Storage** | FlowLibrary namespace in StorageEngine for persisting user-created flows |
+
+### Session N+4 — Windows Native Sprint 🪟
 
 | Layer | Scope |
 |-------|-------|
@@ -159,7 +168,7 @@ Instead of sequential phases, **every build session advances all 5 layers togeth
 | 🔧 **Packaging** | PyInstaller → backend.exe + MSI installer (Inno Setup) |
 | 🔄 **CI/CD** | GA workflow: test → build → sign → release to GitHub |
 
-### Session N+4 — Polish & Ship 🚀 (v1.0.0)
+### Session N+5 — Polish & Ship 🚀 (v1.0.0)
 
 | Scope |
 |-------|
@@ -228,10 +237,11 @@ flowchart LR
 
 ```
 |Phase 0-5 (Infrastructure):  ████████████████████████ 100%  (273 tests)
-|Layer 🗄️ Storage:            ██████████████████████████  90%  (S-01..S-05 done)
-|Layer 🧩 Domains (D1):      ████████████████░░░░░░░░  70%
+|Layer 🗄️ Storage:            ██████████████████████████ 100%  (S-01..S-06 done)
+|Layer 🧩 Domains (D1):      ██████████████████░░░░░░  80%  (D-04/D-05 done)
 |Layer 🎮 Playground:        ████████████████░░░░░░░░░  50%  (P-01..P-05 done)
 |Layer 🧠 Brain:             ██████████████████░░░░░░░░  40%  (B-01..B-05 done)
 |Layer 📈 Learning:          ██████████████████░░░░░░░░  40%  (L-01/L-02 done)
-|Layer 🔧 Standardisation:   ████████████████░░░░░░░░░  40%  (CL-01/CL-02 done)
+|Layer 🔧 Standardisation:   ██████████████████████████ 100%  (CL-01/02/03 done)
+|Layer 🪟 Windows Native:   ░░░░░░░░░░░░░░░░░░░░░░░░░░   0%
 ```

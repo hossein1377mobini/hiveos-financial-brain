@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.10.0] — 2026-07-14
+
+### Added
+- **P-07: Template Customizer** (`PlaygroundEngine.customize_template()`) — Load any flow template and apply user overrides (description, trigger, agent skills, memory config) via deep-merge before running
+- **P-08: Flow Library** (`src/hiveos/playground/library.py`) — Persistent CRUD storage for user-created flows via StorageEngine. `FlowLibrary` class with: `save_flow`, `load_flow`, `list_flows` (filter by user/tag, sort by date), `delete_flow`, `update_flow`, `count`
+- **Desktop Shell** (`src/hiveos/desktop/app.py`) — Phase A: Native Windows desktop window via pywebview wrapping the HiveOS dashboard. `DesktopApp` class with full window lifecycle management
+- **PyInstaller Build Script** (`build/build_exe.py`) — Phase C: One-command build producing `dist/HiveOS/HiveOS.exe` with all hidden imports, domain data, and no console window
+- **Inno Setup Installer** (`build/installer.iss`) — Phase D: MSI installer script with Windows 10+ check, desktop/startup shortcuts, Persian language support, and user data cleanup on uninstall
+- `hive desktop start` CLI command — Launch HiveOS in a native Windows window with configurable port/size/fullscreen
+- `hive desktop connect` CLI command — Open browser to an already-running dashboard
+
+### Added (optional dependencies)
+- `[desktop]` extra — `pywebview>=6.0` for the native window shell
+- `[build]` extra — `pyinstaller>=6.0` for .exe packaging
+
+### Changed
+- Version bumped from `0.9.2` to `0.10.0` in `__init__.py`, `pyproject.toml`, CLI banner, and all doc files
+- `pyproject.toml` — added optional-dependencies groups (`desktop`, `build`)
+
+### Tests
+- **436 total** — all existing tests preserved (no regressions)
+
+---
+
 ## [0.9.2] — 2026-07-14
 
 ### Added

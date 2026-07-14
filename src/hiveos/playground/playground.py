@@ -235,6 +235,114 @@ class PlaygroundEngine:
         return {"domain": domain_name, "templates": templates}
 
     # ------------------------------------------------------------------
+    # P-07: Template Customizer
+    # ------------------------------------------------------------------
+
+    def customize_template(
+        self,
+        template_name: str,
+        overrides: Optional[Dict[str, Any]] = None,
+        domain_name: str = "accounting",
+    ) -> Dict[str, Any]:
+        """Load a flow template and apply user overrides via deep merge.
+
+        *overrides* may contain:
+        - ``description`` — replace the template description
+        - ``trigger`` — merge into the trigger dict (e.g. ``{"type":
+          "cron", "pattern": "0 9 * * *"}``)
+        - ``agents`` — list of agent overrides keyed by ``id``. Each entry
+          replaces fields on the matching agent (``skills``, ``input_from``,
+          ``output``, ``action``, ``deliver`` — all optional).
+        - ``memory`` — merge into the memory section
+
+        Returns a dict with:
+        - ``template_name`` — original template filename
+        - ``customized`` — the merged flow definition (dict)
+        - ``applied_overrides`` — summary of what was changed
+        """
+        from copy import deepcopy
+
+        overrides = overrides or {}
+        applied: Dict[str, Any] = {"description_changed": False, "agents_changed": 0}
+
+        # 1. Load the template
+        flow_path = self.domains_root / domain_name / "flows" / template_name
+        if not flow_path.is_file():
+            flow_path = self.domains_root / domain_name / "flows" / f"{template_name}.yaml"
+        if not flow_path.is_file():
+            return {
+                "template_name": template_name,
+                "customized": None,
+                "error": f"Template '{template_name}' not found in domain '{domain_name}'",
+            }
+
+        data = self._load_yaml(flow_path)
+        if not isinstance(data, dict):
+            return {
+                "template_name": template_name,
+                "customized": None,
+                "error": f"Cannot parse template '{template_name}'",
+            }
+
+        merged = deepcopy(data)
+
+        # 2. Override description
+        if "description" in overrides:
+            merged["description"] = overrides["description"]
+            applied["description_changed"] = True
+
+        # 3. Override trigger
+        if "trigger" in overrides and isinstance(overrides["trigger"], dict):
+            merged_trigger = deepcopy(merged.get("trigger", {}))
+            if not isinstance(merged_trigger, dict):
+                merged_trigger = {}
+            merged_trigger.update(overrides["trigger"])
+            merged["trigger"] = merged_trigger
+            applied["trigger_changed"] = list(overrides["trigger"].keys())
+
+        # 4. Override agents (matched by id)
+        agent_overrides = overrides.get("agents", [])
+        if isinstance(agent_overrides, list):
+            override_by_id: Dict[str, dict] = {}
+            for ao in agent_overrides:
+                if isinstance(ao, dict) and "id" in ao:
+                    override_by_id[ao["id"]] = ao
+
+            existing_agents = merged.get("agents", [])
+            if isinstance(existing_agents, list):
+                for agent in existing_agents:
+                    aid = agent.get("id", "")
+                    if aid in override_by_id:
+                        override = override_by_id[aid]
+                        for key, val in override.items():
+                            if key != "id":  # don't change agent id
+                                if isinstance(val, dict) and isinstance(agent.get(key), dict):
+                                    agent[key].update(val)
+                                else:
+                                    agent[key] = val
+                        applied["agents_changed"] += 1
+
+        # 5. Override memory
+        if "memory" in overrides and isinstance(overrides["memory"], dict):
+            merged_memory = deepcopy(merged.get("memory", {}))
+            if not isinstance(merged_memory, dict):
+                merged_memory = {}
+            merged_memory.update(overrides["memory"])
+            merged["memory"] = merged_memory
+            applied["memory_changed"] = True
+
+        # 6. Optionally add user tags
+        if "tags" in overrides:
+            merged["tags"] = overrides["tags"]
+
+        return {
+            "template_name": template_name,
+            "customized": merged,
+            "applied_overrides": applied,
+            "error": None,
+        }
+
+    # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
 

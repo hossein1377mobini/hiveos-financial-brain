@@ -25,7 +25,7 @@ console = Console()
 
 BANNER = """\
 ╔══════════════════════════════════════╗
-║           HiveOS v0.9.2              ║
+║           HiveOS v0.10.0             ║
 ║    Multi-Agent Operating System      ║
 ╚══════════════════════════════════════╝"""
 
@@ -53,7 +53,7 @@ def hive(version):
     Orchestrate teams of AI agents with declarative YAML workflows.
     """
     if version:
-        rprint(Panel("[bold cyan]HiveOS v0.9.0[/bold cyan]\n"
+        rprint(Panel("[bold cyan]HiveOS v0.10.0[/bold cyan]\n"
                      "Multi-Agent Operating System", width=50))
         raise SystemExit(0)
 
@@ -2172,3 +2172,55 @@ def info():
     if result.update_available:
         console.print(f"\n[bold cyan]🚀 Upgrade:[/bold cyan] {__version__} → [bold]{result.latest_version}[/bold]")
         console.print(f"   [dim]{result.download_url}[/dim]")
+
+
+# ── Desktop Commands ──────────────────────────────────────────────────
+
+@hive.group()
+def desktop():
+    """🖥️ Open HiveOS in a native Windows desktop window."""
+    pass
+
+
+@desktop.command()
+@click.option('--port', default=9876, help='Dashboard port (default 9876)')
+@click.option('--width', default=1280, help='Window width (default 1280)')
+@click.option('--height', default=800, help='Window height (default 800)')
+@click.option('--fullscreen', is_flag=True, help='Start in fullscreen mode')
+def start(port, width, height, fullscreen):
+    """Start HiveOS desktop application — native Windows window."""
+    from ..desktop import DesktopApp
+
+    console.print("[bold cyan]🐝 HiveOS Desktop[/bold cyan]")
+    console.print(f"   Window: {width}×{height} on port {port}")
+
+    app = DesktopApp(
+        port=port,
+        width=width,
+        height=height,
+        fullscreen=fullscreen,
+        debug=False,
+    )
+    app.run()
+
+
+@desktop.command()
+def connect():
+    """Open a connection to an already-running dashboard server."""
+    import webbrowser
+
+    from ..utils.config import ConfigManager
+
+    config = ConfigManager()
+    host = config.get("dashboard_host", "127.0.0.1")
+    port = config.get("dashboard_port", 9876)
+    url = f"http://{host}:{port}"
+
+    console.print(f"[cyan]🔗 Opening dashboard at {url}[/cyan]")
+    webbrowser.open(url)
+
+
+# ── Main entry point ──────────────────────────────────────────────────
+
+if __name__ == "__main__":
+    hive()

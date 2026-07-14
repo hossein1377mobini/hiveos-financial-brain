@@ -19,8 +19,10 @@
 | Phase 6 (Playground) | ✅ Full (APIs + Canvas + Runner) | v0.8.0 |
 | Phase 7 (Brain) | ✅ Full (Engine + API + 3D Viz) | v0.8.0 |
 | Phase 8 (Learning) | ✅ Full (Logger + Analytics) | v0.8.0 |
-| Phase S (Storage) | ✅ SQLite Persistence | v0.9.0 |
-| **CL (Standardisation)** | **🏗️ CHANGELOG + CI** | **v0.9.0** |
+| Phase S (Storage) | ✅ SQLite + Migrations | v0.9.0 |
+| **CL (Standardisation)** | **✅ CHANGELOG + CI + Auto-update** | **v0.9.2** |
+| **D (Domain)** | **✅ Domain CLI + Hermes Skills** | **v0.9.1** |
+| **🪟 Desktop** | **✅ pywebview Shell + PyInstaller + MSI** | **v0.10.0** |
 
 ---
 
@@ -42,7 +44,7 @@ HiveOS is a **Multi-Agent Operating System** with 5 pillars:
 
 ---
 
-## ✅ What's Built (v0.9.0 — 379 tests)
+## ✅ What's Built (v0.10.0 — 436 tests)
 
 ### Core Infrastructure
 | Component | Test Count | Status |
@@ -84,7 +86,7 @@ HiveOS is a **Multi-Agent Operating System** with 5 pillars:
 | **L-01** Execution Logger | ✅ | Passive in-memory collection + stats + trends |
 | **L-02** Execution Analytics | ✅ | Trend analysis, bottleneck detection, failure patterns |
 
-### ✅ Phase S: Storage — SQLite Persistence (v0.9.0)
+### ✅ Phase S: Storage — SQLite Persistence (v0.9.1)
 | Task | Status | Description |
 |------|--------|-------------|
 | **S-01** StorageEngine (SQLite) | ✅ | Generic key-value store, WAL mode, thread-safe |
@@ -92,6 +94,7 @@ HiveOS is a **Multi-Agent Operating System** with 5 pillars:
 | **S-03** Learning persistence | ✅ | ExecutionLogger logs survive restarts |
 | **S-04** Playground persistence | ✅ | FlowRunner state saved/restored |
 | **S-05** Data directory init | ✅ | `~/.hiveos/data/` auto-created on first run and via `hive util init` |
+| **S-06** Migration system | ✅ | Schema versioning, auto-run pending migrations on connect |
 
 ### ✅ CL: Standardisation (v0.9.2)
 | Task | Status | Description |
@@ -99,6 +102,27 @@ HiveOS is a **Multi-Agent Operating System** with 5 pillars:
 | **CL-01** CHANGELOG.md | ✅ | Keep a Changelog format |
 | **CL-02** CI (GA pytest on push) | ✅ | `.github/workflows/test.yml` |
 | **CL-03** Auto-update skeleton | ✅ | `hive update check/info`, GitHub Releases checker |
+
+### ✅ D: Domain System (v0.9.1)
+| Task | Status | Description |
+|------|--------|-------------|
+| **D-04** Hermes skills for accounting agents | ✅ | 6 Hermes SKILL.md files for orchestrator agents |
+| **D-05** Domain Plugin CLI | ✅ | `hive domain list/info/install/remove/init` commands |
+
+### ✅ P: Playground Enhancements (v0.10.0)
+| Task | Status | Description |
+|------|--------|-------------|
+| **P-07** Template Customizer | ✅ | `PlaygroundEngine.customize_template()` — override description, trigger, agents, memory via deep-merge |
+| **P-08** Flow Library | ✅ | `FlowLibrary` — persistent CRUD for user flows via StorageEngine (save/load/list/delete/update) |
+
+### ✅ 🪟 Desktop & Build (v0.10.0)
+| Component | Status | Description |
+|-----------|--------|-------------|
+| Desktop Shell (pywebview) | ✅ | `DesktopApp` class — native Windows window wrapping the FastAPI dashboard |
+| PyInstaller .exe | ✅ | `build/build_exe.py` — one-command build to `dist/HiveOS/HiveOS.exe` |
+| MSI Installer (Inno Setup) | ✅ | `build/installer.iss` — full installer with shortcuts, Persian lang, cleanup |
+| `hive desktop start` | ✅ | Launch HiveOS in a native desktop window |
+| `hive desktop connect` | ✅ | Open browser to running dashboard |
 
 ### CLI Commands
 ```
@@ -112,24 +136,23 @@ hive
  ├── dashboard start/stop/status
  ├── workspace create/list/info/update/remove/activate member
  ├── license info/activate/deactivate/upgrade/tiers/check
- └── util init/info
+ ├── util init/info
+ ├── domain list/info/install/remove/init
+ ├── update check/info
+ └── desktop start/connect
 ```
 
 ---
 
-## 🎯 Next: Phase D1 — Accounting Domain + Storage Improvements
+## 🎯 Next: v0.11.0 — Deepening Domains & Production Polish
 
 ### What to Build Next
 
 | Priority | Task | Layer | Status |
 |----------|------|-------|--------|
-| 🟡 | **P-07** Template Customizer | 🎮 Playground | ⏳ |
-| 🟡 | **P-08** Flow Library (save/share user flows) | 🎮 Playground | ⏳ |
-| 🟢 | **D-04** Hermes skills for accounting agents | 🧩 Domains | ⏳ |
-| 🟢 | **D-05** Domain Plugin CLI (`hive domain list/info/install`) | 🧩 Domains | ⏳ |
-| 🟢 | **S-06** Migration system for StorageEngine | 🗄️ Storage | ⏳ |
-| 🟢 | **CL-03** Auto-update skeleton | 🔧 Standardisation | ✅ |
-| ⬜ | **v0.10.0** Windows Native Sprint (Tauri shell) | 🪟 All | ⏳ |
+| 🟢 | D2 Domain Registry (discover/shared) | 🧩 Domains | ⏳ |
+| 🟢 | L-03 Pattern Recognition → template suggestions | 📈 Learning | ⏳ |
+| 🟡 | Windows signing (Authenticode) + CI/CD release | 🪟 All | ⏳ |
 
 ---
 
@@ -185,8 +208,9 @@ git add -A && git commit -m "..." && git push origin main
 | **Next** | **v0.8.0** | **Playground Canvas + Runner + Gates UI + Brain 3D + Learning Analytics** |
 | **2026-07-14** | **v0.8.0** | **Canvas+Viz Sprint: P-04 Flow Canvas, P-05 Runner+WS, P-06 Gates UI, B-05 3D Neural View, L-02 Analytics (366 tests)** |
 | **2026-07-14** | **v0.9.1** | **S-05 data dir init + CL-02 CI + version fixes + S-06 migrations + D-05 domain CLI + D-04 Hermes skills (413 tests)** |
-| **Next** | **v0.9.2** | **CL-03 Auto-update skeleton** |
-| **Next** | **v0.10.0** | **Windows Native Sprint (Tauri shell)** |
+| **2026-07-14** | **v0.9.2** | **CL-03 Auto-update skeleton: UpdateChecker, hive update check/info (436 tests)** |
+| **2026-07-14** | **v0.10.0** | **P-07 Template Customizer · P-08 Flow Library · Desktop Shell (pywebview) · PyInstaller · MSI Installer (436 tests)** |
+| **Now** | **v0.11.0** | **D2 Domain Registry · L-03 Pattern Recognition · Code signing** |
 
 ---
 
@@ -228,12 +252,12 @@ HiveOS will ship as a **standard Windows desktop application** — installable v
 ### Standards Checklist
 
 - [x] **Semantic Versioning** (vX.Y.Z in pyproject.toml)
-- [x] **Automated Tests** (366 pytest tests)
-- [ ] **CHANGELOG.md** per release
+- [x] **Automated Tests** (436 pytest tests)
+- [x] **CHANGELOG.md** per release
 - [x] **GitHub** (repo pushed)
-- [ ] **GitHub Actions CI** (pytest on push)
-- [ ] **Auto-updater** (checks GitHub Releases on startup)
-- [ ] **Windows MSI installer**
+- [x] **GitHub Actions CI** (pytest on push)
+- [x] **Auto-updater** (checks GitHub Releases on startup)
+- [x] **Windows MSI installer** (Inno Setup — `build/installer.iss`)
 - [ ] **Code signing** (Authenticode)
 - [ ] **Beautiful desktop UI** (Tauri + React/Tailwind)
 - [ ] **Persistent data** across restarts (SQLite — ✅ v0.9.0)
