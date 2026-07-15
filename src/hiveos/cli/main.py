@@ -21,11 +21,13 @@ from ..mothership.communication_bus import MessageType, MessagePriority
 from ..mothership.task_router import RouteStrategy
 from ..rbac import RBACManager, User, Permission, Resource, Action
 
+from hiveos import __version__ as HIVEOS_VERSION
+
 console = Console()
 
-BANNER = """\
+BANNER = f"""\
 ╔══════════════════════════════════════╗
-║           HiveOS v0.10.0             ║
+║           HiveOS v{HIVEOS_VERSION:<18}║
 ║    Multi-Agent Operating System      ║
 ╚══════════════════════════════════════╝"""
 
@@ -53,7 +55,7 @@ def hive(version):
     Orchestrate teams of AI agents with declarative YAML workflows.
     """
     if version:
-        rprint(Panel("[bold cyan]HiveOS v0.10.0[/bold cyan]\n"
+        rprint(Panel(f"[bold cyan]HiveOS v{HIVEOS_VERSION}[/bold cyan]\n"
                      "Multi-Agent Operating System", width=50))
         raise SystemExit(0)
 
@@ -2240,6 +2242,169 @@ def verify():
         table.add_row(iss["domain"], sev_style, iss["message"])
     console.print(table)
     console.print(f"\n[yellow]Total issues: {len(issues)} ({sum(1 for i in issues if i['severity'] == 'error')} errors)[/yellow]")
+
+
+# ── Learning Commands ──────────────────────────────────────────────────
+
+@hive.group()
+def learning():
+    """📈 Execution analytics and pattern recognition — analyse runs, detect patterns, get template suggestions."""
+    pass
+
+
+@learning.command()
+def summary():
+    """📊 Show an executive analytics summary of all execution data."""
+    from ..learning import ExecutionLogger
+    from ..learning.analytics import AnalyticsEngine
+    from ..storage import StorageEngine
+    from rich.table import Table
+    from rich.panel import Panel
+
+    storage = StorageEngine()
+    logger = ExecutionLogger(storage=storage)
+    analytics = AnalyticsEngine(logger)
+
+    s = analytics.summary()
+    summary_data = s.get("summary", {})
+
+    panel = Panel(
+        f"[bold cyan]📊 Learning Analytics Summary[/bold cyan]\n\n"
+        f"  • [bold]Executions (24h):[/bold] {summary_data.get('total_executions_24h', 0)}\n"
+        f"  • [bold]Avg Success Rate:[/bold] {summary_data.get('avg_success_rate_24h', 0)}%\n"
+        f"  • [bold]Unique Flows:[/bold] {summary_data.get('unique_flows', 0)}\n"
+        f"  • [bold]Bottlenecks Found:[/bold] {summary_data.get('bottleneck_count', 0)}\n"
+        f"  • [bold]Anomalies Detected:[/bold] {summary_data.get('anomaly_count', 0)}\n"
+        f"  • [bold]Template Suggestions:[/bold] {summary_data.get('suggested_templates', 0)}",
+        width=60,
+    )
+    console.print(panel)
+
+    # Top flows
+    top_flows = s.get("top_flows", [])
+    if top_flows:
+        table = Table(title="🏆 Top Flows", box=None)
+        table.add_column("Flow", style="cyan")
+        table.add_column("Runs", style="yellow")
+        table.add_column("Success Rate", style="green")
+        table.add_column("Avg Duration", style="dim")
+        for f in top_flows[:5]:
+            table.add_row(
+                f["flow_name"],
+                str(f["total_runs"]),
+                f"{f['success_rate']}%",
+                f"{f['avg_duration_ms']}ms",
+            )
+        console.print(table)
+
+
+@learning.command()
+def patterns():
+    """🔍 Show frequently occurring agent execution sequences."""
+    from ..learning import ExecutionLogger
+    from ..learning.analytics import AnalyticsEngine
+    from ..storage import StorageEngine
+    from rich.table import Table
+
+    storage = StorageEngine()
+    logger = ExecutionLogger(storage=storage)
+    analytics = AnalyticsEngine(logger)
+
+    sequences = analytics.frequent_sequences(min_occurrences=1)
+    if not sequences:
+        console.print("[yellow]📭 No execution patterns found yet. Run some flows first.[/yellow]")
+        return
+
+    table = Table(title="🔍 Frequent Execution Patterns")
+    table.add_column("#", style="dim")
+    table.add_column("Agent Sequence", style="cyan")
+    table.add_column("Occurrences", style="yellow")
+    table.add_column("Suggest Template?", style="green")
+
+    for i, seq in enumerate(sequences, 1):
+        seq_str = " → ".join(seq["sequence"])
+        suggest = "✅ Yes" if seq["suggest_as_template"] else "—"
+        table.add_row(str(i), seq_str, str(seq["occurrences"]), suggest)
+    console.print(table)
+
+
+@learning.command()
+def suggest():
+    """💡 Get template suggestions based on execution patterns."""
+    from ..learning import ExecutionLogger
+    from ..learning.analytics import AnalyticsEngine
+    from ..storage import StorageEngine
+    from rich.table import Table
+
+    storage = StorageEngine()
+    logger = ExecutionLogger(storage=storage)
+    analytics = AnalyticsEngine(logger)
+
+    suggestions = analytics.suggested_templates()
+    if not suggestions:
+        console.print("[yellow]💡 No template suggestions yet. Need at least 3 similar executions.[/yellow]")
+        console.print("   Run some flows first, then check here for automated suggestions.")
+        return
+
+    table = Table(title="💡 Suggested Templates")
+    table.add_column("Suggested Name", style="cyan")
+    table.add_column("Agent IDs", style="yellow")
+    table.add_column("Occurrences", style="white")
+    table.add_column("Confidence", style="green")
+
+    for s in suggestions:
+        confidence_color = "green" if s["confidence"] == "high" else "yellow"
+        table.add_row(
+            s["suggested_name"],
+            ", ".join(s["agent_ids"]),
+            str(s["occurrences"]),
+            f"[{confidence_color}]{s['confidence']}[/{confidence_color}]",
+        )
+    console.print(table)
+
+
+@learning.command()
+def anomalies():
+    """⚠️ Show anomalous executions with outlier durations."""
+    from ..learning import ExecutionLogger
+    from ..learning.analytics import AnalyticsEngine
+    from ..storage import StorageEngine
+    from rich.table import Table
+
+    storage = StorageEngine()
+    logger = ExecutionLogger(storage=storage)
+    analytics = AnalyticsEngine(logger)
+
+    result = analytics.anomalies()
+    anomalies_list = result.get("anomalies", [])
+    if not anomalies_list:
+        console.print("[green]✅ No anomalies detected.[/green]")
+        console.print(f"   Threshold: {result.get('threshold_ms', 0)}ms "
+                      f"(mean: {result.get('mean_duration_ms', 0)}ms, "
+                      f"std: {result.get('std_dev_ms', 0)}ms)")
+        return
+
+    console.print(f"[yellow]⚠️ {result.get('total_anomalies', len(anomalies_list))} anomalies found[/yellow]")
+    console.print(f"   Threshold: {result.get('threshold_ms', 0)}ms "
+                  f"(mean: {result.get('mean_duration_ms', 0)}ms, "
+                  f"std: {result.get('std_dev_ms', 0)}ms)\n")
+
+    table = Table(title="⚠️ Anomalies")
+    table.add_column("Flow", style="cyan")
+    table.add_column("Agent", style="yellow")
+    table.add_column("Duration", style="white")
+    table.add_column("Status", style="green")
+    table.add_column("Z-Score", style="dim")
+
+    for a in anomalies_list[:10]:
+        table.add_row(
+            a.get("flow_name", ""),
+            a.get("agent_id", ""),
+            f"{a['duration_ms']}ms",
+            a.get("status", ""),
+            str(a.get("z_score", 0)),
+        )
+    console.print(table)
 
 
 # ── Update Commands ────────────────────────────────────────────────────

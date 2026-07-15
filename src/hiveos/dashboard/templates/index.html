@@ -185,6 +185,7 @@
   .grid-2 { grid-template-columns: repeat(2, 1fr); }
   .grid-3 { grid-template-columns: repeat(3, 1fr); }
   .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid-5 { grid-template-columns: repeat(5, 1fr); }
   .card {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -568,7 +569,7 @@ agents:
       <h2>📈 Learning & Analytics</h2>
       <div class="last-updated" id="learning-header"></div>
     </div>
-    <div class="grid grid-4 mb-2" id="learning-summary-cards"></div>
+    <div class="grid grid-5 mb-2" id="learning-summary-cards"></div>
     <div class="grid grid-2">
       <div class="card">
         <div class="card-header"><h3>🏆 Top Flows</h3></div>
@@ -592,6 +593,13 @@ agents:
     <div class="card mt-2">
       <div class="card-header"><h3>🧩 Suggested Templates</h3></div>
       <div id="analytics-templates-body" class="empty-state"><div class="icon">🧩</div><div>Not enough data for suggestions</div></div>
+    </div>
+    <div class="card mt-2">
+      <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+        <h3>🔍 Pattern Recognition</h3>
+        <span class="text-muted" style="font-size:11px">Agent execution sequences</span>
+      </div>
+      <div id="analytics-patterns-body" class="empty-state"><div class="icon">🔍</div><div>Not enough execution data for pattern detection</div></div>
     </div>
   </section>
 
@@ -1039,13 +1047,14 @@ function initBrain3D() {
 
 // ─── Learning / Analytics ───
 async function loadAnalytics() {
-  const [summary, flows, bottlenecks, anomalies, templates, timeseries] = await Promise.all([
+  const [summary, flows, bottlenecks, anomalies, templates, timeseries, patterns] = await Promise.all([
     api(BASE+'/api/learning/analytics/summary'),
     api(BASE+'/api/learning/analytics/flows?min_runs=1'),
     api(BASE+'/api/learning/analytics/bottlenecks'),
     api(BASE+'/api/learning/analytics/anomalies'),
     api(BASE+'/api/learning/analytics/templates'),
     api(BASE+'/api/learning/analytics/timeseries?hours=24&interval=hour'),
+    api(BASE+'/api/learning/analytics/patterns?min_occurrences=1'),
   ]);
   document.getElementById('learning-header').textContent = new Date().toLocaleString();
   const s = summary?.summary || {};
@@ -1054,6 +1063,7 @@ async function loadAnalytics() {
     {label:'Avg Success Rate', value:(s.avg_success_rate_24h||0)+'%', cls:'text-green'},
     {label:'Bottlenecks', value:s.bottleneck_count||0, cls:'text-yellow'},
     {label:'Template Ideas', value:s.suggested_templates||0, cls:'text-accent'},
+    {label:'Patterns', value:s.pattern_count||0, cls:'text-blue'},
   ].map(s => '<div class="card"><div class="card-value '+s.cls+'">'+s.value+'</div><div class="card-label">'+s.label+'</div></div>').join('');
   const flowList = flows?.flows || [];
   document.getElementById('analytics-flows-body').innerHTML = flowList.length
@@ -1083,6 +1093,25 @@ async function loadAnalytics() {
       '<div><strong>'+t.suggested_name+'</strong><br><span class="text-muted">'+t.occurrences+' occurrences · '+t.confidence+' confidence</span></div>'+
       '<span class="badge badge-accent">Suggest as template</span></div>').join('')
     : '<div class="empty-state"><div class="icon">🧩</div><div>Not enough data for template suggestions — run more flows</div></div>';
+  // ── Pattern Recognition ──
+  const pats = patterns?.patterns || [];
+  const patternsBody = document.getElementById('analytics-patterns-body');
+  if (patternsBody) {
+    patternsBody.innerHTML = pats.length
+      ? '<table style="width:100%;border-collapse:collapse;font-size:13px">' +
+        '<thead><tr><th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);color:var(--text-muted)">#</th>' +
+        '<th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);color:var(--text-muted)">Agent Sequence</th>' +
+        '<th style="text-align:center;padding:6px 8px;border-bottom:1px solid var(--border);color:var(--text-muted)">Count</th>' +
+        '<th style="text-align:center;padding:6px 8px;border-bottom:1px solid var(--border);color:var(--text-muted)">Template?</th></tr></thead><tbody>' +
+        pats.map((p, i) => '<tr>' +
+          '<td style="padding:6px 8px;color:var(--text-muted)">'+(i+1)+'</td>' +
+          '<td style="padding:6px 8px"><code style="font-size:12px;background:var(--bg);padding:2px 6px;border-radius:4px">'+p.sequence.join(' → ')+'</code></td>' +
+          '<td style="padding:6px 8px;text-align:center;color:var(--yellow);font-weight:600">'+p.occurrences+'</td>' +
+          '<td style="padding:6px 8px;text-align:center">'+(p.suggest_as_template ? '<span class="badge badge-green" style="font-size:10px">✅ Suggest</span>' : '<span style="color:var(--text-muted)">—</span>')+'</td>' +
+          '</tr>').join('') +
+        '</tbody></table>'
+      : '<div class="empty-state"><div class="icon">🔍</div><div>No execution patterns yet — run some flows to see patterns</div></div>';
+  }
 }
 
 // ─── Legacy pages ───

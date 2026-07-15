@@ -300,7 +300,7 @@ class AnalyticsEngine:
         ]
 
         if not durations:
-            return {"anomalies": [], "threshold_ms": 0}
+            return {"anomalies": [], "threshold_ms": 0, "mean_duration_ms": 0, "std_dev_ms": 0, "total_anomalies": 0}
 
         mean = sum(durations) / len(durations)
         variance = sum((d - mean) ** 2 for d in durations) / len(durations)
@@ -359,6 +359,7 @@ class AnalyticsEngine:
                 "bottleneck_count": len(bottlenecks.get("slowest_agents", [])),
                 "anomaly_count": anomalies.get("total_anomalies", 0),
                 "suggested_templates": len(self.suggested_templates()),
+                "pattern_count": len(self.frequent_sequences(min_occurrences=1)),
             },
             "top_flows": perf[:5],
             "top_bottlenecks": bottlenecks,
