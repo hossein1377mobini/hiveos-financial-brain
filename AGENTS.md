@@ -24,6 +24,7 @@
 | **D (Domain)** | **✅ Domain CLI + Hermes Skills** | **v0.9.1** |
 | **🪟 Desktop** | **✅ pywebview Shell + PyInstaller + MSI** | **v0.10.0** |
 | **🪟 D2 Domain Registry** | **✅ StorageEngine-backed + API + UI + CLI** | **v0.11.0** |
+| **🌐 PWA** | **✅ Installable dashboard (manifest + SW + icons)** | **v0.11.1** |
 
 ---
 

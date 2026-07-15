@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Optional
 
 import uvicorn
 from fastapi import FastAPI, Request, Response, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from pydantic import BaseModel
 from rich.console import Console
 
@@ -208,6 +208,36 @@ class DashboardApp:
             if html_path.exists():
                 return html_path.read_text(encoding="utf-8")
             return HTMLResponse("<h1>HiveOS Dashboard</h1><p>Template not found.</p>")
+
+        # ── PWA (Progressive Web App) Static Files ────────────────
+
+        @app.get("/manifest.json")
+        async def pwa_manifest():
+            """Serve Web App Manifest."""
+            path = TEMPLATES / "manifest.json"
+            if path.exists():
+                return FileResponse(path, media_type="application/manifest+json")
+            return JSONResponse({"error": "not found"}, status_code=404)
+
+        @app.get("/sw.js")
+        async def pwa_service_worker():
+            """Serve Service Worker."""
+            path = TEMPLATES / "sw.js"
+            if path.exists():
+                return FileResponse(path, media_type="application/javascript")
+            return JSONResponse({"error": "not found"}, status_code=404)
+
+        @app.get("/icons/{filename}")
+        async def pwa_icons(filename: str):
+            """Serve PWA icon files."""
+            path = TEMPLATES / "icons" / filename
+            if path.exists():
+                ext = path.suffix.lower()
+                media_types = {".png": "image/png", ".svg": "image/svg+xml", ".ico": "image/x-icon"}
+                return FileResponse(path, media_type=media_types.get(ext, "application/octet-stream"))
+            return JSONResponse({"error": "not found"}, status_code=404)
+
+        # ── API Routes ────────────────────────────────────────────
 
         @app.get("/api/overview")
         async def overview():

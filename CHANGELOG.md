@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.11.1] — 2026-07-14
+
+### Added
+- **PWA (Progressive Web App)** — HiveOS Dashboard is now installable on any device:
+  - `manifest.json` — install to home screen on Android/iOS/Desktop
+  - `Service Worker` — cache-first for static assets, network-first for API, offline fallback
+  - Custom HiveOS icons (192×192, 512×512) with golden hexagon design
+  - Apple meta tags for iOS home screen support
+  - FastAPI routes for `/manifest.json`, `/sw.js`, `/icons/{filename}`
+
+### Changed
+- Version bumped from `0.11.0` to `0.11.1` in manifest.json, sw.js
+
+---
+
 ## [0.11.0] — 2026-07-14
 
 ### Added
