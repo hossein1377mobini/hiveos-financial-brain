@@ -17,6 +17,7 @@ import os
 import shutil
 import subprocess
 import sys
+import argparse
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -38,8 +39,12 @@ def clean():
     print("🧹 Cleaned build artifacts.")
 
 
-def build_exe():
-    """Run PyInstaller to produce HiveOS.exe."""
+def build_exe(ci_mode: bool = False):
+    """Run PyInstaller to produce HiveOS.exe.
+
+    Args:
+        ci_mode: If True, skip --windowed flag (CI has no display).
+    """
     if not shutil.which("pyinstaller"):
         print(
             "❌ PyInstaller not found. Install with: uv pip install pyinstaller",
@@ -88,8 +93,11 @@ def build_exe():
         "--hidden-import=uvicorn.protocols.http.auto",
         "--hidden-import=websockets",
         "--collect-all=hiveos",
-        "--windowed",  # No console window for end users
+        "--windowed",  # No console window for end users (skip with --ci)
     ]
+
+    if ci_mode:
+        cmd = [c for c in cmd if c != "--windowed"]
 
     if Path(icon_path).exists():
         cmd.append(f"--icon={icon_path}")
@@ -175,6 +183,10 @@ def make_icon():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Build HiveOS executable")
+    parser.add_argument("--ci", action="store_true", help="CI mode (skip --windowed)")
+    args = parser.parse_args()
+
     make_icon()
     clean()
-    build_exe()
+    build_exe(ci_mode=args.ci)

@@ -168,7 +168,7 @@ hive
 | Priority | Task | Layer | Status |
 |----------|------|-------|--------|
 | 🟢 | L-03 Pattern Recognition → template suggestions | 📈 Learning | ✅ v0.11.0 |
-| 🟡 | Windows signing (Authenticode) + CI/CD release | 🪟 All | ⏳ |
+| 🟡 | Windows signing (Authenticode) + CI/CD release | 🪟 All | 🏗️ Done (needs cert) |
 
 ---
 

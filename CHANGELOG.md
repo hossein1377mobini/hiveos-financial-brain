@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.11.0] — 2026-07-14
+
+### Added
+- **D2: Domain Registry** (`src/hiveos/domain/registry.py`) — StorageEngine-backed catalog with scan, search, install, remove, dependency resolution, integrity verification, and learning/suggestions. 11 REST API endpoints, Desktop UI cards grid with detail panel, and CLI commands.
+- **L-03: Pattern Recognition** — `hive learning summary|patterns|suggest|anomalies` CLI commands. Learning UI now shows Pattern Recognition table with agent execution sequences, occurrence counts, and template suggestions. Patterns counter in summary cards.
+- **Dynamic version banner** — CLI banner now reads from `__version__` instead of hardcoded string.
+- **CI/CD Release Pipeline** — `release.yml` now uses `build/build_exe.py --ci` (single source of truth).
+- **Code Signing documentation** (`docs/CODE_SIGNING.md`) — Azure Key Vault, signtool, self-signed options.
+- **Commented signing step** in `release.yml` — ready to uncomment when a certificate is available.
+
+### Changed
+- Version bumped from `0.10.0` to `0.11.0` in `__init__.py`, `pyproject.toml`, `build/installer.iss`, and CLI banner.
+- `build/build_exe.py` — added `--ci` flag (skips `--windowed` for headless CI).
+
+### Fixed
+- `analytics.anomalies()` — empty edgecase now returns `total_anomalies`, `mean_duration_ms`, `std_dev_ms`.
+- `Release.yml` — consolidated to single build script, cleaner artifact paths.
+
+### Tests
+- **436+ total** — all existing tests preserved, all API endpoints verified (200 OK).
+
+---
+
 ## [0.10.0] — 2026-07-14
 
 ### Added

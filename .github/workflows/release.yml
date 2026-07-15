@@ -20,20 +20,15 @@ jobs:
           python-version: '3.11'
 
       - name: Install HiveOS + build deps
-        run: pip install -e . pyinstaller pywebview
+        run: pip install -e . pyinstaller
         shell: pwsh
 
-      - name: Build .exe (PyInstaller)
+      - name: Build .exe via build_exe.py (CI mode)
         shell: pwsh
         run: |
-          pyinstaller --noconfirm --clean --onedir --name=HiveOS `
-            --distpath=dist --workpath=build\pyinstaller --specpath=build `
-            --exclude-module=pythoncom --exclude-module=pywin32 `
-            --collect-all=hiveos `
-            --add-data="domains;domains" `
-            src\hiveos\desktop\app.py
-          Write-Host "PyInstaller exit code: $LASTEXITCODE"
-          if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed" }
+          python build/build_exe.py --ci
+          Write-Host "build_exe.py exit code: $LASTEXITCODE"
+          if ($LASTEXITCODE -ne 0) { throw "build_exe.py failed" }
 
       - name: Verify build
         shell: pwsh
@@ -61,6 +56,16 @@ jobs:
           Get-ChildItem dist\ -Filter "HiveOS-Setup-*" | ForEach-Object {
             Write-Host "✅ MSI: $($_.Name) ($([math]::Round($_.Length/1MB,1)) MB)"
           }
+
+      # Optional: Code Signing — uncomment when you have a certificate
+      # See docs/CODE_SIGNING.md for setup instructions
+      # - name: Sign executables
+      #   shell: pwsh
+      #   run: |
+      #     signtool sign /fd SHA256 /a /tr http://timestamp.digicert.com /td SHA256 `
+      #       dist\HiveOS\HiveOS.exe
+      #     signtool sign /fd SHA256 /a /tr http://timestamp.digicert.com /td SHA256 `
+      #       dist\HiveOS-Setup-*.exe
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
