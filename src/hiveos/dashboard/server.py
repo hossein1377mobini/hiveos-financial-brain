@@ -237,6 +237,25 @@ class DashboardApp:
                 return FileResponse(path, media_type=media_types.get(ext, "application/octet-stream"))
             return JSONResponse({"error": "not found"}, status_code=404)
 
+        # ── Playground SPA Routes ─────────────────────────────────
+        # Serve static assets for the React playground UI
+        from fastapi.staticfiles import StaticFiles
+        playground_static = TEMPLATES / "playground" / "assets"
+        if playground_static.exists():
+            app.mount("/playground/assets", StaticFiles(directory=str(playground_static)), name="playground_assets")
+
+        @app.get("/playground", response_class=HTMLResponse)
+        @app.get("/playground/{path:path}", response_class=HTMLResponse)
+        async def playground_spa(path: str = ""):
+            """Serve the React-based Playground SPA (catch-all)."""
+            # Don't interfere with API calls
+            if path and path.startswith("api/"):
+                return JSONResponse({"error": "not found"}, status_code=404)
+            html_path = TEMPLATES / "playground" / "index.html"
+            if html_path.exists():
+                return html_path.read_text(encoding="utf-8")
+            return HTMLResponse("<h1>Playground not built yet</h1><p>Run `cd playground-ui && npx vite build`</p>")
+
         # ── API Routes ────────────────────────────────────────────
 
         @app.get("/api/overview")
@@ -670,6 +689,43 @@ class DashboardApp:
             """List domain flow templates."""
             result = self.playground.list_templates(domain)
             return result
+
+        # ── Component API (Advanced Playground) ──────────────────────
+
+        @app.get("/api/playground/components/types")
+        async def component_types():
+            """List all supported flow component types with metadata."""
+            from ..dsl import FlowDSL
+            return {"types": FlowDSL.get_component_types()}
+
+        @app.post("/api/playground/components/validate")
+        async def validate_components(data: dict):
+            """Validate a component-based flow definition."""
+            from ..dsl import FlowDSL
+            errors = FlowDSL.validate_structure(data)
+            return {
+                "valid": len(errors) == 0,
+                "errors": errors,
+                "has_components": "components" in data,
+            }
+
+        @app.post("/api/playground/components/execute")
+        async def execute_components(data: dict):
+            """Execute a component-based flow and return results."""
+            from ..dsl import FlowDSL
+            from ..playground import ComponentEngine, ExecutionContext
+
+            flow = FlowDSL.parse(data)
+            ctx = ExecutionContext(flow)
+            engine = ComponentEngine()
+
+            import asyncio
+            result = await engine.execute(flow, ctx)
+            return {
+                "status": ctx.status,
+                "result": result.to_dict(),
+                "scope": {k: str(v)[:200] for k, v in ctx.scope.items()},
+            }
 
         # ── Brain API — Event Stream ────────────────────────────────
 

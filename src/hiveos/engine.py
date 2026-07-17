@@ -12,7 +12,7 @@ import subprocess
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
-from .dsl import Flow, Agent, FlowDSL
+from .dsl import Flow, SimpleAgent as Agent, FlowDSL
 from .utils.knowledge import KnowledgeManager
 
 console = Console()

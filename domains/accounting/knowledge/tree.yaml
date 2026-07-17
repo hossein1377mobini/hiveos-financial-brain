@@ -17,6 +17,7 @@
 #   - tags: برچسب‌های جستجو
 #   - agent_id: ایجنت پیش‌فرضی که این گره را پوشش می‌دهد
 #   - priority: اولویت برای پیاده‌سازی (1=فوری, 2=مهم, 3=آینده)
+#   - doc_dir: مسیر دایرکتوری اسناد مرتبط در docs/06-Research/accounting/
 # ============================================================
 
 version: "1.0.0"
@@ -36,6 +37,7 @@ nodes:
     description:
       fa: "ثبت، طبقه‌بندی و گزارش رویدادهای مالی بر اساس استانداردهای حسابداری"
       en: "Recording, classifying, and reporting financial events per accounting standards"
+    doc_dir: "01-اصول-حسابداری, 10-صورتهای-مالی"
     children:
 
       # ── A1: Transaction Recording ──

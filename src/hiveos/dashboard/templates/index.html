@@ -378,24 +378,32 @@
   .flow-canvas-toolbox {
     position: absolute;
     left: 10px;
+    right: 10px;
     top: 10px;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: 4px;
     z-index: 2;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
   }
+  .flow-canvas-toolbox::-webkit-scrollbar { height: 4px; }
+  .flow-canvas-toolbox::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
   .flow-canvas-toolbox .tool {
-    padding: 8px 12px;
-    background: var(--bg-card);
+    padding: 6px 10px;
+    background: var(--bg-glass);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     cursor: grab;
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-primary);
     text-align: center;
     user-select: none;
     backdrop-filter: blur(8px);
     transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .flow-canvas-toolbox .tool:hover { background: var(--bg-card-hover); border-color: var(--accent); transform: translateX(2px); }
   .canvas-run-bar {
@@ -490,9 +498,16 @@
         <div class="flow-canvas-wrap" id="flow-canvas-wrap">
           <div class="flow-canvas-toolbox">
             <div class="tool" draggable="true" data-type="agent">🤖 Agent</div>
-            <div class="tool" draggable="true" data-type="gate">🔒 Gate</div>
-            <div class="tool" draggable="true" data-type="trigger">⚡ Trigger</div>
             <div class="tool" draggable="true" data-type="condition">🔀 Condition</div>
+            <div class="tool" draggable="true" data-type="switch">🔀 Switch</div>
+            <div class="tool" draggable="true" data-type="loop">🔄 Loop</div>
+            <div class="tool" draggable="true" data-type="parallel">⚡ Parallel</div>
+            <div class="tool" draggable="true" data-type="join">🔗 Join</div>
+            <div class="tool" draggable="true" data-type="timer">⏱ Timer</div>
+            <div class="tool" draggable="true" data-type="subflow">🔽 Subflow</div>
+            <div class="tool" draggable="true" data-type="transform">🔧 Transform</div>
+            <div class="tool" draggable="true" data-type="gate">🔒 Gate</div>
+            <div class="tool" draggable="true" data-type="error_handler">🛡 Error</div>
           </div>
           <canvas id="flow-canvas" style="width:100%;height:100%;display:block;"></canvas>
         </div>
@@ -500,6 +515,7 @@
           <button class="btn btn-accent" onclick="runFlowFromCanvas()">▶ Run Flow</button>
           <button class="btn btn-blue" onclick="clearCanvas()">🗑 Clear</button>
           <button class="btn btn-ghost" onclick="loadTemplate()">📋 Load Template</button>
+          <button class="btn btn-ghost" onclick="loadComponentExample()">🔧 Load Component Flow</button>
         </div>
       </div>
       <div class="card">
@@ -518,6 +534,7 @@ agents:
         <div class="flex gap-2 mt-2 flex-wrap">
           <button class="btn btn-accent" onclick="runYamlFlow()">▶ Run from YAML</button>
           <button class="btn btn-green" onclick="validateYaml()">🔍 Validate</button>
+          <button class="btn btn-accent" onclick="validateComponentYaml()">🔀 Validate Components</button>
           <button class="btn btn-ghost" onclick="fetchTemplates()">📋 Browse Templates</button>
         </div>
         <div id="yaml-result" class="mt-2 text-muted" style="font-size:12px;"></div>
@@ -812,7 +829,7 @@ function initFlowCanvas() {
       ctx.font = '11px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(n.label, n.x, n.y + 40);
-      const icons = {agent: '🤖', gate: '🔒', trigger: '⚡', condition: '🔀'};
+      const icons = {agent: '🤖', gate: '🔒', trigger: '⚡', condition: '🔀', switch: '🔀', loop: '🔄', parallel: '⚡', join: '🔗', timer: '⏱', subflow: '🔽', transform: '🔧', error_handler: '🛡'};
       ctx.font = '16px sans-serif';
       ctx.fillText(icons[n.type] || '●', n.x, n.y + 6);
     }
@@ -826,7 +843,7 @@ function initFlowCanvas() {
     for (const n of window._canvasNodes) {
       if (Math.sqrt((x - n.x)**2 + (y - n.y)**2) < 24) return;
     }
-    const types = ['agent', 'gate', 'trigger', 'condition'];
+    const types = ['agent', 'condition', 'switch', 'loop', 'parallel', 'join', 'timer', 'subflow', 'transform', 'gate', 'error_handler'];
     const type = types[Math.floor(Math.random() * types.length)];
     const label = type.charAt(0).toUpperCase() + type.slice(1) + '-' + (window._canvasNodes.length + 1);
     window._canvasNodes.push({x, y, type, label, id: 'node-' + Date.now()});
@@ -850,26 +867,64 @@ window.addEventListener('resize', () => {
 });
 function clearCanvas() { window._canvasNodes = []; window._canvasEdges = []; }
 function loadTemplate() {
-  document.getElementById('flow-yaml-editor').value = `name: "Financial Close"
+  document.getElementById('flow-yaml-editor').value = 'name: "Financial Close"\nversion: "1.0.0"\ndescription: "Complete period-end financial close workflow"\ndomain: accounting\ntrigger:\n  type: manual\nagents:\n  - id: financial-recorder\n    name: "Financial Recorder"\n    skills: ["journal-entry", "reconciliation"]\n    depends_on: []\n  - id: financial-reporter\n    name: "Financial Reporter"\n    skills: ["financial-statements"]\n    depends_on: ["financial-recorder"]\n  - id: financial-orchestrator\n    name: "Financial Orchestrator"\n    skills: ["review", "approve"]\n    depends_on: ["financial-reporter"]';
+}
+
+// ── Component-based flow helpers ─────────────────────────────────
+function loadComponentExample() {
+  document.getElementById('flow-yaml-editor').value = `name: "Smart Close with Validation"
 version: "1.0.0"
-description: "Complete period-end financial close workflow"
-domain: accounting
+description: "Period-end close with condition, retry, parallel"
 trigger:
   type: manual
-agents:
-  - id: financial-recorder
-    name: "Financial Recorder"
-    skills: ["journal-entry", "reconciliation"]
-    depends_on: []
-  - id: financial-reporter
-    name: "Financial Reporter"
-    skills: ["financial-statements"]
-    depends_on: ["financial-recorder"]
-  - id: financial-orchestrator
-    name: "Financial Orchestrator"
-    skills: ["review", "approve"]
-    depends_on: ["financial-reporter"]`;
+components:
+  - id: recorder
+    type: agent
+    ref: financial-recorder
+    label: "Record Transactions"
+  - id: validator
+    type: condition
+    expression: "{{outputs.recorder.status}} == success"
+    branches:
+      true:
+        - id: reporter
+          type: agent
+          ref: financial-reporter
+          label: "Generate Reports"
+        - id: notify
+          type: agent
+          ref: notification-sender
+          label: "Send Report"
+      false:
+        - id: retry-loop
+          type: loop
+          label: "Retry (max 3)"
+          until: "{{outputs.recorder.status}} == success"
+          max_iterations: 3
+          body:
+            - id: fix-records
+              type: agent
+              ref: financial-recorder
+              label: "Fix & Retry"
+        - id: escalate
+          type: agent
+          ref: escalation-manager
+          label: "Escalate Error"
+  - id: error-handler
+    type: error_handler
+    label: "Error Handler"
+    on_ids: [recorder, reporter]
+    action: retry
+    max_retries: 2`;
 }
+async function validateComponentYaml() {
+  const yaml = document.getElementById('flow-yaml-editor').value;
+  const result = await api(BASE+'/api/playground/components/validate', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({yaml})});
+  document.getElementById('yaml-result').innerHTML = result.valid
+    ? '<span class=\"text-green\">✅ Component flow is valid</span>'
+    : '<span class=\"text-red\">❌ Invalid</span><br>' + (result.errors||[]).join('<br>');
+}
+
 function validateYaml() {
   const yaml = document.getElementById('flow-yaml-editor').value;
   api(BASE+'/api/playground/validate', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({yaml})}).then(r => {

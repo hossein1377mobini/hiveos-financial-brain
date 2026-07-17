@@ -1,11 +1,10 @@
 # gitignore for HiveOS
 
-# Obsidian
-.obsidian/workspace
-.obsidian/workspace.json
-.obsidian/cache/
-.obsidian/plugins/
-.obsidian/themes/
+# Knowledge Domain (sold separately — not part of core OS)
+docs/06-Research/accounting/
+
+# Obsidian workspace (personal, local only)
+.obsidian/
 
 # OS files
 .DS_Store
@@ -28,5 +27,8 @@ dist/
 # Node
 node_modules/
 
-# Databases
+# Databases (local knowledge DB, not part of core)
 *.db
+
+# Testing
+.pytest_cache/

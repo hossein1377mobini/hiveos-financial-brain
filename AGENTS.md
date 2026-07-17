@@ -15,7 +15,7 @@
 | Phase 3 (Packaging) | ✅ | v0.4.0 |
 | Phase 4 (Mothership) | ✅ | v0.4.0 |
 | Phase 5 (Enterprise) | ✅ | v0.6.0 |
-| Phase D1 (Accounting) | 🏗️ 70% | v0.6.0 |
+|| Phase D1 (Accounting) | ✅ 100% (471 files, 23.6MB) | v0.6.0 |
 | Phase 6 (Playground) | ✅ Full (APIs + Canvas + Runner) | v0.8.0 |
 | Phase 7 (Brain) | ✅ Full (Engine + API + 3D Viz) | v0.8.0 |
 | Phase 8 (Learning) | ✅ Full (Logger + Analytics) | v0.8.0 |
@@ -25,6 +25,7 @@
 | **🪟 Desktop** | **✅ pywebview Shell + PyInstaller + MSI** | **v0.10.0** |
 | **🪟 D2 Domain Registry** | **✅ StorageEngine-backed + API + UI + CLI** | **v0.11.0** |
 | **🌐 PWA** | **✅ Installable dashboard (manifest + SW + icons)** | **v0.11.1** |
+| **🎮 Playground UI** | **✅ React Flow Visual Builder (Linear-style)** | **v0.12.0** |
 
 ---
 
@@ -118,13 +119,38 @@ HiveOS is a **Multi-Agent Operating System** with 5 pillars:
 | **P-08** Flow Library | ✅ | `FlowLibrary` — persistent CRUD for user flows via StorageEngine (save/load/list/delete/update) |
 
 ### ✅ 🪟 Desktop & Build (v0.10.0)
+|| Component | Status | Description |
+||-----------|--------|-------------|
+|| Desktop Shell (pywebview) | ✅ | `DesktopApp` class — native Windows window wrapping the FastAPI dashboard |
+|| PyInstaller .exe | ✅ | `build/build_exe.py` — one-command build to `dist/HiveOS/HiveOS.exe` |
+|| MSI Installer (Inno Setup) | ✅ | `build/installer.iss` — full installer with shortcuts, Persian lang, cleanup |
+|| `hive desktop start` | ✅ | Launch HiveOS in a native desktop window |
+|| `hive desktop connect` | ✅ | Open browser to running dashboard |
+
+### ✅ 🎮 Playground UI — React Flow Visual Builder (v0.12.0)
+
+The new Playground UI replaces the old HTML5 Canvas with a professional React Flow-based visual editor, styled after **Linear's dark-mode design system** (design tokens at `playground-ui/DESIGN.md`).
+
 | Component | Status | Description |
 |-----------|--------|-------------|
-| Desktop Shell (pywebview) | ✅ | `DesktopApp` class — native Windows window wrapping the FastAPI dashboard |
-| PyInstaller .exe | ✅ | `build/build_exe.py` — one-command build to `dist/HiveOS/HiveOS.exe` |
-| MSI Installer (Inno Setup) | ✅ | `build/installer.iss` — full installer with shortcuts, Persian lang, cleanup |
-| `hive desktop start` | ✅ | Launch HiveOS in a native desktop window |
-| `hive desktop connect` | ✅ | Open browser to running dashboard |
+| **Node Palette** | ✅ | Left sidebar with draggable nodes in 4 categories: Triggers ⚡, Actions ⚙️, AI & Agents 🤖, Flow Control 🔀 |
+| **React Flow Canvas** | ✅ | Drag & drop infinite canvas with cursor-pan, zoom, snap-to-grid, and connection drawing |
+| **Properties Panel** | ✅ | Right panel with live JSON config editor, label/description fields, node type badge |
+| **Mini-map** | ✅ | Bottom-right overview showing canvas topology at a glance |
+| **Execution Trace** | ✅ | Bottom panel showing real-time log of every node's execution (start→complete/error) |
+| **Toolbar** | ✅ | Templates menu, Run Flow, Clear Canvas, node/edge count |
+| **Execution Visualization** | ✅ | Animated shimmer on running nodes, green/red indicators for success/error, edge path animations |
+| **Design Tokens** | ✅ | Linear-inspired dark theme in `DESIGN.md` + CSS vars (Inter font, 510 weight, brand indigo #5e6ad2) |
+| **Backend Integration** | ✅ | FastAPI serves the built SPA at `GET /playground`, static assets at `/playground/assets/` |
+
+### Technical Stack
+- **Framework:** Vite + React 19 + TypeScript
+- **Canvas:** @xyflow/react (React Flow v12)
+- **Styling:** Tailwind CSS v4 + custom CSS variables (Linear-inspired dark theme)
+- **Design:** See `playground-ui/DESIGN.md` for complete design token spec
+- **Dev server:** `cd playground-ui && npm run dev` (port 5173, proxies `/api` to backend)
+- **Build:** `cd playground-ui && npm run build`
+- **Deploy to backend:** `cd playground-ui && npm run deploy`
 
 ### ✅ D2: Domain Registry (v0.11.0)
 | Component | Status | Description |

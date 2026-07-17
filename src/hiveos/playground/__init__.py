@@ -7,5 +7,6 @@ and flow execution with WebSocket streaming.
 from hiveos.playground.playground import PlaygroundEngine
 from hiveos.playground.runner import PlaygroundRunner
 from hiveos.playground.library import FlowLibrary
+from hiveos.playground.component_engine import ComponentEngine, ComponentResult, ExecutionContext
 
-__all__ = ["PlaygroundEngine", "PlaygroundRunner", "FlowLibrary"]
+__all__ = ["PlaygroundEngine", "PlaygroundRunner", "FlowLibrary", "ComponentEngine", "ComponentResult", "ExecutionContext"]

@@ -448,6 +448,7 @@ class DomainRegistry:
             "description_fa": description.get("fa", ""),
             "orchestrator_agent": domain_data.get("orchestrator_agent", ""),
             "depends_on": domain_data.get("depends_on", []),
+            "knowledge_tree": domain_data.get("knowledge_tree", ""),
             "tags": metadata.get("tags", []) if isinstance(metadata, dict) else [],
             "total_agents": len(agents),
             "orchestrators": sum(1 for a in agents if a.get("type") == "orchestrator"),
