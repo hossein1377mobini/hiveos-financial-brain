@@ -52,7 +52,7 @@
 - [x] Multi-tenant workspaces (38 tests)
 - [x] Pricing model — license tiers (32 tests)
 
-**Test total: 329** ✅
+**Test total: 273** ✅
 
 ---
 
@@ -78,7 +78,7 @@
 
 ---
 
-## 🏗️ In Progress: v0.10.0 — Playground Enhancements + Windows Native Sprint
+## ✅ v0.12.0: Release Candidate (All layers complete)
 
 ### Phase D1: Accounting Domain ✅
 - [x] Knowledge tree (200+ nodes, 10 branches A-J)
@@ -90,16 +90,41 @@
 - [x] Agent auto-generation API
 - [x] Template browser API
 
-### Phase D2: Domain Plugin CLI ✅
+### Phase D2: Domain Registry ✅
 - [x] `hive domain` (list/info/install/remove/init)
-- [ ] Domain registry (discover/shared)
-- [ ] Mothership domain loading
-- [ ] Cross-domain dependency resolution
+- [x] Domain registry (discover/shared)
+- [x] Mothership domain loading
+- [x] Cross-domain dependency resolution
 
-### Phase D3: Next Domain ⏳
-- [ ] Choose domain (medical, legal, engineering...)
-- [ ] Build knowledge tree + agents + flows
-- [ ] Publish to domain registry
+### Phase S: Storage — SQLite Persistence ✅
+- [x] S-01: SQLite StorageEngine
+- [x] S-02: Persist Brain (EventStream, Traces, Gates)
+- [x] S-03: Persist Learning (ExecutionLogs)
+- [x] S-04: Persist Playground (FlowRuns)
+- [x] S-05: Data directory init
+- [x] S-06: Migration system
+
+### Phase CL: Standardisation ✅
+- [x] CL-01: CHANGELOG.md (Keep a Changelog format)
+- [x] CL-02: CI (GA pytest on push)
+- [x] CL-03: Auto-update skeleton (UpdateChecker, GitHub Releases)
+
+### Phase 🎮 Playground UI (React Flow) ✅
+- [x] Node Palette (4 categories: Trigger/Action/AI/Flow Control)
+- [x] React Flow Canvas (snap-to-grid, connections)
+- [x] Properties Panel (JSON editor)
+- [x] Mini-map & Controls
+- [x] Execution Trace panel
+- [x] Toolbar (Templates, Run, Clear)
+- [x] Execution Visualization (animated shimmer)
+- [x] Design Tokens (Linear-inspired dark theme)
+- [x] Backend Integration (FastAPI SPA)
+
+### Phase 🪟 Desktop & Build ✅
+- [x] Desktop Shell (pywebview native window)
+- [x] PyInstaller → HiveOS.exe
+- [x] MSI installer (Inno Setup)
+- [x] PWA (manifest, Service Worker, offline fallback)
 
 ---
 
@@ -107,87 +132,42 @@
 
 Instead of sequential phases, **every build session advances all 5 layers together**:
 
-```
-🧠     BRAIN       │ Event Stream · Decision Tracer · 3D Viz
-🎮  PLAYGROUND     │ Validator · Auto-Agent · Canvas · Run/Debug
-🔧    ENGINE       │ Core OS (CLI, Flow Engine, Mothership, Enterprise)
-🧩    DOMAINS      │ Accounting D1 · Domain CLI · Next domains
-📈   LEARNING      │ Logging · Analytics · Pattern Recognition
-```
+## 🏁 Current Status: v0.12.0 Release Candidate
 
-| Layer | What It Is | Next Session Focus |
-|-------|-----------|-------------------|
-| 🔧 **Engine** | Core ready ✅ | Maintenance (as needed) |
-| 🧩 **Domains** | D1 Accounting + CLI ✅ | D2 Domain registry / Mothership loading |
-| 🎮 **Playground** | Core APIs ✅ | P-07 Template Customizer · P-08 Flow Library |
-| 🧠 **Brain** | Core Engine ✅ | 3D Neural View |
-| 📈 **Learning** | Passive Logger ✅ | L-03 Pattern Recognition |
+| Layer | Status |
+|-------|--------|
+| 🔧 **Engine** | ✅ Complete |
+| 🧩 **Domains** | ✅ D1 + D2 Complete |
+| 🎮 **Playground** | ✅ Full (APIs + UI) |
+| 🧠 **Brain** | ✅ Full (Engine + 3D Viz) |
+| 📈 **Learning** | ✅ Full (Logger + Analytics + Patterns) |
+| 🗄️ **Storage** | ✅ SQLite Complete |
+| 🪟 **Desktop** | ✅ 80% (Needs Code Signing, Tauri UI) |
 
-### Session N — First Build Sprint ✅ (v0.7.0 — Done)
+### What's Left for v1.0.0
 
-| Layer | Scope | Status |
-|-------|-------|--------|
-| 🎮 Playground | **P-01** Flow Validator API · **P-02** Auto-Agent API · **P-03** Template Browser API | ✅ Done |
-| 🧠 Brain | **B-01** Event Stream · **B-02** Decision Tracer · **B-03** Approval Gate Engine | ✅ Done |
-| 🧩 Domains | **D-04** Hermes skills for accounting agents | ⏳ Next |
-| 📈 Learning | **L-01** Execution logging (passive collection) | ✅ Done |
-
-### Session N+1 — Canvas + Viz Sprint ✅ (v0.8.0 — Done)
-
-| Layer | Scope | Status |
-|-------|-------|--------|
-| 🎮 Playground | **P-04** Visual Canvas (HTML5 Canvas) · **P-05** Run/Debug + WebSocket | ✅ Done |
-| 🧠 Brain | **B-05** 3D Neural View (Three.js/WebGL) | ✅ Done |
-| 🧩 Domains | **D-04** Hermes skills for accounting agents | ⏳ Next |
-| 📈 Learning | **L-02** Execution analytics + pattern recognition | ✅ Done |
-
-### Session N+2 — Data Persistence Sprint 🗄️ (v0.9.0)
-
-| Layer | Scope | Status |
-|-------|-------|--------|
-| 🗄️ **Storage** | **S-01** SQLite StorageEngine ✅ · **S-02** Persist Brain (EventStream, Traces, Gates) ✅ | ✅ Done |
-| 🗄️ **Storage** | **S-03** Persist Learning (ExecutionLogs) ✅ · **S-04** Persist Playground (FlowRuns) ✅ | ✅ Done |
-| 🗄️ **Storage** | **S-05** Data directory init ✅ · **S-06** Migration system ✅ | ✅ Done |
-| 🔧 **Standardisation** | **CL-01** CHANGELOG.md ✅ · **CL-02** CI (GA pytest on push) ✅ · **CL-03** Auto-update skeleton ✅ | ✅ Done |
-| 🧩 **Domains** | **D-04** Hermes skills for 6 accounting orchestrators ✅ · **D-05** Domain Plugin CLI ✅ | ✅ Done |
-
-### Session N+3 — Playground Features 🎮 (v0.10.0)
-
-| Layer | Scope |
-|-------|-------|
-| 🎮 **Playground** | **P-07** Template Customizer — override parameters before running · **P-08** Flow Library — save/load/list user flows via StorageEngine |
-| 🔧 **CLI** | `hive flow save/list/load/delete` commands for user flow library |
-| 🗄️ **Storage** | FlowLibrary namespace in StorageEngine for persisting user-created flows |
-
-### Session N+4 — Windows Native Sprint 🪟
-
-| Layer | Scope |
-|-------|-------|
-| 🪟 **Shell** | Wrap web UI in Tauri desktop shell |
-| 🎨 **UI** | Begin replacing Jinja2 with React/Tailwind components |
-| 🔧 **Packaging** | PyInstaller → backend.exe + MSI installer (Inno Setup) |
-| 🔄 **CI/CD** | GA workflow: test → build → sign → release to GitHub |
-
-### Session N+5 — Polish & Ship 🚀 (v1.0.0)
-
-| Scope |
-|-------|
-| Auto-updater (check GitHub Releases on startup, download + install) |
-| Desktop-grade UI (all pages ported to React) |
-| Code signing (Authenticode) |
-| First public release on GitHub |
+| Priority | Task | Status |
+|----------|------|--------|
+| 🟡 | Windows code signing (Authenticode) | Needs certificate |
+| 🟡 | Tauri desktop shell (beautiful native UI) | Planned |
+| 🟢 | First GitHub Release (v0.12.0) | Ready to cut |
 
 ## 🏁 Endgame: Windows Native Application
 
 ```mermaid
 flowchart LR
-    A[FastAPI + Jinja2] -->|Phase A| B[Tauri Shell + Web UI]
-    B -->|Phase B| C[Tauri + React/Tailwind]
+    A[FastAPI + Jinja2] -->|Phase A| B[pywebview Shell]
+    B -->|Phase B| C[React Flow UI]
     C -->|Phase C| D[PyInstaller .exe]
     D -->|Phase D| E[MSI Installer]
     E -->|Phase E| F[Auto-Update]
     F -->|Phase F| G[CI/CD Pipeline]
     style A fill:#f9f,stroke:#333
+    style B fill:#9f9,stroke:#333
+    style C fill:#9f9,stroke:#333
+    style D fill:#9f9,stroke:#333
+    style E fill:#9f9,stroke:#333
+    style F fill:#9f9,stroke:#333
     style G fill:#9f9,stroke:#333
 ```
 
@@ -236,12 +216,12 @@ flowchart LR
 ## 📊 Progress Summary
 
 ```
-|Phase 0-5 (Infrastructure):  ████████████████████████ 100%  (273 tests)
-|Layer 🗄️ Storage:            ██████████████████████████ 100%  (S-01..S-06 done)
-|Layer 🧩 Domains (D1):      ██████████████████░░░░░░  80%  (D-04/D-05 done)
-|Layer 🎮 Playground:        ████████████████░░░░░░░░░  50%  (P-01..P-05 done)
-|Layer 🧠 Brain:             ██████████████████░░░░░░░░  40%  (B-01..B-05 done)
-|Layer 📈 Learning:          ██████████████████░░░░░░░░  40%  (L-01/L-02 done)
-|Layer 🔧 Standardisation:   ██████████████████████████ 100%  (CL-01/02/03 done)
-|Layer 🪟 Windows Native:   ░░░░░░░░░░░░░░░░░░░░░░░░░░   0%
+|Phase 0-5 (Infrastructure):   ██████████████████████████ 100% (273 tests)
+|Layer 🗄️ Storage:             ██████████████████████████ 100% (S-01..S-06 done)
+|Layer 🧩 Domains (D1/D2):     ██████████████████████████ 100% (D-04/D-05/D2 done)
+|Layer 🎮 Playground:          ██████████████████████████ 100% (P-01..P-08 + UI)
+|Layer 🧠 Brain:               ██████████████████████████ 100% (B-01..B-05 done)
+|Layer 📈 Learning:            ██████████████████████████ 100% (L-01..L-03 done)
+|Layer 🔧 Standardisation:     ██████████████████████████ 100% (CL-01/02/03 done)
+|Layer 🪟 Windows Native:      ████████████████████████░░  80% (Needs signing)
 ```

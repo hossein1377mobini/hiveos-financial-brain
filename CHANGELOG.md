@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.11.1] — 2026-07-14
+## [0.12.0] — 2026-07-18
 
 ### Added
 - **PWA (Progressive Web App)** — HiveOS Dashboard is now installable on any device:
@@ -18,7 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - FastAPI routes for `/manifest.json`, `/sw.js`, `/icons/{filename}`
 
 ### Changed
-- Version bumped from `0.11.0` to `0.11.1` in manifest.json, sw.js
+- Version bumped from `0.11.1` to `0.12.0` in `__init__.py`, `pyproject.toml`, `build/installer.iss`, and all doc files.
+- `playground-ui` version is now `0.12.0`
 
 ---
 

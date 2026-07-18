@@ -1,21 +1,30 @@
 # Working Memory — Current State
 
-**Last Updated:** 2026-07-14 (v0.8.0 done)
+**Last Updated:** 2026-07-18 (v0.12.0 Release Candidate)
 
-## HiveOS — v0.8.0 ✅
+## HiveOS — v0.12.0 🏁
 
-- **Canvas + Viz Sprint completed:** P-04 (Flow Canvas), P-05 (Runner+WebSocket), P-06 (Gates UI), B-05 (3D Neural View), L-02 (Analytics)
-- **New modules:** `playground/runner.py`, `learning/analytics.py`
-- **Dashboard upgraded:** 4 new pages (Playground, Brain 3D, Gates, Learning)
-- **Tests:** 366 total
-- **Git:** v0.8.0 pushed
+- **Version harmonised** — all files bumped to v0.12.0
+- **CHANGELOG updated** — v0.12.0 section added with PWA + version changes
+- **Tests:** 436 passed ✅
+- **Git:** All changes unstaged, ready for commit
+
+## Release Checklist
+
+- [x] Version bump (pyproject.toml, __init__.py, installer.iss, docs, AGENTS.md)
+- [x] CHANGELOG.md updated
+- [x] ROADMAP.md updated to reflect current release candidate status
+- [x] AGENTS.md updated with v0.12.0 status
+- [x] Tests passed (436/436)
+- [x] Brain memory updated
+- [ ] Git commit + push
+- [ ] Cut v0.12.0 tag
+- [ ] GitHub Release
 
 ## Other Projects — Status
+
 | Project | Status | Note |
 |---------|--------|------|
-| HiveOS | 🟢 v0.8.0 | Canvas+Viz done. Next: D-04 Hermes skills → **Persistence Layer** |
+| HiveOS | 🟢 v0.12.0 RC | All layers built. Ready for first GitHub Release. |
 | Compass | 🟢 | Unchanged |
 | Server | 🟢 | Unchanged |
-
-## Next Session
-User raised critical architectural concern: **all data is in-memory** — FlowRuns, Brain events, Approval Gates, Execution Logs all vanish on restart. For a self-hosted server product, we need a **Persistence Layer** (SQLite/JSONL). This becomes P0 before D-04.

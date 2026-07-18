@@ -24,7 +24,7 @@
 | **D (Domain)** | **✅ Domain CLI + Hermes Skills** | **v0.9.1** |
 | **🪟 Desktop** | **✅ pywebview Shell + PyInstaller + MSI** | **v0.10.0** |
 | **🪟 D2 Domain Registry** | **✅ StorageEngine-backed + API + UI + CLI** | **v0.11.0** |
-| **🌐 PWA** | **✅ Installable dashboard (manifest + SW + icons)** | **v0.11.1** |
+| **🌐 PWA** | **✅ Installable dashboard (manifest + SW + icons)** | **v0.12.0** |
 | **🎮 Playground UI** | **✅ React Flow Visual Builder (Linear-style)** | **v0.12.0** |
 
 ---
@@ -186,17 +186,16 @@ hive
 
 ---
 
-## 🎯 Next: v0.11.0 — Domain Registry Done
+## 🎯 Current: v0.12.0 — Release Candidate
 
-✅ D2 Domain Registry — shipped this session.
+**Status:** All layers built. 436 tests passing. Playground UI deployed. Ready for release.
 
-### What's Left
-
+### What's Left for v1.0.0
 | Priority | Task | Layer | Status |
 |----------|------|-------|--------|
-| 🟢 | L-03 Pattern Recognition → template suggestions | 📈 Learning | ✅ v0.11.0 |
-| 🟡 | Windows signing (Authenticode) + CI/CD release | 🪟 All | 🏗️ Done (needs cert) |
-
+| 🟡 | Windows code signing (Authenticode) | 🪟 All | 🏗️ Needs certificate |
+| 🟡 | Beautiful desktop UI (Tauri shell) | 🪟 UI | Planned |
+| 🟢 | First GitHub Release (v0.12.0) | 📦 Distribution | Next step |
 ---
 
 ## 📁 Key Files

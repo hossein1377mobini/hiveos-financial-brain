@@ -32,7 +32,7 @@ HiveOS is an **Operating System for Business AI Agents**. Just as Linux provides
 
 ### Current Status
 
-The project is at **v0.11.1** with the following layers built:
+The project is at **v0.12.0** with the following layers built:
 
 | Layer | Status | Description |
 |-------|--------|-------------|
