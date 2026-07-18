@@ -55,7 +55,7 @@ accounting/
 |------|--------|-------|
 | `_inbox/` | 🟢 باز | هر چی داری بنداز اینجا |
 | `01-Fundamentals/` | 🟢 تکمیل شده | ✅ 01-accounting-principles ✅ 02-iranian-gaap ✅ 03-accounting-cycle ✅ 04-chart-of-accounts تکمیل |
-| `02-Tax/` | 🔴 شروع نشده | دانش مالیاتی |
+|| `02-Tax/` | 🟢 شروع شده | دانش مالیاتی ✅ 01-direct-taxes-law 🔴 |,
 | `03-Social-Security-Labor/` | 🔴 شروع نشده | حقوق، دستمزد و تأمین اجتماعی |
 | `04-Commerce/` | 🔴 شروع نشده | قوانین تجاری و شرکت‌ها |
 | `05-Auditing/` | 🔴 شروع نشده | حسابرسی |
