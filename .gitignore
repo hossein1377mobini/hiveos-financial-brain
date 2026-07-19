@@ -29,6 +29,11 @@ node_modules/
 
 # Databases (local knowledge DB, not part of core)
 *.db
+*.db-shm
+*.db-wal
 
 # Testing
 .pytest_cache/
+
+# Graphify — codebase knowledge graph output
+graphify-out/
