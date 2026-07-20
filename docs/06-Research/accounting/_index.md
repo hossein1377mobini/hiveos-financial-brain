@@ -1,91 +1,103 @@
-# درخت محتوایی — دانش حسابداری و مالی ایران برای HiveOS
+# Accounting Knowledge Research Index
 
-> مسیر: `docs/06-Research/accounting/`
-> **آخرین به‌روزرسانی:** 2026-07-18
+> Iranian accounting, tax, social security, commerce, auditing, and management accounting research for HiveOS Enterprise Accounting Assistant.
 
-## ساختار
+## Phase 1 — مبانی حسابداری (Basics)
 
-```
-accounting/
-├── _inbox/                          ← ورودی خام — هر چی داری اینجا بریز
-├── _index.md                        ← این فایل — درخت محتوایی + وضعیت
-│
-├── 01-Fundamentals/                 ← مفاهیم پایه و مبانی حسابداری
-│   ├── 01-accounting-principles.md  ← اصول و مبانی حسابداری
-│   ├── 02-iranian-gaap.md          ← استانداردهای حسابداری ایران
-│   ├── 03-accounting-cycle.md       ← چرخه حسابداری
-│   └── 04-chart-of-accounts.md     ← کدینگ و طبقه‌بندی حساب‌ها
-│
-├── 02-Tax/                          ← دانش مالیاتی
-│   ├── 01-direct-taxes-law.md      ← قانون مالیات‌های مستقیم
-│   ├── 02-corporate-income-tax.md  ← مالیات بر درآمد شرکت‌ها
-│   ├── 03-vat.md                    ← مالیات بر ارزش افزوده
-│   ├── 04-tax-returns.md           ← نحوه تهیه اظهارنامه مالیاتی
-│   └── 05-withholding-tax.md       ← مالیات تکلیفی
-│
-├── 03-Social-Security-Labor/        ← حقوق، دستمزد و تأمین اجتماعی
-│   ├── 01-labor-law.md              ← قانون کار ایران
-│   ├── 02-social-security-law.md    ← قانون تأمین اجتماعی
-│   └── 03-payroll.md               ← حقوق و دستمزد
-│
-├── 04-Commerce/                     ← قوانین تجاری و شرکت‌ها
-│   ├── 01-commercial-law.md         ← قانون تجارت ایران
-│   ├── 02-financial-statements.md   ← صورت‌های مالی
-│   └── 03-company-registration.md  ← ثبت شرکت‌ها
-│
-├── 05-Auditing/                     ← حسابرسی
-│   ├── 01-audit-standards.md        ← استانداردهای حسابرسی
-│   ├── 02-audit-organization.md     ← سازمان حسابرسی
-│   └── 03-internal-audit.md        ← حسابرسی داخلی
-│
-├── 06-Management-Accounting/        ← حسابداری مدیریت
-│   ├── 01-cost-accounting.md        ← حسابداری بهای تمام شده
-│   ├── 02-budgeting.md              ← بودجه‌بندی
-│   └── 03-performance-evaluation.md ← ارزیابی عملکرد
-│
-└── 07-Practical-Scenarios/          ← سناریوهای عملی
-    ├── 01-closing-entries.md        ← بستن حساب‌ها در پایان سال
-    ├── 02-tax-calculation.md        ← محاسبه مالیات در عمل
-    └── 03-faq.md                    ← سوالات متداول
-```
+| # | Topic | Status | Date | File |
+|---|-------|--------|------|------|
+| 1 | اصول حسابداری مالی (Financial Accounting Principles) | 🟢 | 2026-07-20 | 01-Financial-Accounting-Principles/01-اصول-حسابداری-مالی.md |
+| 2 | مفاهیم بنیادی: دارایی، بدهی، سرمایه، درآمد، هزینه | 🔴 | — | |
+| 3 | سیستم حسابداری دوطرفه (Double-Entry System) | 🔴 | — | |
+| 4 | چرخه حسابداری (Accounting Cycle) | 🔴 | — | |
+| 5 | ثبت‌های حسابداری و سند حسابداری (Journal Entries) | 🔴 | — | |
+| 6 | صورت‌های مالی: ترازنامه، صورت سود و زیان، صورت جریان وجوه نقد | 🔴 | — | |
+| 7 | استانداردهای حسابداری ایران (Iranian Accounting Standards) | 🔴 | — | |
 
-## وضعیت فایل‌ها
+## Phase 2 — مالیات (Tax)
 
-| پوشه | وضعیت | توضیح |
-|------|--------|-------|
-| `_inbox/` | 🟢 باز | هر چی داری بنداز اینجا |
-| `01-Fundamentals/` | 🟢 تکمیل شده | ✅ 01-accounting-principles ✅ 02-iranian-gaap ✅ 03-accounting-cycle ✅ 04-chart-of-accounts تکمیل |
-| `02-Tax/` | 🟢 تکمیل شده | دانش مالیاتی ✅ 01-direct-taxes-law ✅ 02-corporate-income-tax |
-| `03-Social-Security-Labor/` | 🔴 شروع نشده | حقوق، دستمزد و تأمین اجتماعی |
-| `04-Commerce/` | 🔴 شروع نشده | قوانین تجاری و شرکت‌ها |
-| `05-Auditing/` | 🔴 شروع نشده | حسابرسی |
-| `06-Management-Accounting/` | 🔴 شروع نشده | حسابداری مدیریت |
-| `07-Practical-Scenarios/` | 🔴 شروع نشده | سناریوهای عملی |
+| # | Topic | Status | Date | File |
+|---|-------|--------|------|------|
+| 8 | قانون مالیات‌های مستقیم (Direct Taxes Law) — اشخاص حقیقی و حقوقی | 🔴 | — | |
+| 9 | مالیات بر درآمد اشخاص حقوقی (Corporate Income Tax) | 🔴 | — | |
+| 10 | مالیات بر درآمد مشاغل (Business Income Tax) | 🔴 | — | |
+| 11 | مالیات بر حقوق (Payroll / Salary Tax) — ماده 84 و 85 | 🔴 | — | |
+| 12 | مالیات تکلیفی (Withholding Tax) — ماده 104 | 🔴 | — | |
+| 13 | مالیات بر ارزش افزوده (VAT — Value Added Tax) | 🔴 | — | |
+| 14 | مالیات بر عملکرد سالانه (Annual Performance Tax) | 🔴 | — | |
+| 15 | تراکنش‌های بانکی و مالیات (Bank Transactions & Tax) | 🔴 | — | |
+| 16 | معافیت‌های مالیاتی (Tax Exemptions) — ماده 132 و ... | 🔴 | — | |
+| 17 | جرایم مالیاتی و دادرسی (Tax Penalties & Litigation) | 🔴 | — | |
+| 18 | اظهارنامه مالیاتی و تسلیم اظهارنامه (Tax Return Filing) | 🔴 | — | |
+| 19 | رسیدگی مالیاتی و دفاعیات (Tax Audit & Defense) | 🔴 | — | |
 
-## دسته‌بندی فازها
+## Phase 3 — تامین اجتماعی و قانون کار (Social Security & Labor)
 
-| فاز | محتوا | وضعیت |
-|-----|-------|--------|
-| **فاز 1 — مبانی (Basics)** | مفاهیم پایه، استانداردهای حسابداری ایران، چرخه حسابداری، کدینگ حساب‌ها | 🟢 تکمیل شده |
-| **فاز 2 — مالیات (Tax)** | قانون مالیات‌های مستقیم، مالیات شرکت‌ها، ارزش افزوده، اظهارنامه، مالیات تکلیفی | 🔴 |
-| **فاز 3 — تأمین اجتماعی و کار (Social Security/Labor)** | قانون کار، قانون تأمین اجتماعی، حقوق و دستمزد | 🔴 |
-| **فاز 4 — تجارت (Commerce)** | قانون تجارت، صورت‌های مالی، ثبت شرکت | 🔴 |
-| **فاز 5 — حسابرسی (Auditing)** | استانداردهای حسابرسی، سازمان حسابرسی، حسابرسی داخلی | 🔴 |
-| **فاز 6 — حسابداری مدیریت (Mgmt Accounting)** | بهای تمام شده، بودجه‌بندی، ارزیابی عملکرد | 🔴 |
-| **فاز 7 — سناریوهای عملی (Practical)** | سوالات متداول، محاسبات عملی، مثال‌های واقعی | 🔴 |
+| # | Topic | Status | Date | File |
+|---|-------|--------|------|------|
+| 20 | قانون تامین اجتماعی — حق بیمه و نرخ‌ها (Social Security Contributions) | 🔴 | — | |
+| 21 | قانون کار ایران — قرارداد کار، دستمزد، مزایا (Labor Law) | 🔴 | — | |
+| 22 | بیمه بیکاری (Unemployment Insurance) | 🔴 | — | |
+| 23 | عیدی، پاداش، سنوات (Year-end Bonus & Severance) | 🔴 | — | |
+| 24 | مرخصی، غیبت، اضافه‌کاری (Leave, Absence, Overtime) | 🔴 | — | |
+| 25 | محاسبه حقوق و دستمزد کامل (Full Payroll Calculation) | 🔴 | — | |
+| 26 | بازنشستگی و پایان کار (Retirement & Final Settlement) | 🔴 | — | |
 
-## نحوه کار
+## Phase 4 — تجارت و شرکت‌ها (Commerce & Companies)
 
-1. تو `_inbox/` هر چی داری — لینک، فایل، یادداشت — بنداز
-2. من میام هر چی توی `_inbox/` هست رو می‌خونم، دسته‌بندی می‌کنم و می‌ریزم توی پوشه‌های مرتبط
-3. اولویت تحقیق بر اساس ترتیب فازهاست: فاز ۱ (مبانی) → فاز ۲ (مالیات) → فاز ۳ (تامین اجتماعی) → ...
-4. بعد از تکمیل هر مبحث، وضعیت از 🔴 به 🟢 تغییر می‌کنه
+| # | Topic | Status | Date | File |
+|---|-------|--------|------|------|
+| 27 | قانون تجارت ایران (Iranian Commercial Law) | 🔴 | — | |
+| 28 | ثبت شرکت‌ها و انواع شرکت (Company Registration & Types) | 🔴 | — | |
+| 29 | چک، سفته و اسناد تجاری (Checks, Promissory Notes, Commercial Documents) | 🔴 | — | |
+| 30 | صورت‌جلسات و تصمیمات (Board Minutes & Resolutions) | 🔴 | — | |
 
-## منابع اصلی
+## Phase 5 — حسابرسی (Auditing)
 
-- [سازمان امور مالیاتی کشور](https://www.intamedia.ir/)
-- [سازمان حسابرسی](https://www.audit.org.ir/)
-- [سازمان تأمین اجتماعی](https://www.tamin.ir/)
-- [مرکز پژوهش‌های مجلس](https://rc.majlis.ir/)
-- [دانشکده حسابداری و مالی](https://www.irantvto.ir/)
-- [سامانه مودیان](https://my.tax.gov.ir/)
+| # | Topic | Status | Date | File |
+|---|-------|--------|------|------|
+| 31 | استانداردهای حسابرسی ایران (Iranian Auditing Standards) | 🔴 | — | |
+| 32 | حسابرسی داخلی (Internal Audit) | 🔴 | — | |
+| 33 | حسابرسی عملیاتی (Operational Audit) | 🔴 | — | |
+| 34 | کنترل داخلی (Internal Control — COSO Framework) | 🔴 | — | |
+| 35 | گزارش حسابرسی (Audit Report Types) | 🔴 | — | |
+
+## Phase 6 — حسابداری مدیریت (Management Accounting)
+
+| # | Topic | Status | Date | File |
+|---|-------|--------|------|------|
+| 36 | حسابداری مدیریت (Management Accounting Concepts) | 🔴 | — | |
+| 37 | بودجه‌ریزی عملیاتی (Operational Budgeting) | 🔴 | — | |
+| 38 | تحلیل هزینه — حجم — سود (CVP Analysis) | 🔴 | — | |
+| 39 | ارزیابی عملکرد (Performance Evaluation — BSC) | 🔴 | — | |
+| 40 | قیمت‌گذاری و تصمیم‌گیری (Pricing & Decision Making) | 🔴 | — | |
+
+## Phase 7 — سناریوهای عملی (Practical Scenarios)
+
+| # | Topic | Status | Date | File |
+|---|-------|--------|------|------|
+| 41 | محاسبه حقوق و کسورات (Full Payroll Calculation Example) | 🔴 | — | |
+| 42 | تکمیل اظهارنامه مالیاتی (Tax Return Completion) | 🔴 | — | |
+| 43 | تهیه صورت‌های مالی پایان سال (Year-end Financial Statements) | 🔴 | — | |
+| 44 | محاسبه مالیات نقل و انتقال (Transfer Tax Calculation) | 🔴 | — | |
+| 45 | محاسبه مالیات بر اجاره (Rental Income Tax) | 🔴 | — | |
+| 46 | نحوه محاسبه مالیات بر ارزش افزوده (VAT Calculation Example) | 🔴 | — | |
+| 47 | ثبت‌های حسابداری تامین اجتماعی (Social Security Journal Entries) | 🔴 | — | |
+| 48 | بستن حساب‌ها در پایان سال مالی (Year-end Closing Entries) | 🔴 | — | |
+
+---
+
+## Priorities
+
+**Phase 1 (Basics)** → **Phase 2 (Tax)** → **Phase 3 (Social Security / Labor)** → **Phase 4 (Commerce)** → **Phase 5 (Auditing)** → **Phase 6 (Management Accounting)** → **Phase 7 (Practical Scenarios)**
+
+Within each phase, topics are ordered by prerequisite flow.
+
+## Legend
+
+| Symbol | Meaning |
+|--------|---------|
+| 🔴 | Not yet researched |
+| 🟡 | In progress |
+| 🟢 | Completed |
+| 💤 | Skipped (deferred) |
