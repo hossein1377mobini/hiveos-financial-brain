@@ -3,6 +3,8 @@ CLI main entry point.
 """
 
 import json
+import asyncio
+import sys
 import click
 from pathlib import Path
 from rich.console import Console
@@ -2452,6 +2454,407 @@ def info():
         console.print(f"   [dim]{result.download_url}[/dim]")
 
 
+# ── Domain Pack Commands ──────────────────────────────────────────────
+
+
+def _get_domain_manager():
+    """Build a DomainPackManager for CLI use."""
+    from ..domain_pack import DomainPackManager
+    from ..storage import StorageEngine
+    storage = StorageEngine()
+    base_dir = Path.home() / ".hiveos" / "domains"
+    return DomainPackManager(base_dir=base_dir, storage=storage)
+
+
+@hive.group()
+def domain():
+    """📦 Domain Pack management — install, list, enable, disable."""
+    pass
+
+
+@domain.command()
+def list():
+    """List installed Domain Packs."""
+    mgr = _get_domain_manager()
+    installed = asyncio.run(mgr.list_installed())
+
+    if not installed:
+        console.print("[yellow]No Domain Packs installed.[/yellow]")
+        console.print("  Install one: [cyan]hive domain install <path>[/cyan]")
+        return
+
+    table = Table(title="📦 Installed Domain Packs")
+    table.add_column("ID", style="cyan")
+    table.add_column("Name", style="white")
+    table.add_column("Version", style="green")
+    table.add_column("Enabled", style="yellow")
+    table.add_column("Skills", style="white")
+
+    for p in installed:
+        enabled_str = "[green]✓[/green]" if p.enabled else "[red]✗[/red]"
+        table.add_row(p.id, p.name, p.version, enabled_str, str(len(p.skills)))
+
+    console.print(table)
+
+
+@domain.command()
+@click.argument("pack_id")
+def info(pack_id: str):
+    """Show detailed info about an installed Domain Pack."""
+    mgr = _get_domain_manager()
+    try:
+        meta = asyncio.run(mgr.get_pack(pack_id))
+    except Exception as e:
+        console.print(f"[red]❌ {e}[/red]")
+        return
+
+    panel = Panel(
+        f"[bold cyan]📦 {meta.name}[/bold cyan]\\n\\n"
+        f"  [bold]ID:[/bold]              {meta.id}\\n"
+        f"  [bold]Version:[/bold]         {meta.version}\\n"
+        f"  [bold]Description:[/bold]     {meta.description}\\n"
+        f"  [bold]Min Core Version:[/bold] {meta.min_core_version}\\n"
+        f"  [bold]Author:[/bold]          {meta.author.name} ({meta.author.url})\\n"
+        f"  [bold]Enabled:[/bold]         {'[green]✓[/green]' if meta.enabled else '[red]✗[/red]'}\\n"
+        f"  [bold]Installed At:[/bold]    {meta.installed_at or '—'}\\n"
+        f"  [bold]Path:[/bold]            {meta.install_path}\\n"
+        f"  [bold]Skills:[/bold]          {len(meta.skills)}\\n"
+        f"  [bold]Workflows:[/bold]        {len(meta.workflows)}",
+        width=70,
+    )
+    console.print(panel)
+
+    if meta.skills:
+        skill_table = Table(title="Skills")
+        skill_table.add_column("ID", style="cyan")
+        skill_table.add_column("Name", style="white")
+        skill_table.add_column("Version", style="green")
+        for s in meta.skills:
+            skill_table.add_row(s.id, s.name, s.version)
+        console.print(skill_table)
+
+    if meta.workflows:
+        wf_table = Table(title="Workflows")
+        wf_table.add_column("ID", style="cyan")
+        wf_table.add_column("Name", style="white")
+        wf_table.add_column("Steps", style="green")
+        for w in meta.workflows:
+            wf_table.add_row(w.id, w.name, str(len(w.steps)))
+        console.print(wf_table)
+
+
+@domain.command()
+@click.argument("source_path", type=click.Path(exists=True))
+@click.option("--dry-run", is_flag=True, help="Validate without installing")
+def install(source_path: str, dry_run: bool):
+    """Install a Domain Pack from a directory."""
+    path = Path(source_path).resolve()
+    mgr = _get_domain_manager()
+
+    if dry_run:
+        from ..domain_pack import validate_pack_dry_run
+        is_valid, errors = validate_pack_dry_run(path)
+        if is_valid:
+            console.print("[green]✅ Pack structure is valid — ready to install.[/green]")
+        else:
+            console.print("[red]❌ Pack validation failed:[/red]")
+            for e in errors:
+                console.print(f"  • {e}")
+        return
+
+    try:
+        meta = asyncio.run(mgr.install(path))
+        console.print(f"[green]✅ Domain Pack installed: {meta.name} v{meta.version}[/green]")
+        console.print(f"   Skills: {len(meta.skills)}  |  Workflows: {len(meta.workflows)}")
+    except Exception as e:
+        console.print(f"[red]❌ Install failed: {e}[/red]")
+        raise SystemExit(1)
+
+
+@domain.command()
+@click.argument("pack_id")
+def remove(pack_id: str):
+    """Remove an installed Domain Pack."""
+    mgr = _get_domain_manager()
+    try:
+        asyncio.run(mgr.remove(pack_id))
+        console.print(f"[green]✅ Domain Pack '{pack_id}' removed.[/green]")
+    except Exception as e:
+        console.print(f"[red]❌ {e}[/red]")
+        raise SystemExit(1)
+
+
+@domain.command()
+@click.argument("pack_id")
+def enable(pack_id: str):
+    """Enable a Domain Pack."""
+    mgr = _get_domain_manager()
+    try:
+        asyncio.run(mgr.enable(pack_id))
+        console.print(f"[green]✅ Domain Pack '{pack_id}' enabled.[/green]")
+    except Exception as e:
+        console.print(f"[red]❌ {e}[/red]")
+        raise SystemExit(1)
+
+
+@domain.command()
+@click.argument("pack_id")
+def disable(pack_id: str):
+    """Disable a Domain Pack."""
+    mgr = _get_domain_manager()
+    try:
+        asyncio.run(mgr.disable(pack_id))
+        console.print(f"[green]✅ Domain Pack '{pack_id}' disabled.[/green]")
+    except Exception as e:
+        console.print(f"[red]❌ {e}[/red]")
+        raise SystemExit(1)
+
+
+@domain.command()
+@click.argument("source_path", type=click.Path(exists=True))
+def validate(source_path: str):
+    """Validate a Domain Pack structure without installing."""
+    from ..domain_pack import validate_pack_dry_run
+
+    path = Path(source_path).resolve()
+    is_valid, errors = validate_pack_dry_run(path)
+
+    if is_valid:
+        console.print("[green]✅ Domain Pack structure is valid.[/green]")
+    else:
+        console.print("[red]❌ Validation failed:[/red]")
+        for e in errors:
+            console.print(f"  • {e}")
+        raise SystemExit(1 if errors else 0)
+
+
+# ── Domain Pack Download Commands ────────────────────────────────────
+
+
+def _get_domain_downloader():
+    """Build a DomainPackDownloader for CLI use."""
+    from ..domain_pack import DomainPackDownloader, DomainPackManager
+    from ..storage import StorageEngine
+    from ..utils.config import ConfigManager
+
+    config = ConfigManager()
+    storage = StorageEngine()
+    base_dir = Path.home() / ".hiveos" / "domains"
+    mgr = DomainPackManager(base_dir=base_dir, storage=storage)
+
+    registry_url = config.get("domain_pack_registry_url", None)
+    api_key = config.get("domain_pack_registry_api_key", None)
+
+    return DomainPackDownloader(
+        pack_manager=mgr,
+        registry_url=registry_url,
+        api_key=api_key,
+    )
+
+
+@domain.command()
+@click.argument("query", required=False, default="")
+@click.option("--tag", "-t", help="Filter by tag")
+@click.option("--page", default=1, type=int, help="Page number")
+@click.option("--per-page", default=20, type=int, help="Results per page")
+def search(query, tag, page, per_page):
+    """Search remote registry for Domain Packs."""
+    downloader = _get_domain_downloader()
+
+    try:
+        results = downloader.search(query, tag=tag, page=page, per_page=per_page)
+    except Exception as e:
+        console.print(f"[red]❌ Registry search failed: {e}[/red]")
+        raise SystemExit(1)
+
+    if not results.packs:
+        console.print(f"[yellow]No packs found" + (f" matching '{query}'" if query else "") + "[/yellow]")
+        return
+
+    table = Table(title=f"📦 Domain Packs ({results.total} results)")
+    table.add_column("ID", style="cyan")
+    table.add_column("Name", style="white")
+    table.add_column("Version", style="green")
+    table.add_column("Author", style="dim")
+    table.add_column("Downloads", justify="right", style="yellow")
+    table.add_column("Size", justify="right", style="dim")
+
+    for p in results.packs:
+        size_str = _format_size(p.size_bytes) if p.size_bytes else "—"
+        table.add_row(p.id, p.name, p.version, p.author, str(p.downloads), size_str)
+
+    console.print(table)
+
+
+@domain.command()
+@click.argument("pack_id")
+@click.option("--version", "-v", help="Specific version (default: latest)")
+@click.option("--output", "-o", type=click.Path(), help="Save archive to path instead of installing")
+def download(pack_id, version, output):
+    """Download a Domain Pack from the remote registry.
+
+    By default downloads and installs. Use --output to save archive only.
+    """
+    downloader = _get_domain_downloader()
+
+    def on_progress(progress):
+        if progress.phase == "error":
+            console.print(f"  [red]✗ {progress.message}[/red]")
+        elif progress.phase == "done":
+            console.print(f"  [green]✓ {progress.message}[/green]")
+        else:
+            console.print(f"  [dim]{progress.message}[/dim]")
+
+    if output:
+        # Download-only mode
+        console.print(f"[bold cyan]📥 Downloading {pack_id}...[/bold cyan]")
+        try:
+            archive = downloader.download(
+                pack_id, version=version, on_progress=on_progress
+            )
+            # Copy to output path
+            import shutil
+            dest = Path(output)
+            if dest.is_dir():
+                dest = dest / archive.name
+            shutil.copy2(archive, dest)
+            console.print(f"\n[green]✅ Saved to {dest}[/green]")
+        except Exception as e:
+            console.print(f"\n[red]❌ Download failed: {e}[/red]")
+            raise SystemExit(1)
+    else:
+        # Download + install mode
+        console.print(f"[bold cyan]📥 Downloading and installing {pack_id}...[/bold cyan]")
+        result = downloader.download_and_install(
+            pack_id,
+            version=version,
+            on_progress=on_progress,
+        )
+
+        if result.success:
+            console.print(
+                f"\n[green]✅ Installed {result.metadata.name} v{result.version}[/green]"
+                if result.metadata
+                else f"\n[green]✅ Done[/green]"
+            )
+            if result.metadata:
+                console.print(
+                    f"   Skills: {len(result.metadata.skills)}"
+                    f"  |  Workflows: {len(result.metadata.workflows)}"
+                )
+        else:
+            console.print(f"\n[red]❌ {result.error}[/red]")
+            raise SystemExit(1)
+
+
+@domain.command("update")
+@click.argument("pack_id")
+def update_remote(pack_id):
+    """Update an installed Domain Pack to the latest version from registry."""
+    downloader = _get_domain_downloader()
+
+    def on_progress(progress):
+        if progress.phase == "error":
+            console.print(f"  [red]✗ {progress.message}[/red]")
+        elif progress.phase == "done":
+            console.print(f"  [green]✓ {progress.message}[/green]")
+        else:
+            console.print(f"  [dim]{progress.message}[/dim]")
+
+    console.print(f"[bold cyan]🔄 Checking for updates: {pack_id}...[/bold cyan]")
+    result = downloader.update_pack(pack_id, on_progress=on_progress)
+
+    if result.success:
+        if "check" in result.phases:
+            console.print(f"[green]✅ Already up to date ({result.version})[/green]")
+        else:
+            msg = (
+                f"Updated to {result.metadata.name} v{result.version}"
+                if result.metadata
+                else "Updated"
+            )
+            console.print(f"\n[green]✅ {msg}[/green]")
+    else:
+        console.print(f"\n[red]❌ {result.error}[/red]")
+        raise SystemExit(1)
+
+
+@domain.command("update-all")
+def update_all():
+    """Update all installed Domain Packs to latest versions."""
+    downloader = _get_domain_downloader()
+
+    installed = downloader.get_installed_info()
+    updatable = [p for p in installed if p.get("update_available")]
+
+    if not updatable:
+        console.print("[green]✅ All installed packs are up to date.[/green]")
+        return
+
+    console.print(f"[bold cyan]🔄 {len(updatable)} pack(s) have updates:[/bold cyan]")
+    for p in updatable:
+        console.print(f"  • {p['id']}: {p['version']} → {p['latest_version']}")
+    console.print()
+
+    success = 0
+    failed = 0
+    for p in updatable:
+        console.print(f"[cyan]Updating {p['id']}...[/cyan]")
+        result = downloader.update_pack(p["id"])
+        if result.success:
+            success += 1
+            console.print(f"  [green]✓ Updated to {result.version}[/green]")
+        else:
+            failed += 1
+            console.print(f"  [red]✗ {result.error}[/red]")
+
+    console.print(f"\n[bold]Done:[/bold] {success} updated, {failed} failed")
+
+
+@domain.command("registry-info")
+@click.argument("pack_id")
+def registry_info(pack_id):
+    """Show info for a pack on the remote registry."""
+    downloader = _get_domain_downloader()
+
+    listing = downloader.get_pack_info(pack_id)
+    if not listing:
+        console.print(f"[red]❌ Pack '{pack_id}' not found in registry[/red]")
+        raise SystemExit(1)
+
+    from rich.panel import Panel
+
+    panel = Panel(
+        f"[bold cyan]📦 {listing.name}[/bold cyan]\n\n"
+        f"  [bold]ID:[/bold]              {listing.id}\n"
+        f"  [bold]Version:[/bold]         {listing.version}\n"
+        f"  [bold]Description:[/bold]     {listing.description}\n"
+        f"  [bold]Author:[/bold]          {listing.author}\n"
+        f"  [bold]Tags:[/bold]            {', '.join(listing.tags) or '—'}\n"
+        f"  [bold]Downloads:[/bold]       {listing.downloads}\n"
+        f"  [bold]Size:[/bold]            {_format_size(listing.size_bytes)}\n"
+        f"  [bold]Min Core Version:[/bold] {listing.min_core_version}\n"
+        f"  [bold]Published:[/bold]       {listing.published_at or '—'}\n"
+        f"  [bold]Updated:[/bold]         {listing.updated_at or '—'}\n"
+        f"  [bold]SHA256:[/bold]           {listing.sha256[:16]}..." if listing.sha256 else "",
+        width=64,
+    )
+    console.print(panel)
+    console.print(
+        f"\n  Install: [cyan]hive domain download {listing.id}[/cyan]"
+    )
+
+
+def _format_size(size_bytes: int) -> str:
+    """Format bytes to human-readable string."""
+    if size_bytes < 1024:
+        return f"{size_bytes} B"
+    elif size_bytes < 1024 * 1024:
+        return f"{size_bytes / 1024:.1f} KB"
+    else:
+        return f"{size_bytes / (1024 * 1024):.1f} MB"
+
+
 # ── Desktop Commands ──────────────────────────────────────────────────
 
 @hive.group()
@@ -2496,6 +2899,200 @@ def connect():
 
     console.print(f"[cyan]🔗 Opening dashboard at {url}[/cyan]")
     webbrowser.open(url)
+
+
+# ── Knowledge Service Commands ────────────────────────────────────────
+
+@hive.group()
+def knowledge():
+    """📚 Knowledge service — search, ingest, manage."""
+    pass
+
+
+def _get_knowledge_service():
+    """Create a KnowledgeService backed by the default StorageEngine."""
+    from hiveos.storage import StorageEngine
+    from hiveos.knowledge import KnowledgeService
+    engine = StorageEngine()
+    return KnowledgeService(engine)
+
+
+@knowledge.command()
+@click.argument("query")
+@click.option("--source", "source_filter", default=None, help="Filter by source type (e.g. domain:accounting or org)")
+@click.option("--tag", "tags", default=None, help="Comma-separated tag filter (AND logic)")
+@click.option("--limit", default=10, type=int, help="Max results")
+def search(query, source_filter, tags, limit):
+    """Search the knowledge index."""
+    import asyncio
+
+    svc = _get_knowledge_service()
+    tag_list = [t.strip() for t in tags.split(",")] if tags else None
+    results = asyncio.run(svc.search(query, source_filter=source_filter, tags=tag_list, limit=limit))
+
+    if not results:
+        console.print("[yellow]No results found.[/yellow]")
+        return
+
+    table = Table(title=f"Search: '{query}'")
+    table.add_column("Source", style="cyan", max_width=20)
+    table.add_column("Title", style="white")
+    table.add_column("Snippet", style="dim")
+    table.add_column("Score", justify="right", style="green")
+
+    for r in results:
+        # Strip HTML tags from snippet
+        import re
+        snippet_clean = re.sub(r"<[^>]+>", "", r.snippet)
+        if len(snippet_clean) > 80:
+            snippet_clean = snippet_clean[:80] + "..."
+        table.add_row(r.source_type, r.title, snippet_clean, f"{r.score:.3f}")
+
+    console.print(table)
+
+
+@knowledge.command()
+@click.argument("path", type=click.Path(exists=True))
+@click.option("--source-type", required=True, help="Source type (e.g. org or domain:accounting)")
+def ingest(path, source_type):
+    """Ingest a file or directory into the knowledge index."""
+    import asyncio
+
+    svc = _get_knowledge_service()
+    target = Path(path)
+
+    if target.is_file():
+        count = asyncio.run(svc.ingest_directory(str(target.parent), source_type))
+        console.print(f"[green]✅ Ingested {count} chunk(s) from directory.[/green]")
+    elif target.is_dir():
+        count = asyncio.run(svc.ingest_directory(str(target), source_type))
+        console.print(f"[green]✅ Ingested {count} chunk(s) from '{target}'.[/green]")
+    else:
+        console.print(f"[red]Invalid path: {target}[/red]")
+
+
+@knowledge.command()
+def stats():
+    """Show knowledge index statistics."""
+    import asyncio
+
+    svc = _get_knowledge_service()
+    s = asyncio.run(svc.stats())
+
+    if s.total_chunks == 0:
+        console.print("[yellow]Knowledge index is empty.[/yellow]")
+        return
+
+    console.print(Panel("[bold cyan]📊 Knowledge Index Stats[/bold cyan]", width=50))
+
+    info_table = Table.grid(padding=(0, 2))
+    info_table.add_column("Key", style="bold yellow")
+    info_table.add_column("Value", style="white")
+
+    info_table.add_row("Documents", str(s.total_documents))
+    info_table.add_row("Chunks", str(s.total_chunks))
+    info_table.add_row("Sources", str(s.total_sources))
+
+    console.print(info_table)
+
+    if s.source_breakdown:
+        console.print()
+        src_table = Table(title="Sources")
+        src_table.add_column("Type", style="cyan")
+        src_table.add_column("Chunks", justify="right", style="green")
+        for src in s.source_breakdown:
+            src_table.add_row(src.source_type, str(src.document_count))
+        console.print(src_table)
+
+
+# ── Build Commands ─────────────────────────────────────────────────
+
+@hive.group()
+def build():
+    """🔨 Build executables and installers."""
+    pass
+
+
+@build.command("exe")
+@click.option("--onedir", is_flag=True, help="Produce a folder instead of single .exe")
+@click.option("--console", is_flag=True, help="Keep console window (debug)")
+def build_exe_cmd(onedir, console):
+    """Build HiveOS.exe — single-file Windows executable.
+
+    Produces dist/HiveOS.exe (or dist/HiveOS/ with --onedir).
+    No Python installation needed for end users.
+    """
+    import subprocess as _sp
+
+    project_root = Path(__file__).resolve().parent.parent.parent.parent
+    build_script = project_root / "build" / "build_exe.py"
+
+    if not build_script.exists():
+        console.print("[red]❌ build/build_exe.py not found[/red]")
+        raise SystemExit(1)
+
+    cmd = [sys.executable, str(build_script)]
+    if onedir:
+        cmd.append("--onedir")
+    if console:
+        cmd.append("--console")
+
+    console.print("[bold cyan]🔨 Building HiveOS executable...[/bold cyan]")
+    result = _sp.run(cmd, cwd=project_root)
+    if result.returncode != 0:
+        console.print("[red]❌ Build failed[/red]")
+        raise SystemExit(result.returncode)
+
+
+@build.command("installer")
+def build_installer():
+    """Build Windows installer (.exe setup) using Inno Setup.
+
+    Requires: PyInstaller build done + Inno Setup 6 installed.
+    Produces dist/HiveOS-Setup-x.x.x.exe
+    """
+    import subprocess as _sp
+    import shutil
+
+    project_root = Path(__file__).resolve().parent.parent.parent.parent
+    iss_file = project_root / "build" / "installer.iss"
+
+    if not iss_file.exists():
+        console.print("[red]❌ build/installer.iss not found[/red]")
+        raise SystemExit(1)
+
+    # Check dist exists
+    exe = project_root / "dist" / "HiveOS.exe"
+    folder = project_root / "dist" / "HiveOS" / "HiveOS.exe"
+    if not exe.exists() and not folder.exists():
+        console.print("[yellow]⚠ No build found. Running PyInstaller first...[/yellow]")
+        build_cmd = [sys.executable, str(project_root / "build" / "build_exe.py")]
+        _sp.run(build_cmd, cwd=project_root, check=True)
+
+    # Find iscc
+    iscc = None
+    for candidate in [
+        r"C:\Program Files (x86)\Inno Setup 6\iscc.exe",
+        r"C:\Program Files\Inno Setup 6\iscc.exe",
+    ]:
+        if Path(candidate).exists():
+            iscc = candidate
+            break
+    if not iscc:
+        iscc = shutil.which("iscc")
+
+    if not iscc:
+        console.print("[red]❌ Inno Setup 6 not found[/red]")
+        console.print("   Download: https://jrsoftware.org/isdl.php")
+        raise SystemExit(1)
+
+    console.print(f"[bold cyan]🔨 Building installer with Inno Setup...[/bold cyan]")
+    result = _sp.run([iscc, str(iss_file)], cwd=project_root / "build")
+    if result.returncode != 0:
+        console.print("[red]❌ Installer build failed[/red]")
+        raise SystemExit(result.returncode)
+
+    console.print("[green]✅ Installer built![/green]")
 
 
 # ── Main entry point ──────────────────────────────────────────────────

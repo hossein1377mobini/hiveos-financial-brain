@@ -9,7 +9,7 @@
 ; CLI: "C:\Program Files (x86)\Inno Setup 6\iscc.exe" build\installer.iss
 
 #define MyAppName "HiveOS"
-#define MyAppVersion "0.12.0"
+#define MyAppVersion "0.12.1"
 #define MyAppPublisher "HiveOS"
 #define MyAppURL "https://github.com/hossein1377mobini/hiveos-financial-brain"
 #define MyAppExeName "HiveOS.exe"
