@@ -2901,6 +2901,120 @@ def connect():
     webbrowser.open(url)
 
 
+# ── File Watch Folder Commands ──────────────────────────────────────
+
+@hive.group()
+def filewatch():
+    """📂 File Watch Folders — customer drop folders with auto-ingest."""
+    pass
+
+
+def _get_filewatch_service():
+    """Create a FileWatchService for CLI use."""
+    from hiveos.storage import StorageEngine
+    from hiveos.knowledge import KnowledgeService
+    from hiveos.filewatch import FileWatchService
+    engine = StorageEngine()
+    knowledge = KnowledgeService(engine)
+    return FileWatchService(engine, knowledge)
+
+
+@filewatch.command("add")
+@click.argument("name")
+@click.argument("path", type=click.Path())
+@click.option("--customer-id", default="", help="Customer identifier")
+@click.option("--tags", default="", help="Comma-separated tags")
+def fw_add(name, path, customer_id, tags):
+    """Add a new customer watch folder."""
+    tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
+    svc = _get_filewatch_service()
+    folder = svc.add_folder(
+        name=name,
+        path=path,
+        customer_id=customer_id,
+        tags=tag_list,
+    )
+    console.print(
+        f"[green]✅ Watch folder created:[/green] {folder.folder_id}"
+    )
+    console.print(f"   Path: {folder.path}")
+    console.print(f"   Files ingested: {folder.total_files_ingested}")
+
+
+@filewatch.command("list")
+@click.option("--customer-id", default=None, help="Filter by customer")
+def fw_list(customer_id):
+    """List all watch folders."""
+    svc = _get_filewatch_service()
+    folders = svc.list_folders(customer_id=customer_id)
+    if not folders:
+        console.print("[yellow]No watch folders.[/yellow]")
+        return
+    table = Table(title="📂 Watch Folders")
+    table.add_column("ID", style="cyan")
+    table.add_column("Name", style="white")
+    table.add_column("Path", style="dim")
+    table.add_column("Status", style="green")
+    table.add_column("Files", justify="right", style="yellow")
+    table.add_column("Customer", style="white")
+    for f in folders:
+        status = "[green]active[/green]" if f.status.value == "active" else f"[yellow]{f.status.value}[/yellow]"
+        table.add_row(f.folder_id, f.name, f.path, status, str(f.total_files_ingested), f.customer_id or "—")
+    console.print(table)
+
+
+@filewatch.command("scan")
+@click.argument("folder_id")
+def fw_scan(folder_id):
+    """One-shot scan: ingest all files in a folder."""
+    svc = _get_filewatch_service()
+    count = svc.scan_folder(folder_id)
+    console.print(f"[green]✅ Scanned: {count} chunks ingested[/green]")
+
+
+@filewatch.command("events")
+@click.argument("folder_id", required=False)
+@click.option("--limit", default=20, type=int)
+def fw_events(folder_id, limit):
+    """Show recent file events."""
+    svc = _get_filewatch_service()
+    events = svc.get_events(folder_id=folder_id, limit=limit)
+    if not events:
+        console.print("[yellow]No events.[/yellow]")
+        return
+    table = Table(title="📋 File Events")
+    table.add_column("Time", style="dim")
+    table.add_column("Folder", style="cyan")
+    table.add_column("Event", style="white")
+    table.add_column("File", style="yellow")
+    table.add_column("Chunks", justify="right", style="green")
+    for e in events:
+        kind_style = "green" if e.event_kind.value == "ingested" else "red"
+        table.add_row(
+            e.timestamp[:19],
+            e.folder_id,
+            f"[{kind_style}]{e.event_kind.value}[/{kind_style}]",
+            Path(e.file_path).name,
+            str(e.chunks_ingested) if e.chunks_ingested else "—",
+        )
+    console.print(table)
+
+
+@filewatch.command("remove")
+@click.argument("folder_id")
+@click.option("--yes", is_flag=True, help="Skip confirmation")
+def fw_remove(folder_id, yes):
+    """Remove a watch folder."""
+    if not yes:
+        click.confirm(f"Remove folder {folder_id}?", abort=True)
+    svc = _get_filewatch_service()
+    removed = svc.remove_folder(folder_id)
+    if removed:
+        console.print(f"[green]✅ Removed: {folder_id}[/green]")
+    else:
+        console.print(f"[red]❌ Folder not found: {folder_id}[/red]")
+
+
 # ── Knowledge Service Commands ────────────────────────────────────────
 
 @hive.group()
@@ -3093,6 +3207,127 @@ def build_installer():
         raise SystemExit(result.returncode)
 
     console.print("[green]✅ Installer built![/green]")
+
+
+# ── Privacy Commands (ADR-0017: Privacy-First) ──────────────────────
+
+@hive.group()
+def privacy():
+    """🔒 Privacy management (ADR-0017: Privacy-First)."""
+    pass
+
+
+@privacy.command()
+@click.option("--data-dir", type=click.Path(), default="~/.hiveos/data", help="Data directory")
+def status(data_dir):
+    """Show privacy status."""
+    from .privacy import _get_config, _get_audit
+    from rich.table import Table
+    
+    data_path = Path(data_dir).expanduser()
+    config = _get_config(data_path)
+    audit_trail = _get_audit(data_path)
+    
+    stats = audit_trail.get_stats()
+    
+    table = Table(title="Privacy Status")
+    table.add_column("Setting", style="cyan")
+    table.add_column("Value", style="green")
+    
+    table.add_row("Egress Policy", config.egress_policy.value)
+    table.add_row("Audit Enabled", str(config.audit_all_egress))
+    table.add_row("Total Egress Attempts", str(stats["total_egress_attempts"]))
+    table.add_row("Allowed", str(stats["allowed"]))
+    table.add_row("Blocked", str(stats["blocked"]))
+    
+    console.print(table)
+    
+    # Show endpoints
+    endpoint_table = Table(title="External Endpoints")
+    endpoint_table.add_column("ID", style="cyan")
+    endpoint_table.add_column("Purpose")
+    endpoint_table.add_column("Status", style="bold")
+    endpoint_table.add_column("URL")
+    
+    for ep_id, ep in config.allowed_endpoints.items():
+        status_style = "green" if ep.enabled else "red"
+        status_text = "ENABLED" if ep.enabled else "disabled"
+        endpoint_table.add_row(
+            ep_id,
+            ep.purpose,
+            f"[{status_style}]{status_text}[/{status_style}]",
+            ep.url,
+        )
+    
+    console.print(endpoint_table)
+
+
+@privacy.command()
+@click.argument("endpoint_id")
+@click.option("--data-dir", type=click.Path(), default="~/.hiveos/data", help="Data directory")
+def enable_endpoint(endpoint_id, data_dir):
+    """Enable an external endpoint."""
+    from .privacy import _get_config
+    
+    data_path = Path(data_dir).expanduser()
+    config = _get_config(data_path)
+    
+    if config.enable_endpoint(endpoint_id):
+        config.save(data_path / "privacy.json")
+        console.print(f"[green]✓[/green] Endpoint '{endpoint_id}' enabled")
+    else:
+        console.print(f"[red]✗[/red] Endpoint '{endpoint_id}' not found")
+
+
+@privacy.command()
+@click.argument("endpoint_id")
+@click.option("--data-dir", type=click.Path(), default="~/.hiveos/data", help="Data directory")
+def disable_endpoint(endpoint_id, data_dir):
+    """Disable an external endpoint."""
+    from .privacy import _get_config
+    
+    data_path = Path(data_dir).expanduser()
+    config = _get_config(data_path)
+    
+    if config.disable_endpoint(endpoint_id):
+        config.save(data_path / "privacy.json")
+        console.print(f"[green]✓[/green] Endpoint '{endpoint_id}' disabled")
+    else:
+        console.print(f"[red]✗[/red] Endpoint '{endpoint_id}' not found")
+
+
+@privacy.command()
+@click.option("--limit", default=20, help="Number of entries to show")
+@click.option("--data-dir", type=click.Path(), default="~/.hiveos/data", help="Data directory")
+def audit(limit, data_dir):
+    """Show recent audit logs."""
+    from .privacy import _get_audit
+    from rich.table import Table
+    
+    data_path = Path(data_dir).expanduser()
+    audit_trail = _get_audit(data_path)
+    
+    entries = audit_trail.get_recent(limit=limit)
+    
+    table = Table(title="Privacy Audit Log")
+    table.add_column("Time", style="cyan")
+    table.add_column("Method")
+    table.add_column("URL")
+    table.add_column("Status", style="bold")
+    table.add_column("Reason")
+    
+    for entry in entries:
+        status_style = "green" if entry.allowed else "red"
+        status_text = "ALLOWED" if entry.allowed else "BLOCKED"
+        table.add_row(
+            entry.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            entry.method,
+            entry.url[:60] + "..." if len(entry.url) > 60 else entry.url,
+            f"[{status_style}]{status_text}[/{status_style}]",
+            entry.reason,
+        )
+    
+    console.print(table)
 
 
 # ── Main entry point ──────────────────────────────────────────────────

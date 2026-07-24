@@ -45,13 +45,20 @@ class EgressResult:
     reason: str
     request: EgressRequest
     blocked_at: Optional[datetime] = None
-
+    
+    @property
+    def allowed(self) -> bool:
+        """Alias for is_allowed for backwards compatibility."""
+        return self.is_allowed
+    
     @classmethod
-    def allowed(cls, request: EgressRequest) -> "EgressResult":
+    def from_allowed(cls, request: EgressRequest) -> "EgressResult":
+        """Create a result indicating the request is allowed."""
         return cls(is_allowed=True, reason="Policy allows", request=request)
-
+    
     @classmethod
-    def blocked(cls, request: EgressRequest, reason: str) -> "EgressResult":
+    def from_blocked(cls, request: EgressRequest, reason: str) -> "EgressResult":
+        """Create a result indicating the request is blocked."""
         return cls(
             is_allowed=False,
             reason=reason,
@@ -117,13 +124,13 @@ class NetworkGuard:
         # Check blocked domains first
         if domain in self.config.blocked_domains:
             self._blocked_count += 1
-            return EgressResult.blocked(request, f"Domain explicitly blocked: {domain}")
+            return EgressResult.from_blocked(request, f"Domain explicitly blocked: {domain}")
         
         # Check if any data type is forbidden
         for dt in request.data_types:
             if dt in self.config.never_leave:
                 self._blocked_count += 1
-                return EgressResult.blocked(
+                return EgressResult.from_blocked(
                     request,
                     f"Data type '{dt.value}' cannot leave infrastructure"
                 )
@@ -131,26 +138,26 @@ class NetworkGuard:
         # Check policy
         if self.config.egress_policy == EgressPolicy.BLOCK_ALL:
             self._blocked_count += 1
-            return EgressResult.blocked(request, "Global policy: BLOCK_ALL")
+            return EgressResult.from_blocked(request, "Global policy: BLOCK_ALL")
         
         # Check specific endpoint if provided
         if endpoint_id:
             endpoint = self.config.allowed_endpoints.get(endpoint_id)
             if not endpoint:
                 self._blocked_count += 1
-                return EgressResult.blocked(request, f"Unknown endpoint: {endpoint_id}")
+                return EgressResult.from_blocked(request, f"Unknown endpoint: {endpoint_id}")
             if not endpoint.enabled:
                 self._blocked_count += 1
-                return EgressResult.blocked(request, f"Endpoint disabled: {endpoint_id}")
+                return EgressResult.from_blocked(request, f"Endpoint disabled: {endpoint_id}")
         
         # Check allowed domains
         if self.config.allowed_domains and domain not in self.config.allowed_domains:
             self._blocked_count += 1
-            return EgressResult.blocked(request, f"Domain not in allowed list: {domain}")
+            return EgressResult.from_blocked(request, f"Domain not in allowed list: {domain}")
         
         # Passed all checks
         self._allowed_count += 1
-        return EgressResult.allowed(request)
+        return EgressResult.from_allowed(request)
     
     @property
     def stats(self) -> Dict[str, int]:

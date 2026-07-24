@@ -1,188 +1,120 @@
-# HiveOS Roadmap 🗺️
+# HiveOS Roadmap
 
-> **Vision:** A Multi-Agent Operating System with a visual Playground, transparent Brain, and pluggable domain knowledge.
->
-> **Scope cut (v0.12.0 review):** Stripped 70% — no 3D viz, no license tiers, no multi-tenancy, no audit trails, no pattern recognition. One domain. One user. Ship fast.
-
----
-
-## ✅ Phase 0-3: Core Infrastructure (Done)
-
-| Phase | Deliverable | Status |
-|-------|-------------|--------|
-| 0 | Foundation (KB, Git, Python pkg, Flow DSL + Validator) | ✅ |
-| 1 | Playground CLI (Flow Engine, 3-agent demo, state, error handling) | ✅ |
-| 2 | Integration (Hermes subagents, resume, retry, knowledge sync) | ✅ |
-| 3 | Packaging (registry, publish, install, remote client) | ✅ |
+> **Vision:** Organizational Intelligence Platform
+> **Principle:** HiveOS learns from organizations, reasons on their knowledge, and helps managers make better decisions.
+> **Source:** ADR-0017 (Product Direction Update)
 
 ---
 
-## ✅ Phase 4: Mothership (Core Only)
+## V1 — Core Intelligence Platform (NOW)
 
-Simplified — keep routing and bus, drop resilience complexity.
+> "Your organization's knowledge, made computable from day one."
 
-| Component | Description | Status |
-|-----------|-------------|--------|
-| Agent Registry | Capabilities, heartbeat | ✅ |
-| Task Router | 5 strategies | ✅ |
-| Communication Bus | Pub/sub, 2 backends | ✅ |
-| Mothership Server | FastAPI REST API | ✅ |
-| Mothership CLI | agent/route/bus/server | ✅ |
+### V1 Scope
 
-**Removed:** Circuit breaker, health checker, reassignment logic. Agents die → task requeued. Simple.
+| # | Feature | Description | Status |
+|---|---------|-------------|--------|
+| 1 | Domain Pack System | Install, enable, disable, remove Domain Packs | ✅ |
+| 2 | Knowledge Retrieval | Unified search index across Domain + Organization knowledge | ✅ |
+| 3 | Workflow Execution | Run pre-built Workflow Templates | ✅ |
+| 4 | First-Time Experience | After install, show: "These are the business processes we know" | 🟡 |
+| 5 | Capability Selection | Customer chooses which capabilities to activate | 🟡 |
+| 6 | Customer File Watch | Folder for customer documents, auto-detect new files | 🟡 |
+| 7 | Organizational Learning | Parse customer files → build knowledge graph → memory | 🔴 |
+| 8 | Privacy-First Architecture | All data stays on customer infrastructure | ✅ |
+| 9 | Monitoring Dashboard | Basic status, execution history, alerts | 🟡 |
+| 10 | Simple Installer | MSI + PyInstaller for Windows | ✅ |
+| 11 | Domain Pack Download | Download from company website/registry | ✅ |
 
----
-
-## ✅ Phase 6: Playground — Core APIs
-
-| Code | Feature | Status |
-|------|---------|--------|
-| P-01 | `POST /api/playground/validate` — Flow YAML validator | ✅ |
-| P-02 | `POST /api/playground/auto-agents` — Task → domain agent matching | ✅ |
-| P-03 | `GET /api/playground/templates` — Template browser | ✅ |
-| P-04 | Visual Canvas (HTML5 Canvas + drag & drop) | ✅ |
-| P-05 | Run/Debug + WebSocket streaming | ✅ |
-
----
-
-## ✅ Phase 7: Brain — Core Engine
-
-| Code | Feature | Status |
-|------|---------|--------|
-| B-01 | Event Stream Pipeline (agent lifecycle) | ✅ |
-| B-02 | Decision Tracer (step-by-step path tracking) | ✅ |
-| B-03 | Approval Gate Engine (create/approve/reject/expire) | ✅ |
-| B-04 | Brain API (REST) | ✅ |
-
-**Removed:** 3D Neural View (B-05), WebSocket streaming (B-06), interactive exploration (B-07), historical replay (B-08). Brain is a trace log + approval gates. No pretty 3D.
+### V1 NOT Included
+- Model training / fine-tuning / LoRA
+- Custom Workflow creation
+- Pattern detection
+- Analysis engine
+- Recommendation engine
+- Multi-domain orchestration
+- Enterprise SSO / LDAP
+- Two-way system integrations
 
 ---
 
-## ✅ Phase 8: Learning — Passive Logger Only
+## V1.5 — Decision Support Foundation (NEXT)
 
-| Code | Feature | Status |
-|------|---------|--------|
-| L-01 | Execution Logger (in-memory collection + stats + trends) | ✅ |
+> "Helping managers see what's happening."
 
-**Removed:** Pattern recognition (L-02), knowledge accumulation (L-04), adaptive routing (L-05). Learning = collect data. Humans analyze later.
-
----
-
-## ✅ Phase D1: Accounting Domain (One Domain)
-
-| Deliverable | Status |
-|-------------|--------|
-| Knowledge tree (200+ nodes, 10 branches) | ✅ |
-| Domain manifest (29 agents, 6 flows) | ✅ |
-| 29 agent blueprints (YAML) | ✅ |
-| 6 flow templates (YAML) | ✅ |
-| Hermes skills per agent (6 orchestrator SKILL.md) | ✅ |
-| Agent auto-generation API | ✅ |
-| Template browser API | ✅ |
-
-**No more domains until v2.** One domain proves the model.
+| # | Feature | Description |
+|---|---------|-------------|
+| 1 | Organization Variables Wizard | Collect: departments, approval hierarchy, cost centers, suppliers |
+| 2 | Auto-Detect Variables | Extract organization-specific info from customer documents |
+| 3 | Workflow Customization (Edit) | Modify existing workflow templates (change parameters, steps) |
+| 4 | Simple Decision Support | Status alerts, bottleneck detection, delayed approvals |
+| 5 | Monitoring Enhancements | Real-time dashboards, KPI tracking |
 
 ---
 
-## ✅ Phase D2: Domain Registry (Minimal)
+## V2 — Intelligence Layer (FUTURE)
 
-| Deliverable | Status |
-|-------------|--------|
-| `hive domain` (list/info/install/remove/init) | ✅ |
-| Domain registry (local catalog) | ✅ |
+> "The system learns how your organization works."
 
----
-
-## ✅ Phase S: SQLite Persistence
-
-| Code | Feature | Status |
-|------|---------|--------|
-| S-01 | SQLite StorageEngine | ✅ |
-| S-02 | Persist Brain (EventStream, Traces, Gates) | ✅ |
-| S-03 | Persist Learning (ExecutionLogs) | ✅ |
-| S-04 | Persist Playground (FlowRuns) | ✅ |
-| S-05 | Data directory init | ✅ |
-| S-06 | Migration system | ✅ |
+| # | Feature | Description |
+|---|---------|-------------|
+| 1 | Analysis Engine | Pattern detection, anomaly detection, trend analysis |
+| 2 | Recommendation Engine | Proactive suggestions based on execution history |
+| 3 | Custom Workflow Creation | Build new workflows from scratch or from patterns |
+| 4 | Advanced Organizational Learning | Cross-file learning, behavior pattern extraction |
+| 5 | Decision Support Framework | Generic framework across all Domain Packs |
+| 6 | Multiple Domain Packs | Install and orchestrate multiple packs |
 
 ---
 
-## ✅ Phase CL: Standardisation
+## V3 — Autonomous Intelligence (LONG TERM)
 
-| Code | Feature | Status |
-|------|---------|--------|
-| CL-01 | CHANGELOG.md | ✅ |
-| CL-02 | CI (pytest on push) | ✅ |
-| CL-03 | Auto-update skeleton | ✅ |
+> "An organization that never forgets and continuously improves."
 
----
-
-## ✅ Phase: Playground UI (React Flow)
-
-| Deliverable | Status |
-|-------------|--------|
-| Node Palette (4 categories: Trigger/Action/AI/Flow Control) | ✅ |
-| React Flow Canvas (snap-to-grid, connections) | ✅ |
-| Properties Panel (JSON editor) | ✅ |
-| Mini-map & Controls | ✅ |
-| Execution Trace panel | ✅ |
-| Toolbar (Templates, Run, Clear) | ✅ |
-| Execution Visualization (animated shimmer) | ✅ |
-| Design Tokens (Linear-inspired dark theme) | ✅ |
-| Backend Integration (FastAPI SPA) | ✅ |
+| # | Feature | Description |
+|---|---------|-------------|
+| 1 | Proactive Insights | System surfaces insights without user asking |
+| 2 | Predictive Analytics | Forecast trends, risks, opportunities |
+| 3 | Cross-Organization Learning | Anonymized pattern sharing across opt-in customers |
+| 4 | Full Autonomy Mode | Configure autonomy level per Skill/Workflow |
+| 5 | Domain Pack Marketplace | Third-party authors |
 
 ---
 
-## ✅ Phase: Desktop & Build
-
-| Deliverable | Status |
-|-------------|--------|
-| Desktop Shell (pywebview native window) | ✅ |
-| PyInstaller → HiveOS.exe | ✅ |
-| MSI installer (Inno Setup) | ✅ |
-| PWA (manifest, Service Worker, offline fallback) | ✅ |
-
----
-
-## 🏁 What's Left for v1.0.0
-
-| Priority | Task | Status |
-|----------|------|--------|
-| 🟡 | Windows code signing (Authenticode) | Needs certificate |
-| 🟢 | First GitHub Release (v0.12.0) | Ready to cut |
-
----
-
-## 📊 Progress Summary
+## 4-Engine Architecture
 
 ```
-Phase 0-3 (Core):           ██████████████████████████ 100%
-Phase 4 (Mothership):       ██████████████████████████ 100%
-Phase 6-7 (Playground+Brain):████████████████████████████ 100%
-Phase 8 (Learning):         ██████████████████████████ 100%
-Phase D1-D2 (Domain):       ██████████████████████████ 100%
-Phase S (Storage):          ██████████████████████████ 100%
-Phase CL (Standardisation): ██████████████████████████ 100%
-Playground UI:              ██████████████████████████ 100%
-Desktop & Build:            ██████████████████████████ 100%
+Knowledge Engine → Learning Engine → Reasoning Engine → Decision Engine
+     ↓                    ↓                ↓                 ↓
+Domain Packs         Parse Files      RAG + AI Models    Alerts + Insights
+Org Knowledge        Build Memory     Reasoning          Recommendations
+                     Update Daily     Context            Action Items
 ```
+
+| Engine | V1 | V1.5 | V2 | V3 |
+|--------|----|----|----|-----|
+| Knowledge Engine | ✅ | ✅ | ✅ | ✅ |
+| Learning Engine | 🟡 Basic | ✅ | ✅ | ✅ |
+| Reasoning Engine | ✅ | ✅ | ✅ | ✅ |
+| Decision Engine | ❌ | 🟡 Alerts | ✅ Analysis | ✅ Full |
 
 ---
 
-## ❌ Features Cut (v0.12.0 Review)
+## Key Metrics
 
-| Feature | Why Cut |
-|---------|---------|
-| 3D Neural View (Three.js) | Eye candy. Brain traces are enough. |
-| License tiers / pricing | No paying users yet. Premature. |
-| Multi-tenant workspaces | Single-user product. Add when needed. |
-| Audit Trail (JSONL) | Overkill. SQLite logs suffice. |
-| RBAC / auth | Single user. No roles to assign. |
-| Pattern recognition | Premature ML. Collect data first (L-01). |
-| Circuit breaker / health check | Agents die → requeue. Simple wins. |
-| Adaptive routing (L-05) | Premature. 5 static strategies work. |
-| Knowledge accumulation (L-04) | Premature. Prove one domain first. |
-| Historical replay (B-08) | Nice-to-have. Trace logs cover debugging. |
-| Interactive exploration (B-07) | Dashboard exists. No need for fancy clicky. |
-| WebSocket streaming (B-06) | REST polling works. Add when latency matters. |
-| Cross-domain dependencies | One domain. N/A. |
-| Remote registry (HTTP) | Local catalog for now. |
+| Metric | V1 Target | V1.5 Target | V2 Target |
+|--------|-----------|-------------|-----------|
+| Time to first insight | < 5 min | < 3 min | < 1 min |
+| Customer files processed | 10+ | 50+ | 100+ |
+| Workflows available | 6 (accounting) | 12 | 30+ |
+| Decision support alerts | 0 | 5 types | 20+ |
+| Active users | 1 | 5 | 50+ |
+
+---
+
+## Change History
+
+| Version | Date | Change |
+|---------|------|--------|
+| 2.0.0 | 2026-07-24 | Complete rewrite — 5-Pillar to 4-Engine model (ADR-0017) |
+| 1.0.0 | 2026-07-19 | Initial roadmap |

@@ -105,6 +105,22 @@ class StorageEngine:
             ).fetchone()
         return row[0] if row else 0
 
+    def execute(self, sql: str, params: tuple = ()) -> None:
+        """Execute a SQL statement (INSERT/UPDATE/DELETE/CREATE)."""
+        with self._lock:
+            self._conn.execute(sql, params)
+            self._conn.commit()
+
+    def fetch_one(self, sql: str, params: tuple = ()) -> Optional[tuple]:
+        """Execute a SQL query and return one row, or None."""
+        with self._lock:
+            return self._conn.execute(sql, params).fetchone()
+
+    def fetch_all(self, sql: str, params: tuple = ()) -> List[tuple]:
+        """Execute a SQL query and return all rows."""
+        with self._lock:
+            return self._conn.execute(sql, params).fetchall()
+
     def vacuum(self) -> None:
         """Recover disk space."""
         with self._lock:

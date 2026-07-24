@@ -84,12 +84,13 @@ class RBACManager:
             for name, udata in data.get("users", {}).items():
                 self._users[name] = User.from_dict(udata)
         else:
-            # First run — create default admin user
+            # First run — create default admin user with random key
             self._users = {}
             for uname, udata in DEFAULT_RBAC_CONFIG["users"].items():
-                if not udata.get("api_key"):
-                    udata["api_key"] = secrets.token_urlsafe(32)
-                self._users[uname] = User.from_dict(udata)
+                entry = dict(udata)  # copy to avoid mutating global
+                if not entry.get("api_key"):
+                    entry["api_key"] = secrets.token_urlsafe(32)
+                self._users[uname] = User.from_dict(entry)
             self._custom_roles = {}
             self.save()
             console.print(f"[dim]🆕 Created default RBAC: {self._path}[/dim]")

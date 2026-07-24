@@ -1,306 +1,175 @@
-# HiveOS — Agent Boot File 🐝
+# HiveOS — Agent Boot File
 
 > Auto-loaded by Hermes when working in hive-os.
 > Contains COMPLETE project state for cross-session continuity.
+> Updated: 2026-07-24
 
 ---
 
-## 📌 Current Phase
+## Identity
 
-| Phase | Status | Version |
-|-------|--------|---------|
-| Phase 0 (Foundation) | ✅ | v0.1.0 |
-| Phase 1 (Playground CLI) | ✅ | v0.2.0 |
-| Phase 2 (Integration) | ✅ | v0.3.0 |
-| Phase 3 (Packaging) | ✅ | v0.4.0 |
-| Phase 4 (Mothership) | ✅ | v0.4.0 |
-| Phase 5 (Enterprise) | ✅ | v0.6.0 |
-|| Phase D1 (Accounting) | ✅ 100% (471 files, 23.6MB) | v0.6.0 |
-| Phase 6 (Playground) | ✅ Full (APIs + Canvas + Runner) | v0.8.0 |
-| Phase 7 (Brain) | ✅ Full (Engine + API + 3D Viz) | v0.8.0 |
-| Phase 8 (Learning) | ✅ Full (Logger + Analytics) | v0.8.0 |
-| Phase S (Storage) | ✅ SQLite + Migrations | v0.9.0 |
-| **CL (Standardisation)** | **✅ CHANGELOG + CI + Auto-update** | **v0.9.2** |
-| **D (Domain)** | **✅ Domain CLI + Hermes Skills** | **v0.9.1** |
-| **🪟 Desktop** | **✅ pywebview Shell + PyInstaller + MSI** | **v0.10.0** |
-| **🪟 D2 Domain Registry** | **✅ StorageEngine-backed + API + UI + CLI** | **v0.11.0** |
-| **🌐 PWA** | **✅ Installable dashboard (manifest + SW + icons)** | **v0.12.0** |
-| **🎮 Playground UI** | **✅ React Flow Visual Builder (Linear-style)** | **v0.12.0** |
+**HiveOS is an Organizational Intelligence Platform** that learns from organizations, reasons on their knowledge, and helps managers make better decisions.
+
+**Source:** ADR-0017 (Product Direction Update)
 
 ---
 
-## 🎯 Project Vision (v2.0)
+## 4-Engine Architecture
 
-HiveOS is a **Multi-Agent Operating System** with 5 pillars:
-
-1. **Engine** — Core OS (Flow DSL, Engine, Mothership, Enterprise features) ✅
-2. **Domains** — Pluggable knowledge domains (Accounting D1 🏗️)
-3. **Playground** — Visual interactive flow builder ✅ Core APIs / ⏳ Canvas UI
-4. **Brain** — 3D neural glass-box visualization ✅ Core Engine / ⏳ 3D Viz
-5. **Learning** — Self-improving system ✅ Passive Logger / ⏳ Analytics
-
-**Guiding Principles:**
-- **Glass Box** — Every action visible, traceable, explainable
-- **Human-in-the-Loop** — Critical decisions need human approval
-- **Domain-Native** — Domains are first-class plugins
-- **Self-Learning** — Every execution makes the system smarter
-
----
-
-## ✅ What's Built (v0.11.0 — 436+ tests)
-
-### Core Infrastructure
-| Component | Test Count | Status |
-|-----------|-----------|--------|
-| Flow Engine | 13 | ✅ |
-| Agent Registry | 20 | ✅ |
-| Task Router | 16 | ✅ |
-| Communication Bus | 14 | ✅ |
-| Resilience Engine | 20 | ✅ |
-| Sync (Node Registry) | 12 | ✅ |
-| Package Registry | 16 | ✅ |
-| RBAC | 36 | ✅ |
-| Audit Trail | 20 | ✅ |
-| Dashboard | 23 | ✅ |
-| Workspace (Multi-tenant) | 38 | ✅ |
-| License (Pricing) | 32 | ✅ |
-
-### ✅ Phase 6: Playground — Full (v0.8.0)
-| Task | Status | Description |
-|------|--------|-------------|
-| **P-01** `POST /api/playground/validate` | ✅ | Flow YAML validation with rich errors/warnings |
-| **P-02** `POST /api/playground/auto-agents` | ✅ | Task description → auto-select domain agents (keyword scoring) |
-| **P-03** `GET /api/playground/templates` | ✅ | Browse domain flow templates with metadata |
-| **P-04** Visual Canvas (HTML5 Canvas in Dashboard) | ✅ | Drag & drop flow builder |
-| **P-05** `POST /api/playground/run` + WS streaming | ✅ | Async execution + WebSocket event stream |
-
-### ✅ Phase 7: Brain — Full (v0.8.0)
-| Task | Status | Description |
-|------|--------|-------------|
-| **B-01** Event Stream Pipeline | ✅ | Agent lifecycle events with filtering + stats |
-| **B-02** Decision Tracer | ✅ | Trace every decision path + step tracking |
-| **B-03** Approval Gate Engine | ✅ | Create/approve/reject/expire gates with stats |
-| **B-04** Brain API (REST) | ✅ | All routes: /api/brain/events, /traces, /gates |
-| **B-05** 3D Neural View (Three.js/WebGL) | ✅ | Interactive agent topology visualization |
-
-### ✅ Phase 8: Learning — Full (v0.8.0)
-| Task | Status | Description |
-|------|--------|-------------|
-| **L-01** Execution Logger | ✅ | Passive in-memory collection + stats + trends |
-| **L-02** Execution Analytics | ✅ | Trend analysis, bottleneck detection, failure patterns |
-
-### ✅ Phase S: Storage — SQLite Persistence (v0.9.1)
-| Task | Status | Description |
-|------|--------|-------------|
-| **S-01** StorageEngine (SQLite) | ✅ | Generic key-value store, WAL mode, thread-safe |
-| **S-02** Brain persistence | ✅ | EventStream, DecisionTracer, ApprovalGateEngine persist to SQLite |
-| **S-03** Learning persistence | ✅ | ExecutionLogger logs survive restarts |
-| **S-04** Playground persistence | ✅ | FlowRunner state saved/restored |
-| **S-05** Data directory init | ✅ | `~/.hiveos/data/` auto-created on first run and via `hive util init` |
-| **S-06** Migration system | ✅ | Schema versioning, auto-run pending migrations on connect |
-
-### ✅ CL: Standardisation (v0.9.2)
-| Task | Status | Description |
-|------|--------|-------------|
-| **CL-01** CHANGELOG.md | ✅ | Keep a Changelog format |
-| **CL-02** CI (GA pytest on push) | ✅ | `.github/workflows/test.yml` |
-| **CL-03** Auto-update skeleton | ✅ | `hive update check/info`, GitHub Releases checker |
-
-### ✅ D: Domain System (v0.9.1)
-| Task | Status | Description |
-|------|--------|-------------|
-| **D-04** Hermes skills for accounting agents | ✅ | 6 Hermes SKILL.md files for orchestrator agents |
-| **D-05** Domain Plugin CLI | ✅ | `hive domain list/info/install/remove/init` commands |
-
-### ✅ P: Playground Enhancements (v0.10.0)
-| Task | Status | Description |
-|------|--------|-------------|
-| **P-07** Template Customizer | ✅ | `PlaygroundEngine.customize_template()` — override description, trigger, agents, memory via deep-merge |
-| **P-08** Flow Library | ✅ | `FlowLibrary` — persistent CRUD for user flows via StorageEngine (save/load/list/delete/update) |
-
-### ✅ 🪟 Desktop & Build (v0.10.0)
-|| Component | Status | Description |
-||-----------|--------|-------------|
-|| Desktop Shell (pywebview) | ✅ | `DesktopApp` class — native Windows window wrapping the FastAPI dashboard |
-|| PyInstaller .exe | ✅ | `build/build_exe.py` — one-command build to `dist/HiveOS/HiveOS.exe` |
-|| MSI Installer (Inno Setup) | ✅ | `build/installer.iss` — full installer with shortcuts, Persian lang, cleanup |
-|| `hive desktop start` | ✅ | Launch HiveOS in a native desktop window |
-|| `hive desktop connect` | ✅ | Open browser to running dashboard |
-
-### ✅ 🎮 Playground UI — React Flow Visual Builder (v0.12.0)
-
-The new Playground UI replaces the old HTML5 Canvas with a professional React Flow-based visual editor, styled after **Linear's dark-mode design system** (design tokens at `playground-ui/DESIGN.md`).
-
-| Component | Status | Description |
-|-----------|--------|-------------|
-| **Node Palette** | ✅ | Left sidebar with draggable nodes in 4 categories: Triggers ⚡, Actions ⚙️, AI & Agents 🤖, Flow Control 🔀 |
-| **React Flow Canvas** | ✅ | Drag & drop infinite canvas with cursor-pan, zoom, snap-to-grid, and connection drawing |
-| **Properties Panel** | ✅ | Right panel with live JSON config editor, label/description fields, node type badge |
-| **Mini-map** | ✅ | Bottom-right overview showing canvas topology at a glance |
-| **Execution Trace** | ✅ | Bottom panel showing real-time log of every node's execution (start→complete/error) |
-| **Toolbar** | ✅ | Templates menu, Run Flow, Clear Canvas, node/edge count |
-| **Execution Visualization** | ✅ | Animated shimmer on running nodes, green/red indicators for success/error, edge path animations |
-| **Design Tokens** | ✅ | Linear-inspired dark theme in `DESIGN.md` + CSS vars (Inter font, 510 weight, brand indigo #5e6ad2) |
-| **Backend Integration** | ✅ | FastAPI serves the built SPA at `GET /playground`, static assets at `/playground/assets/` |
-
-### Technical Stack
-- **Framework:** Vite + React 19 + TypeScript
-- **Canvas:** @xyflow/react (React Flow v12)
-- **Styling:** Tailwind CSS v4 + custom CSS variables (Linear-inspired dark theme)
-- **Design:** See `playground-ui/DESIGN.md` for complete design token spec
-- **Dev server:** `cd playground-ui && npm run dev` (port 5173, proxies `/api` to backend)
-- **Build:** `cd playground-ui && npm run build`
-- **Deploy to backend:** `cd playground-ui && npm run deploy`
-
-### ✅ D2: Domain Registry (v0.11.0)
-| Component | Status | Description |
-|-----------|--------|-------------|
-| DomainRegistry class | ✅ | StorageEngine-backed catalog with scan/search/install/remove |
-| Dependency resolution | ✅ | Transitive dep resolution + circular detection |
-| Integrity verification | ✅ | Check agent blueprints, flows, deps |
-| Learning & Suggestions | ✅ | Analyse domains, track usage, suggest relevant domains |
-| REST API (11 endpoints) | ✅ | Full CRUD + search + learn + suggestions + dependencies |
-| Desktop UI | ✅ | Cards grid, search, detail panel, install/learn buttons, suggestions |
-| CLI `hive domain search` | ✅ | 🔍 Search by name/label/tags |
-| CLI `hive domain learn` | ✅ | 🧠 Analyse and store insights |
-| CLI `hive domain suggestions` | ✅ | 💡 Get usage-based recommendations |
-| CLI `hive domain verify` | ✅ | ✅ Integrity check all installed domains |
-
-### CLI Commands
 ```
-hive
- ├── flow run/validate/list/state/clear-state
- ├── package build/install/list/publish
- ├── registry list/search/info/remove/verify
- ├── mothership agent/route/bus/health/server
- ├── rbac user/role
- ├── audit list/search/stats/search-gbrain/sync-gbrain/rotate
- ├── dashboard start/stop/status
- ├── workspace create/list/info/update/remove/activate member
- ├── license info/activate/deactivate/upgrade/tiers/check
- ├── util init/info
- ├── domain list/info/install/remove/init/search/learn/suggestions/verify
- ├── update check/info
- └── desktop start/connect
+Knowledge Engine → Learning Engine → Reasoning Engine → Decision Engine
+```
+
+| Engine | Responsibility |
+|--------|---------------|
+| **Knowledge Engine** | Domain Pack knowledge + Organization knowledge |
+| **Learning Engine** | Continuous learning from files, events, user behavior |
+| **Reasoning Engine** | AI-powered reasoning on knowledge (RAG, not training) |
+| **Decision Engine** | Alerts, insights, recommendations for managers |
+
+---
+
+## Current Version: v1.0.0 (V1 Release)
+
+| Phase | Status | Description |
+|-------|--------|-------------|
+| Phase 0-3 (Core) | ✅ | Foundation, Playground CLI, Integration, Packaging |
+| Phase 4 (Mothership) | ✅ | Agent Registry, Task Router, Communication Bus |
+| Phase 6 (Playground) | ✅ | Visual Builder + APIs |
+| Phase 7 (Brain) | ✅ | Event Stream, Decision Tracer, Approval Gates |
+| Phase 8 (Learning) | ✅ | Execution Logger + Analytics |
+| Phase S (Storage) | ✅ | SQLite + Migrations |
+| Phase CL (Standardisation) | ✅ | CHANGELOG + CI + Auto-update |
+| Phase D (Domain) | ✅ | Domain CLI + Registry |
+| Phase Desktop | ✅ | pywebview + PyInstaller + MSI |
+| Phase PWA | ✅ | Installable Dashboard |
+| Phase Playground UI | ✅ | React Flow Visual Builder |
+
+---
+
+## What Ships in V1
+
+### Core Platform
+- Domain Pack Manager (install, enable, disable, remove)
+- Knowledge Service (unified search index)
+- Skill Executor (load → knowledge → capabilities → AI → validate → record)
+- AI Provider Interface (local default, cloud optional)
+- Capability Service (KnowledgeSearch, FileReader, WebAccess, Calculator)
+- Execution History Service (immutable audit)
+- Workflow Runner (sequential Skill pipeline)
+- Configuration Service
+- Core API Gateway (HTTP/WebSocket)
+
+### Domain Pack System
+- Domain Pack Downloader (from remote registry)
+- Domain Pack Manager (install, validate, enable, disable)
+- Domain Pack Loader (parse YAML, validate structure)
+- Domain Pack Registry (local catalog)
+
+### Dashboard
+- Searchable Knowledge Workspace
+- Skill invocation
+- Workflow execution
+- Execution History view
+- Domain Pack management
+- File Watch (customer documents)
+
+### Build & Distribution
+- MSI Installer (Windows)
+- PyInstaller .exe
+- PWA (installable)
+- Auto-Update Checker
+
+### Accounting Domain Pack (D1)
+- 200+ knowledge nodes (Persian)
+- 29 agent blueprints
+- 6 workflow templates
+- 5 core skills
+
+---
+
+## Key Principles (ADR-0017)
+
+1. **Organizational Learning ≠ Model Training** — RAG + Embeddings, not fine-tuning
+2. **Privacy-First** — All data stays on customer infrastructure
+3. **Decision Support** — Core differentiator, not just automation
+4. **First-Time Experience** — No empty dashboard, immediate value
+5. **Domain Packs = Knowledge + Capabilities** — Customer chooses what to activate
+6. **Workflow Customization** — Customer adapts, HiveOS provides initial knowledge
+
+---
+
+## What's NOT in V1
+
+- Model training / fine-tuning / LoRA
+- Custom Workflow creation
+- Pattern detection
+- Analysis engine
+- Recommendation engine
+- Multi-domain orchestration
+- Enterprise SSO / LDAP
+- Two-way system integrations
+
+---
+
+## Tech Stack
+
+- **Backend:** Python 3.11+, FastAPI, SQLite (WAL)
+- **Frontend:** React 19, TypeScript, Vite, Tailwind CSS v4, React Flow v12
+- **Desktop:** pywebview, PyInstaller, MSI (Inno Setup)
+- **Testing:** pytest, 436+ tests
+- **CI/CD:** GitHub Actions
+
+---
+
+## Source Structure
+
+```
+hive-os/src/hiveos/
+├── engine/       — Flow DSL, validator, executor
+├── flow/         — Flow CLI commands
+├── mothership/   — Agent registry, task router, comm bus, resilience, server
+├── playground/   — Validation, auto-agent, templates, visual canvas, run/debug
+├── brain/        — Event stream, decision tracer, approval gates
+├── learning/     — Execution logger, analytics, pattern recognition
+├── domain/       — Domain registry, CLI
+├── domain_pack/  — Downloader, loader, manager, models, registry, validator
+├── license/      — License models, manager
+├── desktop/      — pywebview shell, PyInstaller
+└── storage/      — SQLite StorageEngine, migrations
+playground-ui/    — React Flow Visual Builder
 ```
 
 ---
 
-## 🎯 Current: v0.12.0 — Release Candidate
+## Roadmap (from ROADMAP.md)
 
-**Status:** All layers built. 436 tests passing. Playground UI deployed. Ready for release.
+| Version | Focus | Status |
+|---------|-------|--------|
+| **V1** | Core Intelligence Platform | **NOW** |
+| V1.5 | Decision Support Foundation | NEXT |
+| V2 | Intelligence Layer | FUTURE |
+| V3 | Autonomous Intelligence | LONG TERM |
 
-### What's Left for v1.0.0
-| Priority | Task | Layer | Status |
-|----------|------|-------|--------|
-| 🟡 | Windows code signing (Authenticode) | 🪟 All | 🏗️ Needs certificate |
-| 🟡 | Beautiful desktop UI (Tauri shell) | 🪟 UI | Planned |
-| 🟢 | First GitHub Release (v0.12.0) | 📦 Distribution | Next step |
 ---
 
-## 📁 Key Files
+## Key Files
 
 | File | Purpose |
 |------|---------|
-| `src/hiveos/playground/playground.py` | PlaygroundEngine — validate/auto_agents/list_templates |
-| `src/hiveos/brain/event_stream.py` | EventStream — agent lifecycle event pipeline |
-| `src/hiveos/brain/decision_tracer.py` | DecisionTracer — decision path tracing |
-| `src/hiveos/brain/approval_gate.py` | ApprovalGateEngine — human-in-loop gates |
-| `src/hiveos/learning/logger.py` | ExecutionLogger — passive execution data collection |
-| `src/hiveos/dashboard/server.py` | All API routes including new Playground/Brain/Learning |
-| `tests/test_playground.py` | 14 tests for Playground module |
-| `tests/test_brain.py` | 23 tests for Brain module |
-| `tests/test_learning.py` | 14 tests for Learning module |
-| `ROADMAP.md` | Roadmap with Phases 6/7/8 |
-| `AGENTS.md` | This file — full project context |
+| `ROADMAP.md` | Product roadmap |
+| `CHANGELOG.md` | Release history |
+| `AGENTS.md` | This file |
+| `docs/ADR/0017-product-direction-update.md` | Product direction decision |
+| `docs/01-Product/` | 20 product documents |
+| `docs/ADR/` | 17 Architecture Decision Records |
 
 ---
 
-## 🔧 Common Commands
-
-```bash
-cd "C:\Users\Hossein Mobini\Desktop\hive-os"
-source .venv/Scripts/activate
-uv pip install -e .                    # after code changes
-# CLI
-hive --version
-hive license activate hive-pro-demo
-hive flow validate prototype/
-hive flow run prototype/hello-flow/hello.yml
-# Tests
-python -m pytest tests/ -v
-python -m pytest tests/test_playground.py -v
-# Git
-git add -A && git commit -m "..." && git push origin main
-```
-
----
-
-## 📋 Session History
+## Session History
 
 | Date | Version | What Was Done |
 |------|---------|---------------|
 | 2026-07-13 | v0.1–0.5 | Foundation, Playground CLI, Integration, Packaging, Mothership |
-| 2026-07-14 | v0.5.0 | RBAC — 36 tests |
-| 2026-07-14 | v0.5.1 | Audit Trail — 20 tests |
-| 2026-07-14 | v0.5.2 | Dashboard — FastAPI + SPA — 23 tests |
-| 2026-07-14 | v0.5.3 | Multi-tenant Workspaces — 38 tests |
-| 2026-07-14 | v0.6.0 | License pricing + 29 agent blueprints + 6 flow templates + bilingual README |
-| **2026-07-14** | **v0.7.0** | **Playground Core APIs + Brain Engine + Learning Logger (329 tests)** |
-| **Next** | **v0.8.0** | **Playground Canvas + Runner + Gates UI + Brain 3D + Learning Analytics** |
-| **2026-07-14** | **v0.8.0** | **Canvas+Viz Sprint: P-04 Flow Canvas, P-05 Runner+WS, P-06 Gates UI, B-05 3D Neural View, L-02 Analytics (366 tests)** |
-| **2026-07-14** | **v0.9.1** | **S-05 data dir init + CL-02 CI + version fixes + S-06 migrations + D-05 domain CLI + D-04 Hermes skills (413 tests)** |
-| **2026-07-14** | **v0.9.2** | **CL-03 Auto-update skeleton: UpdateChecker, hive update check/info (436 tests)** |
-| **2026-07-14** | **v0.10.0** | **P-07 Template Customizer · P-08 Flow Library · Desktop Shell (pywebview) · PyInstaller · MSI Installer (436 tests)** |
-| **Now** | **v0.11.0** | **D2 Domain Registry · L-03 Pattern Recognition · Code signing** |
-
----
-
-## 🏁 Endgame Vision: HiveOS as a Windows Native Application
-
-### The Product
-
-HiveOS will ship as a **standard Windows desktop application** — installable via a proper MSI installer, with auto-update, beautiful UI, and a CI/CD pipeline.
-
-### Architecture (Target)
-
-```
-┌─────────────────────────────────────────┐
-│     Electron / Tauri Desktop Shell      │  ← Native window, system tray
-│  ┌───────────────────────────────────┐  │
-│  │  React / Svelte + Tailwind UI     │  │  ← Beautiful desktop UI
-│  └──────────────┬────────────────────┘  │
-│                 │ HTTP/WS               │
-│  ┌──────────────▼────────────────────┐  │
-│  │  Python (PyInstaller → .exe)      │  │  ← Embedded backend
-│  │  FastAPI + Uvicorn                │  │
-│  │  SQLite (hiveos.db)               │  │  ← All data persisted
-│  └───────────────────────────────────┘  │
-└─────────────────────────────────────────┘
-```
-
-### Roadmap to Windows Native
-
-| Phase | What | Why |
-|-------|------|-----|
-| **Current** | FastAPI + Jinja2 SPA | Rapid prototyping, all features in browser |
-| **Phase A** | Tauri shell wrapping the web UI | Native window, system tray, no browser tabs |
-| **Phase B** | Replace Jinja2 with React/Svelte frontend | Desktop-grade UI with real components |
-| **Phase C** | PyInstaller → single backend.exe | No Python dependency for users |
-| **Phase D** | MSI installer (Inno Setup / WiX) | One-click install for Windows users |
-| **Phase E** | Auto-updater (gh-release check on boot) | Users always on latest version |
-| **Phase F** | CI/CD: GA test → build → sign → release | Automated delivery pipeline |
-
-### Standards Checklist
-
-- [x] **Semantic Versioning** (vX.Y.Z in pyproject.toml)
-- [x] **Automated Tests** (436 pytest tests)
-- [x] **CHANGELOG.md** per release
-- [x] **GitHub** (repo pushed)
-- [x] **GitHub Actions CI** (pytest on push)
-- [x] **Auto-updater** (checks GitHub Releases on startup)
-- [x] **Windows MSI installer** (Inno Setup — `build/installer.iss`)
-- [ ] **Code signing** (Authenticode)
-- [ ] **Beautiful desktop UI** (Tauri + React/Tailwind)
-- [ ] **Persistent data** across restarts (SQLite — ✅ v0.9.0)
-
+| 2026-07-14 | v0.5–v0.12.0 | RBAC, Audit, Dashboard, Storage, Domain, Desktop, PWA, Playground UI |
+| 2026-07-24 | v1.0.0 | Product Direction Update (ADR-0017), 4-Engine Architecture, Roadmap rewrite |

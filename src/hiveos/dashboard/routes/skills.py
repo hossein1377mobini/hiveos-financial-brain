@@ -6,8 +6,11 @@ import time
 import uuid
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+
+from .deps import get_current_user, require_permission
+from ...rbac import Resource, Action
 
 router = APIRouter(prefix="/api/skills", tags=["skills"])
 
@@ -20,6 +23,11 @@ def set_services(registry, execution_logger=None):
     global _domain_registry, _execution_logger
     _domain_registry = registry
     _execution_logger = execution_logger
+
+
+def set_auth_deps(checker):
+    """Stub: auth deps are resolved from .deps module."""
+    pass
 
 
 def _scan_skills() -> List[Dict[str, Any]]:
@@ -53,19 +61,18 @@ def _scan_skills() -> List[Dict[str, Any]]:
             continue
     return skills
 
-
 class RunSkillRequest(BaseModel):
     input: Dict[str, Any] = {}
 
 
 @router.get("")
-async def list_skills():
+async def list_skills(_: None = Depends(get_current_user)):
     skills = _scan_skills()
     return {"skills": skills, "count": len(skills)}
 
 
 @router.get("/{skill_id}")
-async def get_skill(skill_id: str):
+async def get_skill(skill_id: str, _: None = Depends(get_current_user)):
     skills = _scan_skills()
     for sk in skills:
         if sk["id"] == skill_id:
@@ -74,7 +81,11 @@ async def get_skill(skill_id: str):
 
 
 @router.post("/{skill_id}/run")
-async def run_skill(skill_id: str, body: RunSkillRequest):
+async def run_skill(
+    skill_id: str,
+    body: RunSkillRequest,
+    _: None = Depends(require_permission(Resource.FLOW, Action.EXECUTE)),
+):
     skills = _scan_skills()
     target = None
     for sk in skills:

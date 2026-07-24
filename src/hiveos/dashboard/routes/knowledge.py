@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
+
+from .deps import get_current_user, require_permission
+from ...rbac import Resource, Action
 
 router = APIRouter(prefix="/api/knowledge", tags=["knowledge"])
 
@@ -16,6 +19,11 @@ _knowledge_service = None
 def set_knowledge_service(svc):
     global _knowledge_service
     _knowledge_service = svc
+
+
+def set_auth_deps(checker):
+    """Stub: auth deps are resolved from .deps module."""
+    pass
 
 
 def _svc():
@@ -41,6 +49,7 @@ async def search(
     source: Optional[str] = Query(None, description="Filter: domain:<pack_id> or org"),
     tags: Optional[str] = Query(None, description="Comma-separated tag filter"),
     limit: int = Query(10, ge=1, le=100),
+    _: None = Depends(get_current_user),
 ):
     tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else None
     results = await _svc().search(q, source_filter=source, tags=tag_list, limit=limit)
@@ -63,7 +72,10 @@ async def search(
 
 
 @router.post("/ingest")
-async def ingest(body: IngestRequest):
+async def ingest(
+    body: IngestRequest,
+    _: None = Depends(require_permission(Resource.DOMAIN, Action.CREATE)),
+):
     try:
         count = await _svc().ingest_directory(body.path, body.source_type)
     except Exception as exc:
@@ -72,7 +84,7 @@ async def ingest(body: IngestRequest):
 
 
 @router.get("/stats")
-async def stats():
+async def stats(_: None = Depends(get_current_user)):
     s = await _svc().stats()
     return {
         "total_documents": s.total_documents,
@@ -86,7 +98,7 @@ async def stats():
 
 
 @router.get("/sources")
-async def sources():
+async def sources(_: None = Depends(get_current_user)):
     srcs = await _svc().list_sources()
     return {
         "sources": [

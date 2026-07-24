@@ -2,8 +2,9 @@
 Update checker — queries GitHub Releases for newer HiveOS versions.
 Supports the CL-03 auto-update skeleton: lightweight, offline-tolerant,
 HTTP-cache-friendly version comparison.
-"""
 
+Privacy: All requests check against PrivacyConfig before sending (ADR-0017).
+"""
 from __future__ import annotations
 
 import json
@@ -15,6 +16,7 @@ from urllib.request import urlopen, Request
 from urllib.error import URLError
 
 from hiveos import __version__ as HIVEOS_VERSION
+from hiveos.privacy import DataClassification, NetworkGuard, PrivacyConfig, PrivacyViolation
 
 # ---------------------------------------------------------------------------
 # Data
@@ -98,10 +100,14 @@ class UpdateChecker:
         current_version: Optional[str] = None,
         api_url: str = GITHUB_API,
         timeout: int = TIMEOUT_SECONDS,
+        privacy_config: Optional[PrivacyConfig] = None,
     ):
         self._current = current_version or HIVEOS_VERSION
         self._api_url = api_url
         self._timeout = timeout
+        
+        # Privacy guard (ADR-0017)
+        self._privacy_guard = NetworkGuard(privacy_config) if privacy_config else None
 
     # ------------------------------------------------------------------
     # Public API
@@ -111,6 +117,11 @@ class UpdateChecker:
         """Query GitHub for the latest release and return an UpdateInfo."""
         try:
             data = self._fetch_latest_release()
+        except PrivacyViolation as exc:
+            return UpdateInfo(
+                current_version=self._current,
+                error=f"Privacy policy violation: {exc}",
+            )
         except URLError as exc:
             return UpdateInfo(
                 current_version=self._current,
@@ -149,6 +160,19 @@ class UpdateChecker:
     # ------------------------------------------------------------------
 
     def _fetch_latest_release(self) -> dict:
+        # Privacy check (ADR-0017)
+        if self._privacy_guard:
+            result = self._privacy_guard.check_egress(
+                url=self._api_url,
+                data_types=[DataClassification.METADATA],
+                endpoint_id="updates",
+            )
+            if not result.allowed:
+                raise PrivacyViolation(
+                    f"Update check blocked: {result.reason}\n"
+                    f"To enable: hive privacy enable updates"
+                )
+        
         req = Request(
             self._api_url,
             headers={

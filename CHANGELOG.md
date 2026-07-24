@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.12.1] — 2026-07-24
+
+### Added
+- **Docker deployment (ADR-0008)** — on-premise container with multi-stage build:
+  - `Dockerfile` — Python 3.11-slim, non-root user, healthcheck, VOLUME for data
+  - `docker-compose.yml` — single-service with named volume, env config, restart policy
+  - `deploy/entrypoint.sh` — init data dir, start dashboard on `0.0.0.0:8080`
+  - `deploy/DEPLOY.md` — full guide: prerequisites, backup/restore, reverse proxy, air-gapped, troubleshooting
+  - `.dockerignore` — exclude dev artifacts (node_modules, __pycache__, git, venv, tests)
+- `pyproject.toml` — `package-data` for `hiveos.dashboard.templates/**/*` (templates now ship in the wheel)
+
+### Changed
+- Version bumped from `0.12.0` to `0.12.1`
+
+---
+
 ## [0.12.0] — 2026-07-18
 
 ### Added

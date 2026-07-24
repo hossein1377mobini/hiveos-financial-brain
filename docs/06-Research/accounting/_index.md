@@ -17,12 +17,12 @@
 | 1 | استانداردهای حسابداری ایران (Iranian Accounting Standards) | 🟢 | `01-basics/01-iranian-accounting-standards.md` |
 | 2 | صورت‌های مالی اساسی (Basic Financial Statements) | 🟢 | `01-basics/02-financial-statements.md` |
 | 3 | کدینگ و نمودار حساب‌ها (Chart of Accounts) | 🟢 | `01-basics/03-chart-of-accounts.md` |
-| 4 | ثبت‌های حسابداری و سند نویسی (Journal Entries & Documentation) | 🔴 | `01-basics/04-journal-entries.md` |
-| 5 | حساب‌های دریافتنی و پرداختنی (Receivables & Payables) | 🔴 | `01-basics/05-receivables-payables.md` |
-| 6 | حسابداری موجودی کالا (Inventory Accounting) | 🔴 | `01-basics/06-inventory-accounting.md` |
-| 7 | حسابداری دارایی‌های ثابت و استهلاک (Fixed Assets & Depreciation) | 🔴 | `01-basics/07-fixed-assets.md` |
-| 8 | حسابداری حقوق و دستمزد (Payroll Accounting) | 🔴 | `01-basics/08-payroll-accounting.md` |
-| 9 | حسابداری صنعتی و بهای تمام شده (Cost Accounting) | 🔴 | `01-basics/09-cost-accounting.md` |
+| 4 | ثبت‌های حسابداری و سند نویسی (Journal Entries & Documentation) | 🟢 | `01-basics/04-journal-entries.md` |
+| 5 | حساب‌های دریافتنی و پرداختنی (Receivables & Payables) | 🟢 | `01-basics/05-receivables-payables.md` |
+| 6 | حسابداری موجودی کالا (Inventory Accounting) | 🟢 | `01-basics/06-inventory-accounting.md` |
+| 7 | حسابداری دارایی‌های ثابت و استهلاک (Fixed Assets & Depreciation) | 🟢 | `01-basics/07-fixed-assets.md` |
+| 8 | حسابداری حقوق و دستمزد (Payroll Accounting) | 🟢 | `01-basics/08-payroll-accounting.md` |
+| 9 | حسابداری صنعتی و بهای تمام شده (Cost Accounting) | 🟢 | `01-basics/09-cost-accounting.md` |
 
 ## Phase 2: Tax — مالیات
 
@@ -97,11 +97,11 @@
 
 | Phase | Title | Total | 🟢 Done | 🔴 Remaining |
 |-------|-------|-------:|--------:|-------------:|
-100|| 1 | Basics | 9 | 3 | 6 |
+100|| 1 | Basics | 9 | 9 | 0 |
 | 2 | Tax | 10 | 0 | 10 |
 | 3 | Social Security & Labor | 6 | 0 | 6 |
 | 4 | Commerce | 5 | 0 | 5 |
 | 5 | Auditing | 5 | 0 | 5 |
 | 6 | Management Accounting | 5 | 0 | 5 |
 | 7 | Practical Scenarios | 6 | 0 | 6 |
-107|| **Total** | | **46** | **3** | **43** |
+107|| **Total** | | **46** | **9** | **37** |

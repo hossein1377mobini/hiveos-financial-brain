@@ -8,4 +8,4 @@ from __future__ import annotations
 
 from hiveos import playground, brain, learning
 
-__version__ = "0.12.0"
+__version__ = "0.12.1"

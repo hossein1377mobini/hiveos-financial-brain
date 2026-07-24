@@ -26,6 +26,8 @@ class Resource(str, Enum):
     AUDIT = "audit"
     WORKSPACE = "workspace"
     RBAC = "rbac"  # role/permission self-management
+    DOMAIN = "domain"
+    LICENSE = "license"
 
 
 class Action(str, Enum):

@@ -1,6 +1,6 @@
 # Architecture Decision Records — Index
 
-> **Last Updated:** 2026-07-19  
+> **Last Updated:** 2026-07-24  
 > **Owner:** Chief Product Architect  
 > **Status:** See individual ADRs
 
@@ -28,6 +28,8 @@ This directory contains Architecture Decision Records (ADRs) for HiveOS. Each AD
 | 0014 | No Visual Workflow Builder in V1 | Approved | 2026-07-19 |
 | 0015 | Human Ownership of Business Truth | Approved | 2026-07-19 |
 | 0016 | Confidence-Based Autonomy Threshold | Deferred | 2026-07-19 |
+| 0017 | Product Direction Update — HiveOS V1 | Approved | 2026-07-24 |
+| 0018 | Organizational Learning Pipeline | Approved | 2026-07-24 |
 
 ## ADR Lifecycle
 
@@ -46,3 +48,4 @@ This directory contains Architecture Decision Records (ADRs) for HiveOS. Each AD
 | Version | Date | Author | Change |
 |---------|------|--------|--------|
 | 1.0.0 | 2026-07-19 | Chief Product Architect | Initial creation from Product Discovery |
+| 1.1.0 | 2026-07-24 | AI & Domain Architect | Added ADR-0017 (Product Direction Update), ADR-0018 (Organizational Learning Pipeline) |

@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
+
+from .deps import get_current_user
 
 router = APIRouter(prefix="/api/history", tags=["history"])
 
@@ -17,6 +19,11 @@ def set_execution_logger(logger):
     _execution_logger = logger
 
 
+def set_auth_deps(checker):
+    """Stub: auth deps are resolved from .deps module."""
+    pass
+
+
 def _logger():
     return _execution_logger
 
@@ -26,6 +33,7 @@ async def list_history(
     limit: int = Query(50, ge=1, le=200),
     status: Optional[str] = Query(None, description="completed|failed"),
     skill_id: Optional[str] = Query(None),
+    _: None = Depends(get_current_user),
 ):
     log = _logger()
     if not log:
@@ -41,7 +49,10 @@ async def list_history(
 
 
 @router.get("/{execution_id}")
-async def get_execution(execution_id: str):
+async def get_execution(
+    execution_id: str,
+    _: None = Depends(get_current_user),
+):
     log = _logger()
     if not log:
         return {"execution": None}
