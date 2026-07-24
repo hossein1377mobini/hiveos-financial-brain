@@ -20,7 +20,7 @@ RUN pip install --no-cache-dir --upgrade pip \
 FROM python:3.11-slim AS runtime
 
 LABEL maintainer="HiveOS Team"
-LABEL description="HiveOS — Multi-Agent Operating System (on-premise)"
+LABEL description="HiveOS — Organizational Intelligence Platform (on-premise)"
 LABEL org.opencontainers.image.source="https://github.com/hossein1377mobini/hiveos-financial-brain"
 
 # Non-root user for security
@@ -50,8 +50,8 @@ EXPOSE 8080
 
 VOLUME ["/data"]
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/')" || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/health')" || exit 1
 
 USER hiveos
 WORKDIR /home/hiveos

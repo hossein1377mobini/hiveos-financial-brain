@@ -35,6 +35,7 @@ tests/
 # Docs (large, not needed at runtime)
 docs/
 graphify-out/
+kb/
 *.md
 !README.md
 !CHANGELOG.md

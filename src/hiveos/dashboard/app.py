@@ -30,16 +30,28 @@ _HERE = Path(__file__).parent
 _STATIC = _HERE / "static"
 
 
+def create_app() -> FastAPI:
+    """uvicorn entry-point factory: ``uvicorn hiveos.dashboard.app:create_app --factory``."""
+    app_inst = HiveOSApp()
+    return app_inst.api
+
+
 class HiveOSApp:
     """Application bootstrap — wires services and creates the FastAPI app."""
 
     def __init__(self, config_path: Optional[Path] = None):
-        # 1. Config
+        # 1. Config (respect HIVEOS_DATA_DIR env for Docker)
         self.config = ConfigService(config_path)
 
-        # 2. Storage
-        db_path = self.config.get("storage.db_path", "~/.hiveos/data/hiveos.db")
-        db_path = Path(db_path).expanduser()
+        # 2. Storage — honour HIVEOS_DATA_DIR env override
+        data_dir_env = os.environ.get("HIVEOS_DATA_DIR")
+        if data_dir_env:
+            data_dir = Path(data_dir_env)
+            db_path = data_dir / "hiveos.db"
+        else:
+            db_path = Path(self.config.get("storage.db_path", "~/.hiveos/data/hiveos.db")).expanduser()
+            data_dir = Path(self.config.get("storage.data_dir", "~/.hiveos/data")).expanduser()
+
         self.storage = StorageEngine(db_path)
 
         # 3. Knowledge
@@ -48,7 +60,6 @@ class HiveOSApp:
         # 4. Domain Registry
         from hiveos.domain.registry import DomainRegistry
 
-        data_dir = Path(self.config.get("storage.data_dir", "~/.hiveos/data")).expanduser()
         domains_root = data_dir / "domains"
         if not domains_root.exists():
             # Fall back to project-level domains
