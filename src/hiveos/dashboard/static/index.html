@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HiveOS Dashboard</title>
+  <link rel="stylesheet" href="/static/css/dashboard.css">
+  <style>
+    /* Inline critical path */
+    body { background: #08090a; color: #f7f8f8; }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════ NAV BAR ═══════════════════ -->
+  <nav class="nav">
+    <div class="nav-title">
+      <span class="nav-brand">HiveOS</span>
+      <span class="nav-tag">V2</span>
+    </div>
+    <div class="nav-status">
+      <span id="nav-status-dot" class="nav-status-dot"></span>
+      <span id="nav-status-text">connecting...</span>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════ LAYOUT ═══════════════════ -->
+  <div class="app-layout">
+
+    <!-- ─── Sidebar ─── -->
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Workspace</div>
+        <a class="nav-item active" data-page="knowledge" href="#knowledge">
+          <span class="nav-item-icon">&#x1f50d;</span> Knowledge Search
+        </a>
+        <a class="nav-item" data-page="domains" href="#domains">
+          <span class="nav-item-icon">&#x1f4e6;</span> Domain Packs
+        </a>
+        <a class="nav-item" data-page="skills" href="#skills">
+          <span class="nav-item-icon">&#x2699;</span> Skills
+        </a>
+        <a class="nav-item" data-page="workflows" href="#workflows">
+          <span class="nav-item-icon">&#x25b6;</span> Workflows
+        </a>
+        <a class="nav-item" data-page="history" href="#history">
+          <span class="nav-item-icon">&#x1f4cb;</span> History
+        </a>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Developer</div>
+        <a class="nav-item" data-page="playground" href="#playground">
+          <span class="nav-item-icon">&#x1f4bb;</span> Playground
+        </a>
+      </div>
+    </aside>
+
+    <!-- ─── Main ─── -->
+    <main class="main">
+
+      <!-- ═══ Knowledge Page ═══ -->
+      <div id="page-knowledge" class="page active">
+        <h1 class="page-title">Knowledge Search</h1>
+        <p class="page-desc">Search across all ingested domain and organisation knowledge.</p>
+
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="stat-value" id="k-total-chunks">0</div>
+            <div class="stat-label">Chunks</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="k-total-docs">0</div>
+            <div class="stat-label">Documents</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="k-total-sources">0</div>
+            <div class="stat-label">Sources</div>
+          </div>
+        </div>
+
+        <div class="search-bar">
+          <input id="search-input" type="text" placeholder="Search knowledge base..." autofocus>
+          <button id="search-btn" class="btn btn-primary">Search</button>
+        </div>
+
+        <div class="card">
+          <div class="card-body" id="search-results">
+            <div class="empty-state">
+              <div class="empty-state-text">Enter a search query above</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ Domains Page ═══ -->
+      <div id="page-domains" class="page">
+        <h1 class="page-title">Domain Packs</h1>
+        <p class="page-desc">Manage installed domain packs — install, enable, disable, and remove.</p>
+        <div class="domain-grid" id="domains-grid">
+          <div class="empty-state"><span class="spinner"></span> Loading...</div>
+        </div>
+      </div>
+
+      <!-- ═══ Skills Page ═══ -->
+      <div id="page-skills" class="page">
+        <h1 class="page-title">Skills</h1>
+        <p class="page-desc">Available skills from installed domain packs.</p>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Pack</th>
+                  <th>Description</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="skills-list"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ Workflows Page ═══ -->
+      <div id="page-workflows" class="page">
+        <h1 class="page-title">Workflows</h1>
+        <p class="page-desc">Sequential skill pipeline templates from domain packs.</p>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Steps</th>
+                  <th>Description</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="workflows-list"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="wf-view-section" style="display:none" class="mt-2">
+          <div class="card">
+            <div class="card-header">
+              <span>Workflow: <span id="wf-view-id"></span></span>
+              <button class="btn btn-sm btn-ghost" onclick="document.getElementById('wf-view-section').style.display='none'">Close</button>
+            </div>
+            <div class="card-body">
+              <pre id="wf-view-steps" class="font-mono"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ History Page ═══ -->
+      <div id="page-history" class="page">
+        <h1 class="page-title">Execution History</h1>
+        <p class="page-desc">Audit log of every skill and workflow execution.</p>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Flow / Skill</th>
+                  <th>Status</th>
+                  <th>Agent</th>
+                  <th>Input</th>
+                </tr>
+              </thead>
+              <tbody id="history-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ Playground Page ═══ -->
+      <div id="page-playground" class="page">
+        <h1 class="page-title">Playground</h1>
+        <p class="page-desc">Debug console — run any skill with custom input and view full execution context.</p>
+
+        <div class="grid-2">
+          <div>
+            <div class="card">
+              <div class="card-header">Run Skill</div>
+              <div class="card-body">
+                <div class="mb-1">
+                  <label>Skill ID</label>
+                  <input id="playground-skill-id" type="text" placeholder="e.g. accounting-qa">
+                </div>
+                <div class="mb-1">
+                  <label>Input (JSON)</label>
+                  <textarea id="playground-input" class="font-mono" rows="8">{}</textarea>
+                </div>
+                <button id="playground-run-btn" class="btn btn-primary">Run</button>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-header">Output</div>
+              <div class="card-body">
+                <pre id="playground-output" class="font-mono" style="min-height:200px;white-space:pre-wrap;">// Output appears here</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pre-filled run from skills page -->
+        <div id="skill-run-section" style="display:none" class="mt-2">
+          <div class="card">
+            <div class="card-header">
+              <span>Quick Run: <code id="skill-run-id"></code></span>
+              <button class="btn btn-sm btn-ghost" onclick="document.getElementById('skill-run-section').style.display='none'">Close</button>
+            </div>
+            <div class="card-body">
+              <div class="grid-2">
+                <div>
+                  <label>Input</label>
+                  <textarea id="skill-run-input" class="font-mono" rows="6">{}</textarea>
+                  <button id="skill-run-btn" class="btn btn-primary mt-1">Execute</button>
+                </div>
+                <div>
+                  <label>Result</label>
+                  <pre id="skill-run-output" class="font-mono" style="min-height:120px;"></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

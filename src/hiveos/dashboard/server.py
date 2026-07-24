@@ -20,6 +20,8 @@ from typing import Any, Dict, List, Optional
 import uvicorn
 from fastapi import FastAPI, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Depends
 from pydantic import BaseModel
 from rich.console import Console
 
@@ -193,13 +195,39 @@ class DashboardApp:
         self.domain_registry = DomainRegistry(storage=self.storage, domains_root=domains_root)
         self.domain_registry.scan()  # auto-scan on startup
 
+        # ── Auth checker ────────────────────────────────────────────
+        from .auth import AuthChecker
+        self._auth_checker = AuthChecker(rbac=rbac, audit=audit) if rbac else None
+
         self.app = FastAPI(title="HiveOS Dashboard", version="0.5.0")
+
+        # ── CORS (restrict to localhost by default) ─────────────────
+        self.app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["http://127.0.0.1:8080", "http://localhost:8080"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+
         self._register_routes()
 
     # ── Routes ───────────────────────────────────────────────────────
 
     def _register_routes(self):
         app = self.app
+
+        # ── Auth dependency helpers ────────────────────────────────
+        def _check():
+            """Authenticated (any valid API key) — no specific permission."""
+            return Depends(self._auth_checker()) if self._auth_checker else lambda: None
+
+        def _require(resource: Resource, action: Action):
+            """Authenticated + specific permission check."""
+            if not self._auth_checker:
+                return lambda: None
+            return Depends(self._auth_checker.require(resource, action))
+        # ───────────────────────────────────────────────────────────
 
         @app.get("/", response_class=HTMLResponse)
         async def index():
@@ -228,7 +256,7 @@ class DashboardApp:
             return JSONResponse({"error": "not found"}, status_code=404)
 
         @app.get("/icons/{filename}")
-        async def pwa_icons(filename: str):
+        async def pwa_icons(filename: str, _: None = _check()):
             """Serve PWA icon files."""
             path = TEMPLATES / "icons" / filename
             if path.exists():
@@ -246,7 +274,7 @@ class DashboardApp:
 
         @app.get("/playground", response_class=HTMLResponse)
         @app.get("/playground/{path:path}", response_class=HTMLResponse)
-        async def playground_spa(path: str = ""):
+        async def playground_spa(path: str = "", ):
             """Serve the React-based Playground SPA (catch-all)."""
             # Don't interfere with API calls
             if path and path.startswith("api/"):
@@ -259,7 +287,7 @@ class DashboardApp:
         # ── API Routes ────────────────────────────────────────────
 
         @app.get("/api/overview")
-        async def overview():
+        async def overview(_: None = _check()):
             """Aggregated system overview."""
             data: Dict[str, Any] = {
                 "timestamp": datetime.utcnow().isoformat(),
@@ -349,7 +377,7 @@ class DashboardApp:
             return data
 
         @app.get("/api/agents")
-        async def list_agents():
+        async def list_agents(_: None = _check()):
             """List all registered agents with details."""
             agents_data = []
             if self.agent_registry:
@@ -372,7 +400,7 @@ class DashboardApp:
             return {"agents": agents_data}
 
         @app.get("/api/tasks")
-        async def list_tasks():
+        async def list_tasks(_: None = _check()):
             """List all task assignments."""
             tasks_data = []
             if self.task_router:
@@ -393,7 +421,7 @@ class DashboardApp:
             return {"tasks": tasks_data}
 
         @app.get("/api/health")
-        async def system_health():
+        async def system_health(_: None = _check()):
             """Detailed health information per node."""
             health_data = []
             if self.resilience:
@@ -442,7 +470,7 @@ class DashboardApp:
             return {"nodes": health_data, "recent_failures": recent_failures if health_data else []}
 
         @app.get("/api/bus")
-        async def bus_status():
+        async def bus_status(_: None = _check()):
             """Communication bus stats."""
             if not self.comm_bus:
                 return {"messages": [], "stats": {"total": 0, "by_type": {}}}
@@ -469,7 +497,7 @@ class DashboardApp:
             }
 
         @app.get("/api/audit")
-        async def audit_log(limit: int = 50):
+        async def audit_log(_: None = _check(), limit: int = 50):
             """Recent audit trail entries."""
             entries_data = []
             if self.audit:
@@ -496,7 +524,7 @@ class DashboardApp:
             return {"entries": entries_data}
 
         @app.get("/api/rbac")
-        async def rbac_status():
+        async def rbac_status(_: None = _check()):
             """RBAC users and roles."""
             if not self.rbac:
                 return {"users": [], "roles": []}
@@ -518,7 +546,7 @@ class DashboardApp:
             return {"users": users, "roles": roles}
 
         @app.get("/api/nodes")
-        async def list_nodes():
+        async def list_nodes(_: None = _check()):
             """List satellite nodes from NodeRegistry."""
             nodes_data = []
             # Try to access NodeRegistry through AgentRegistry's _node_registry
@@ -537,26 +565,26 @@ class DashboardApp:
             return {"nodes": nodes_data}
 
         @app.get("/api/domains")
-        async def list_domains():
+        async def list_domains(_: None = _check()):
             """List all known domains from the registry."""
             self.domain_registry.scan()
             domains = self.domain_registry.list_domains()
             return {"domains": domains}
 
         @app.get("/api/domains/installed")
-        async def list_installed_domains():
+        async def list_installed_domains(_: None = _check()):
             """List installed domains only."""
             return {"domains": self.domain_registry.list_installed()}
 
         @app.get("/api/domains/search")
-        async def search_domains(q: str = ""):
+        async def search_domains(q: str = "", _: None = _check()):
             """Search domains by name, label, or tags."""
             if not q:
                 return {"results": self.domain_registry.list_domains()}
             return {"results": self.domain_registry.search(q)}
 
         @app.get("/api/domains/{name}")
-        async def get_domain(name: str):
+        async def get_domain(name: str, _: None = _check()):
             """Get detailed metadata for a domain."""
             meta = self.domain_registry.get_domain(name)
             if not meta:
@@ -569,7 +597,7 @@ class DashboardApp:
             return {"domain": meta}
 
         @app.post("/api/domains/{name}/install")
-        async def install_domain(name: str):
+        async def install_domain(name: str, _: None = _require(Resource.DOMAIN, Action.CREATE)):
             """Mark a domain as installed."""
             try:
                 result = self.domain_registry.install(name)
@@ -578,13 +606,13 @@ class DashboardApp:
                 return {"error": str(e)}
 
         @app.delete("/api/domains/{name}")
-        async def remove_domain(name: str):
+        async def remove_domain(name: str, _: None = _require(Resource.DOMAIN, Action.DELETE)):
             """Remove a domain from the registry."""
             self.domain_registry.remove(name)
             return {"status": "removed", "domain": name}
 
         @app.post("/api/domains/{name}/learn")
-        async def learn_domain(name: str):
+        async def learn_domain(name: str, _: None = _require(Resource.DOMAIN, Action.UPDATE)):
             """Analyse a domain and store insights."""
             try:
                 insights = self.domain_registry.learn(name)
@@ -593,24 +621,24 @@ class DashboardApp:
                 return {"error": str(e)}
 
         @app.get("/api/domains/learning/insights")
-        async def list_learning_insights():
+        async def list_learning_insights(_: None = _check()):
             """List all learning insights across domains."""
             return {"insights": self.domain_registry.list_learned()}
 
         @app.get("/api/domains/learning/suggestions")
-        async def suggest_domains(tags: str = ""):
+        async def suggest_domains(tags: str = "", _: None = _check()):
             """Get domain suggestions based on usage and tags."""
             tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else None
             suggestions = self.domain_registry.suggest_domains(tags=tag_list)
             return {"suggestions": suggestions}
 
         @app.get("/api/domains/usage/stats")
-        async def domain_usage_stats():
+        async def domain_usage_stats(_: None = _check()):
             """Get aggregated domain usage statistics."""
             return self.domain_registry.get_usage_stats()
 
         @app.get("/api/domains/{name}/dependencies")
-        async def domain_dependencies(name: str):
+        async def domain_dependencies(name: str, _: None = _check()):
             """Resolve domain dependencies."""
             try:
                 deps = self.domain_registry.resolve_dependencies(name)
@@ -619,7 +647,7 @@ class DashboardApp:
                 return {"error": str(e)}
 
         @app.get("/api/workspaces")
-        async def list_workspaces():
+        async def list_workspaces(_: None = _check()):
             """List workspaces from the WorkspaceManager."""
             from ..workspace import WorkspaceManager
             mgr = WorkspaceManager()
@@ -640,7 +668,7 @@ class DashboardApp:
             }
 
         @app.get("/api/license")
-        async def license_status():
+        async def license_status(_: None = _check()):
             """Current license information."""
             from ..license import LicenseManager
             mgr = LicenseManager()
@@ -669,7 +697,7 @@ class DashboardApp:
         # ── Playground API ──────────────────────────────────────────
 
         @app.post("/api/playground/validate")
-        async def playground_validate(request: Request):
+        async def playground_validate(request: Request, _: None = _check()):
             """Validate a flow YAML."""
             body = await request.json()
             yaml_content = body.get("yaml", "")
@@ -677,7 +705,7 @@ class DashboardApp:
             return result
 
         @app.post("/api/playground/auto-agents")
-        async def playground_auto_agents(request: Request):
+        async def playground_auto_agents(request: Request, _: None = _check()):
             """Auto-generate agent team from task description."""
             body = await request.json()
             task = body.get("task", "")
@@ -686,7 +714,7 @@ class DashboardApp:
             return result
 
         @app.get("/api/playground/templates")
-        async def playground_templates(domain: str = "accounting"):
+        async def playground_templates(domain: str = "accounting", _: None = _check()):
             """List domain flow templates."""
             result = self.playground.list_templates(domain)
             return result
@@ -694,13 +722,13 @@ class DashboardApp:
         # ── Component API (Advanced Playground) ──────────────────────
 
         @app.get("/api/playground/components/types")
-        async def component_types():
+        async def component_types(_: None = _check()):
             """List all supported flow component types with metadata."""
             from ..dsl import FlowDSL
             return {"types": FlowDSL.get_component_types()}
 
         @app.post("/api/playground/components/validate")
-        async def validate_components(data: dict):
+        async def validate_components(data: dict, _: None = _check()):
             """Validate a component-based flow definition."""
             from ..dsl import FlowDSL
             errors = FlowDSL.validate_structure(data)
@@ -711,7 +739,7 @@ class DashboardApp:
             }
 
         @app.post("/api/playground/components/execute")
-        async def execute_components(data: dict):
+        async def execute_components(data: dict, _: None = _check()):
             """Execute a component-based flow and return results."""
             from ..dsl import FlowDSL
             from ..playground import ComponentEngine, ExecutionContext
@@ -731,13 +759,13 @@ class DashboardApp:
         # ── Brain API — Event Stream ────────────────────────────────
 
         @app.get("/api/brain/events")
-        async def brain_events(limit: int = 50, event_type: str = None):
+        async def brain_events(limit: int = 50, event_type: str = None, _: None = _check()):
             """Get recent events from the event stream."""
             events = self.event_stream.get_events(limit=limit, event_type=event_type)
             return {"events": events}
 
         @app.get("/api/brain/events/{event_id}")
-        async def brain_event(event_id: str):
+        async def brain_event(event_id: str, _: None = _check()):
             """Get a specific event by ID."""
             event = self.event_stream.get_event(event_id)
             if event is None:
@@ -745,14 +773,14 @@ class DashboardApp:
             return {"event": event}
 
         @app.get("/api/brain/events/stats")
-        async def brain_event_stats():
+        async def brain_event_stats(_: None = _check()):
             """Event stream statistics."""
             return self.event_stream.stats()
 
         # ── Brain API — Decision Tracer ─────────────────────────────
 
         @app.post("/api/brain/traces")
-        async def brain_start_trace(request: Request):
+        async def brain_start_trace(request: Request, _: None = _check()):
             """Start a new decision trace."""
             body = await request.json()
             trace_id = self.decision_tracer.start_trace(
@@ -762,7 +790,7 @@ class DashboardApp:
             return {"trace_id": trace_id}
 
         @app.post("/api/brain/traces/{trace_id}/steps")
-        async def brain_add_step(trace_id: str, request: Request):
+        async def brain_add_step(trace_id: str, request: Request, _: None = _check()):
             """Add a decision step to a trace."""
             body = await request.json()
             step = self.decision_tracer.add_step(trace_id, body)
@@ -771,7 +799,7 @@ class DashboardApp:
             return {"step": step}
 
         @app.get("/api/brain/traces/{trace_id}")
-        async def brain_get_trace(trace_id: str):
+        async def brain_get_trace(trace_id: str, _: None = _check()):
             """Get a full trace with all steps."""
             trace = self.decision_tracer.get_trace(trace_id)
             if trace is None:
@@ -779,13 +807,13 @@ class DashboardApp:
             return {"trace": trace}
 
         @app.get("/api/brain/traces")
-        async def brain_list_traces(limit: int = 20, status: str = None):
+        async def brain_list_traces(limit: int = 20, status: str = None, _: None = _check()):
             """List recent decision traces."""
             traces = self.decision_tracer.list_traces(limit=limit, status=status)
             return {"traces": traces}
 
         @app.post("/api/brain/traces/{trace_id}/complete")
-        async def brain_complete_trace(trace_id: str, request: Request):
+        async def brain_complete_trace(trace_id: str, request: Request, _: None = _check()):
             """Mark a trace as completed."""
             body = await request.json()
             ok = self.decision_tracer.complete_trace(
@@ -798,7 +826,7 @@ class DashboardApp:
             return {"status": "completed"}
 
         @app.post("/api/brain/traces/{trace_id}/fail")
-        async def brain_fail_trace(trace_id: str, request: Request):
+        async def brain_fail_trace(trace_id: str, request: Request, _: None = _check()):
             """Mark a trace as failed."""
             body = await request.json()
             ok = self.decision_tracer.fail_trace(
@@ -810,26 +838,26 @@ class DashboardApp:
             return {"status": "failed"}
 
         @app.get("/api/brain/traces/stats")
-        async def brain_trace_stats():
+        async def brain_trace_stats(_: None = _check()):
             """Decision tracer statistics."""
             return self.decision_tracer.stats()
 
         # ── Brain API — Approval Gates ──────────────────────────────
 
         @app.get("/api/brain/gates")
-        async def brain_list_gates(status: str = None, limit: int = 50):
+        async def brain_list_gates(status: str = None, limit: int = 50, _: None = _check()):
             """List approval gates."""
             gates = self.approval_gates.list_gates(status=status, limit=limit)
             return {"gates": gates}
 
         @app.get("/api/brain/gates/pending")
-        async def brain_pending_gates():
+        async def brain_pending_gates(_: None = _check()):
             """Get all pending approval gates."""
             gates = self.approval_gates.pending_for_user()
             return {"gates": gates}
 
         @app.post("/api/brain/gates")
-        async def brain_create_gate(request: Request):
+        async def brain_create_gate(request: Request, _: None = _check()):
             """Create a new approval gate."""
             body = await request.json()
             gate = self.approval_gates.create_gate(
@@ -843,7 +871,7 @@ class DashboardApp:
             return {"gate": gate}
 
         @app.post("/api/brain/gates/{gate_id}/approve")
-        async def brain_approve_gate(gate_id: str, request: Request):
+        async def brain_approve_gate(gate_id: str, request: Request, _: None = _check()):
             """Approve a gate."""
             body = await request.json()
             gate = self.approval_gates.approve(
@@ -856,7 +884,7 @@ class DashboardApp:
             return {"gate": gate}
 
         @app.post("/api/brain/gates/{gate_id}/reject")
-        async def brain_reject_gate(gate_id: str, request: Request):
+        async def brain_reject_gate(gate_id: str, request: Request, _: None = _check()):
             """Reject a gate."""
             body = await request.json()
             gate = self.approval_gates.reject(
@@ -869,14 +897,14 @@ class DashboardApp:
             return {"gate": gate}
 
         @app.get("/api/brain/gates/stats")
-        async def brain_gate_stats():
+        async def brain_gate_stats(_: None = _check()):
             """Approval gate statistics."""
             return self.approval_gates.stats()
 
         # ── Learning API ────────────────────────────────────────────
 
         @app.post("/api/learning/log")
-        async def learning_log(request: Request):
+        async def learning_log(request: Request, _: None = _check()):
             """Log a single agent execution."""
             body = await request.json()
             log_id = self.execution_logger.log_execution(
@@ -892,7 +920,7 @@ class DashboardApp:
             return {"log_id": log_id}
 
         @app.post("/api/learning/log-flow")
-        async def learning_log_flow(request: Request):
+        async def learning_log_flow(request: Request, _: None = _check()):
             """Log a full flow execution."""
             body = await request.json()
             log_ids = self.execution_logger.log_flow_execution(
@@ -907,11 +935,9 @@ class DashboardApp:
             return {"log_ids": log_ids}
 
         @app.get("/api/learning/executions")
-        async def learning_executions(
-            limit: int = 50,
+        async def learning_executions(limit: int = 50,
             flow_name: str = None,
-            status: str = None,
-        ):
+            status: str = None, _: None = _check()):
             """Query execution logs."""
             entries = self.execution_logger.get_executions(
                 limit=limit,
@@ -921,70 +947,68 @@ class DashboardApp:
             return {"executions": entries}
 
         @app.get("/api/learning/stats/flow")
-        async def learning_flow_stats(flow_name: str = None):
+        async def learning_flow_stats(flow_name: str = None, _: None = _check()):
             """Get flow execution statistics."""
             return self.execution_logger.get_flow_stats(flow_name=flow_name)
 
         @app.get("/api/learning/stats/agent")
-        async def learning_agent_stats(agent_id: str = None):
+        async def learning_agent_stats(agent_id: str = None, _: None = _check()):
             """Get per-agent statistics."""
             return self.execution_logger.get_agent_stats(agent_id=agent_id)
 
         @app.get("/api/learning/trends")
-        async def learning_trends():
+        async def learning_trends(_: None = _check()):
             """Get overall execution trends."""
             return self.execution_logger.get_trends()
 
         # ── Learning API — Analytics (L-02) ──────────────────────────
 
         @app.get("/api/learning/analytics/summary")
-        async def analytics_summary():
+        async def analytics_summary(_: None = _check()):
             """Executive analytics summary."""
             return self.analytics.summary()
 
         @app.get("/api/learning/analytics/timeseries")
-        async def analytics_timeseries(
-            metric: str = "executions",
+        async def analytics_timeseries(metric: str = "executions",
             interval: str = "hour",
-            hours: int = 24,
-        ):
+            hours: int = 24, _: None = _check()):
             """Execution time series data."""
             return self.analytics.time_series(metric=metric, interval=interval, hours=hours)
 
         @app.get("/api/learning/analytics/flows")
-        async def analytics_flows(min_runs: int = 1):
+        async def analytics_flows(min_runs: int = 1, _: None = _check()):
             """Flow performance ranking."""
             return {"flows": self.analytics.flow_performance(min_runs=min_runs)}
 
         @app.get("/api/learning/analytics/agents")
-        async def analytics_agents(min_calls: int = 1):
+        async def analytics_agents(min_calls: int = 1, _: None = _check()):
             """Agent performance ranking."""
             return {"agents": self.analytics.agent_performance(min_calls=min_calls)}
 
         @app.get("/api/learning/analytics/bottlenecks")
-        async def analytics_bottlenecks():
+        async def analytics_bottlenecks(_: None = _check()):
             """System bottleneck detection."""
             return self.analytics.bottlenecks()
 
         @app.get("/api/learning/analytics/anomalies")
-        async def analytics_anomalies():
+        async def analytics_anomalies(_: None = _check()):
             """Anomaly detection results."""
             return self.analytics.anomalies()
 
         @app.get("/api/learning/analytics/patterns")
-        async def analytics_patterns(min_occurrences: int = 2):
+        async def analytics_patterns(min_occurrences: int = 2, _: None = _check()):
             """Frequent execution patterns."""
             return {"patterns": self.analytics.frequent_sequences(min_occurrences=min_occurrences)}
 
         @app.get("/api/learning/analytics/templates")
-        async def analytics_suggested_templates():
+        async def analytics_suggested_templates(_: None = _check()):
             """Template suggestions from patterns."""
             return {"suggestions": self.analytics.suggested_templates()}
 
         # ── Playground API — Flow Runner (P-05) ───────────────────
 
         @app.post("/api/playground/run")
-        async def playground_run(request: Request):
+        async def playground_run(request: Request, _: None = _require(Resource.FLOW, Action.EXECUTE)):
             """Execute a flow definition and get run_id for streaming."""
             body = await request.json()
             flow_yaml = body.get("yaml", "")
@@ -1004,13 +1028,13 @@ class DashboardApp:
                 return {"error": str(e)}
 
         @app.get("/api/playground/runs")
-        async def playground_list_runs(limit: int = 20, status: str = None):
+        async def playground_list_runs(limit: int = 20, status: str = None, _: None = _check()):
             """List recent flow runs."""
             runs = self.playground_runner.list_runs(limit=limit, status=status)
             return {"runs": runs}
 
         @app.get("/api/playground/runs/{run_id}")
-        async def playground_get_run(run_id: str):
+        async def playground_get_run(run_id: str, _: None = _check()):
             """Get a specific run's status and details."""
             run = self.playground_runner.get_run(run_id)
             if run is None:
@@ -1018,13 +1042,13 @@ class DashboardApp:
             return {"run": run.to_dict()}
 
         @app.post("/api/playground/runs/{run_id}/cancel")
-        async def playground_cancel_run(run_id: str):
+        async def playground_cancel_run(run_id: str, _: None = _require(Resource.FLOW, Action.UPDATE)):
             """Cancel a queued or running flow."""
             ok = self.playground_runner.cancel_run(run_id)
             return {"cancelled": ok}
 
         @app.websocket("/api/playground/runs/{run_id}/stream")
-        async def playground_run_stream(websocket: WebSocket, run_id: str):
+        async def playground_run_stream(websocket: WebSocket, run_id: str, _: None = _check()):
             """WebSocket endpoint for live run streaming events."""
             await websocket.accept()
             queue = self.playground_runner.get_ws_queue(run_id)
@@ -1054,7 +1078,7 @@ class DashboardApp:
         # ── Brain API — 3D Viz Data (B-05) ──────────────────────────
 
         @app.get("/api/brain/graph")
-        async def brain_graph_data():
+        async def brain_graph_data(_: None = _check()):
             """Get graph data for 3D neural visualization.
 
             Returns nodes (agents) and edges (connections) with
@@ -1113,7 +1137,7 @@ class DashboardApp:
             return {"nodes": nodes, "edges": edges, "stats": brain_stats}
 
         @app.get("/api/brain/gates/pending-html")
-        async def brain_pending_gates_html():
+        async def brain_pending_gates_html(_: None = _check()):
             """Get pending gates in a format suitable for the Gates UI."""
             gates = self.approval_gates.list_gates(status="pending")
             return {"gates": gates}
