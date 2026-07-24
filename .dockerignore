@@ -1,0 +1,50 @@
+# Git
+.git/
+.gitignore
+.github/
+
+# IDE
+.vscode/
+.idea/
+.obsidian/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/pyinstaller/
+build/lib/
+
+# Node
+playground-ui/node_modules/
+playground-ui/dist/
+playground-ui/.vite/
+
+# Testing
+.pytest_cache/
+tests/
+
+# Database files (persisted via volume mount)
+*.db
+*.db-shm
+*.db-wal
+
+# Docs (large, not needed at runtime)
+docs/
+graphify-out/
+*.md
+!README.md
+!CHANGELOG.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# HiveOS-specific
+hiveos.db
+hiveos.db-shm
+hiveos.db-wal
+working_memory.md

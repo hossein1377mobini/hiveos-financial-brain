@@ -127,6 +127,12 @@ class PackageInstaller:
             if package_dir.exists():
                 console.print(f"⚠️  Package {manifest.name}-{manifest.version} already installed, overwriting...")
             
+            # Security: validate no path traversal in archive members
+            import os
+            for member in tar.getmembers():
+                member_path = os.path.normpath(os.path.join(package_dir, member.name))
+                if not member_path.startswith(os.path.normpath(package_dir)):
+                    raise ValueError(f"Path traversal detected in package: {member.name}")
             tar.extractall(path=package_dir)
         
         console.print(f"✅ Installed {manifest.name} v{manifest.version}")

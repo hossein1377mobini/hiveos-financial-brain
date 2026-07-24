@@ -88,7 +88,7 @@ class MothershipHandler(BaseHTTPRequestHandler):
             self._audit_log(
                 AuditAction.READ, AuditResource.MOTHERSHIP,
                 result=AuditResult.DENIED, status_code=401,
-                message=f"Invalid API key: {api_key[:12]}...",
+                message="Invalid API key or user disabled",
             )
             _json_response(self, {"error": "Invalid API key or user disabled"}, 401)
             return False
@@ -841,7 +841,7 @@ class MothershipServer:
         bus: Any,
         resilience: Any = None,
         health_checker: Any = None,
-        host: str = "0.0.0.0",
+        host: str = "127.0.0.1",
         port: int = 8080,
         knowledge_dir: Optional[Path] = None,
         flow_dir: Optional[Path] = None,

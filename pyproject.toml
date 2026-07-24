@@ -25,6 +25,9 @@ hive = "hiveos.cli.main:main"
 where = ["src"]
 include = ["hiveos*", "hiveos.*"]
 
+[tool.setuptools.package-data]
+"hiveos.dashboard" = ["templates/**/*"]
+
 [build-system]
 requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"

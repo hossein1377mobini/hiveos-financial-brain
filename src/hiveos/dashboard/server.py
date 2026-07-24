@@ -539,6 +539,7 @@ class DashboardApp:
         @app.get("/api/domains")
         async def list_domains():
             """List all known domains from the registry."""
+            self.domain_registry.scan()
             domains = self.domain_registry.list_domains()
             return {"domains": domains}
 

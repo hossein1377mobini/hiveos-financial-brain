@@ -7,6 +7,8 @@ permission checks and CRUD for users and custom roles.
 
 from __future__ import annotations
 
+import os
+import secrets
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 from datetime import datetime
@@ -29,7 +31,7 @@ DEFAULT_RBAC_CONFIG = {
         "admin": {
             "username": "admin",
             "role": "admin",
-            "api_key": "hive-admin-key",
+            "api_key": "",  # generated at first run
             "enabled": True,
             "email": "admin@hiveos.local",
             "created_at": datetime.utcnow().isoformat(),
@@ -51,6 +53,11 @@ class RBACManager:
         self.data_dir = Path(data_dir) if data_dir else Path.home() / ".hiveos"
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self._path = self.data_dir / "rbac.yaml"
+        # Ensure data dir is owner-only accessible
+        try:
+            self.data_dir.chmod(0o700)
+        except OSError:
+            pass
 
         # Built-in roles are always loaded
         self._builtin_roles: Dict[str, Role] = get_builtin_roles()
@@ -80,10 +87,13 @@ class RBACManager:
             # First run — create default admin user
             self._users = {}
             for uname, udata in DEFAULT_RBAC_CONFIG["users"].items():
+                if not udata.get("api_key"):
+                    udata["api_key"] = secrets.token_urlsafe(32)
                 self._users[uname] = User.from_dict(udata)
             self._custom_roles = {}
             self.save()
             console.print(f"[dim]🆕 Created default RBAC: {self._path}[/dim]")
+            console.print(f"[bold yellow]   Admin API key (save this!): {self._users['admin'].api_key}[/bold yellow]")
 
         self._rebuild_api_key_cache()
 
